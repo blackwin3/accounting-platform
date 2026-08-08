@@ -1,0 +1,154 @@
+<header class="mb-8">
+  <a href="/money" class="text-ink/40 hover:text-till text-sm">← Money</a>
+  <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mt-2">Money Movement — <%= currentBusinessUnit %></p>
+  <h1 class="font-display text-3xl mt-1">Unit Income</h1>
+  <p class="text-ink/50 text-sm mt-1">Rent collected, or investment interest and dividends — income that isn't tied to selling stocked goods.</p>
+</header>
+
+<% if (!['RENTAL', 'INVESTMENTS'].includes(currentBusinessUnit)) { %>
+  <div class="bg-white rounded-xl border border-ink/10 p-6 max-w-lg">
+    <p class="text-ink/60">Switch to the <span class="font-mono">RENTAL</span> or <span class="font-mono">INVESTMENTS</span> unit (top right) to record this kind of income. The Till handles income for SHOP and FARM.</p>
+  </div>
+<% } else { %>
+
+<div class="grid md:grid-cols-2 gap-6">
+  <section class="bg-white rounded-xl border border-ink/10 p-6">
+    <h2 class="font-display text-xl mb-1">Record Income</h2>
+    <p class="text-ink/50 text-sm mb-5">
+      <% if (currentBusinessUnit === 'RENTAL') { %>Rent received from a tenant.<% } else { %>Bond coupon interest or share dividends received.<% } %>
+    </p>
+
+    <form id="income-form" class="space-y-4">
+      <% if (currentBusinessUnit === 'RENTAL') { %>
+        <div>
+          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Tenant / House</label>
+          <select name="stakeholderId" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display">
+            <% tenants.forEach(function(t) { %>
+              <option value="<%= t.id %>"><%= t.name %></option>
+            <% }) %>
+          </select>
+        </div>
+        <input type="hidden" name="incomeType" value="RENT" />
+      <% } else { %>
+        <div>
+          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Source</label>
+          <div class="flex gap-2">
+            <label class="flex-1">
+              <input type="radio" name="incomeType" value="INTEREST" checked class="peer sr-only" />
+              <div class="peer-checked:bg-till peer-checked:text-paper border border-ink/20 rounded-lg px-4 py-3 text-center cursor-pointer transition">
+                <span class="font-display block">Bond Interest</span>
+              </div>
+            </label>
+            <label class="flex-1">
+              <input type="radio" name="incomeType" value="DIVIDEND" class="peer sr-only" />
+              <div class="peer-checked:bg-till peer-checked:text-paper border border-ink/20 rounded-lg px-4 py-3 text-center cursor-pointer transition">
+                <span class="font-display block">Dividend</span>
+              </div>
+            </label>
+          </div>
+        </div>
+        <div>
+          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Instrument</label>
+          <select name="moneyId" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display">
+            <option value="">— not linked to a specific instrument —</option>
+            <% instruments.forEach(function(m) { %>
+              <option value="<%= m.id %>"><%= m.name %></option>
+            <% }) %>
+          </select>
+        </div>
+      <% } %>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Amount (KES)</label>
+        <input name="amount" type="number" min="0.01" step="0.01" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Received Via</label>
+        <div class="grid grid-cols-4 gap-1.5">
+          <label><input type="radio" name="paymentMethod" value="CASH" checked class="peer sr-only" /><div class="peer-checked:bg-till peer-checked:text-paper border border-ink/20 rounded-lg py-2 text-center text-xs font-medium cursor-pointer transition">Cash</div></label>
+          <label><input type="radio" name="paymentMethod" value="MOBILE" class="peer sr-only" /><div class="peer-checked:bg-till peer-checked:text-paper border border-ink/20 rounded-lg py-2 text-center text-xs font-medium cursor-pointer transition">Mobile</div></label>
+          <label><input type="radio" name="paymentMethod" value="BANK" class="peer sr-only" /><div class="peer-checked:bg-till peer-checked:text-paper border border-ink/20 rounded-lg py-2 text-center text-xs font-medium cursor-pointer transition">Bank</div></label>
+          <label><input type="radio" name="paymentMethod" value="CREDIT" class="peer sr-only" /><div class="peer-checked:bg-till peer-checked:text-paper border border-ink/20 rounded-lg py-2 text-center text-xs font-medium cursor-pointer transition">Owed</div></label>
+        </div>
+        <p class="text-xs text-ink/40 mt-1">"Owed" records this as still outstanding — e.g. rent arrears not yet collected.</p>
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Notes (optional)</label>
+        <textarea name="notes" rows="2" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display"></textarea>
+      </div>
+      <button type="submit" id="submit-btn" class="w-full py-3 rounded-lg bg-till text-paper font-display text-lg hover:brightness-110 transition">
+        Record Income
+      </button>
+      <div id="feedback" class="hidden text-sm p-3 rounded-lg"></div>
+    </form>
+  </section>
+
+  <section class="bg-white rounded-xl border border-ink/10 p-6">
+    <h2 class="font-display text-xl mb-1"><%= currentBusinessUnit === 'RENTAL' ? 'Tenants' : 'Instruments' %></h2>
+    <p class="text-ink/50 text-sm mb-5">
+      <% if (currentBusinessUnit === 'RENTAL') { %>Fifteen one-bedroom rental houses.<% } else { %>Bonds and shares held.<% } %>
+    </p>
+    <% if (currentBusinessUnit === 'RENTAL') { %>
+      <div class="grid grid-cols-3 gap-2 text-sm">
+        <% tenants.forEach(function(t) { %>
+          <div class="px-3 py-2 rounded-lg bg-paper text-center font-mono text-xs"><%= t.name %></div>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <div class="space-y-3">
+        <% instruments.forEach(function(m) { %>
+          <div class="flex justify-between items-center py-2 border-b border-ink/5 last:border-0">
+            <div>
+              <p class="font-display text-sm"><%= m.name %></p>
+              <p class="text-xs text-ink/40"><%= m.type %><%= m.rate ? ' · ' + m.rate + '%' : '' %></p>
+            </div>
+            <span class="font-mono tabular-nums text-sm"><%= m.principal.toFixed(2) %></span>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </section>
+</div>
+
+<% } %>
+
+<script>
+  const form = document.getElementById("income-form");
+  if (form) {
+    const feedback = document.getElementById("feedback");
+    const submitBtn = document.getElementById("submit-btn");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Posting...";
+      const data = Object.fromEntries(new FormData(form).entries());
+      try {
+        const res = await fetch("/api/unit-income", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            incomeType: data.incomeType,
+            amount: Number(data.amount),
+            paymentMethod: data.paymentMethod,
+            notes: data.notes,
+            stakeholderId: data.stakeholderId ? Number(data.stakeholderId) : null,
+            moneyId: data.moneyId ? Number(data.moneyId) : null,
+          }),
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || "Failed to record income");
+        feedback.textContent = `Recorded KES ${Number(data.amount).toFixed(2)}.`;
+        feedback.className = "text-sm p-3 rounded-lg bg-till/10 text-till";
+        feedback.classList.remove("hidden");
+        form.reset();
+      } catch (err) {
+        feedback.textContent = err.message;
+        feedback.className = "text-sm p-3 rounded-lg bg-clay/10 text-clay";
+        feedback.classList.remove("hidden");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Record Income";
+      }
+    });
+  }
+</script>

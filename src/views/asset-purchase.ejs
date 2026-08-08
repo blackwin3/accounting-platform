@@ -1,0 +1,80 @@
+<header class="mb-8">
+  <p class="font-mono text-xs uppercase tracking-widest text-ink/40">Fixed Assets</p>
+  <h1 class="font-display text-3xl mt-1">Record an Asset Purchase</h1>
+  <p class="text-ink/50 text-sm mt-1">For vehicles, equipment, or other property that will be used over several years and depreciated — not stock for resale.</p>
+</header>
+
+<div class="max-w-lg bg-white rounded-xl border border-ink/10 p-6">
+  <form id="asset-form" class="space-y-5">
+    <div>
+      <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Asset name</label>
+      <input name="name" type="text" required placeholder="e.g. Toyota Vitz" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display" />
+    </div>
+    <div>
+      <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Cost (KES)</label>
+      <input name="cost" type="number" min="0.01" step="0.01" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Useful life (years)</label>
+        <input name="usefulLifeYears" type="number" min="1" step="1" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Residual value (KES)</label>
+        <input name="residualValue" type="number" min="0" step="0.01" value="0" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      </div>
+    </div>
+    <div>
+      <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Depreciation method</label>
+      <select name="depreciationMethod" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono">
+        <option value="STRAIGHT_LINE">Straight-line</option>
+        <option value="REDUCING_BALANCE">Reducing balance</option>
+        <option value="UNITS_OF_PRODUCTION">Units of production</option>
+      </select>
+    </div>
+
+    <button type="submit" id="submit-btn" class="w-full py-3 rounded-lg bg-till text-paper font-display text-lg hover:brightness-110 transition">
+      Record Purchase
+    </button>
+    <div id="feedback" class="hidden text-sm p-3 rounded-lg"></div>
+  </form>
+</div>
+
+<script>
+  const form = document.getElementById("asset-form");
+  const feedback = document.getElementById("feedback");
+  const submitBtn = document.getElementById("submit-btn");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Posting...";
+    const data = Object.fromEntries(new FormData(form).entries());
+    try {
+      const res = await fetch("/api/asset-purchase", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: data.name,
+          cost: Number(data.cost),
+          usefulLifeYears: Number(data.usefulLifeYears),
+          residualValue: Number(data.residualValue || 0),
+          depreciationMethod: data.depreciationMethod,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to record asset purchase");
+      feedback.textContent = `Recorded: ${data.name} — monthly depreciation KES ${result.monthlyDepreciation.toFixed(2)}.`;
+      feedback.className = "text-sm p-3 rounded-lg bg-till/10 text-till";
+      feedback.classList.remove("hidden");
+      form.reset();
+    } catch (err) {
+      feedback.textContent = err.message;
+      feedback.className = "text-sm p-3 rounded-lg bg-clay/10 text-clay";
+      feedback.classList.remove("hidden");
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Record Purchase";
+    }
+  });
+</script>

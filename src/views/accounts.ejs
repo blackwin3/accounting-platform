@@ -1,0 +1,101 @@
+<header class="mb-8">
+  <p class="font-mono text-xs uppercase tracking-widest text-ink/40">Chart of Accounts</p>
+  <h1 class="font-display text-3xl mt-1">Accounts</h1>
+  <% if (canEdit) { %>
+    <p class="text-ink/50 text-sm mt-1">Click the pencil on any account to rename its code or display name. All Catalogue rules referencing the old code are updated automatically.</p>
+  <% } %>
+</header>
+
+<div class="bg-white rounded-xl border border-ink/10 overflow-hidden">
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="border-b border-ink/10 text-left text-ink/40 font-mono text-xs uppercase tracking-widest">
+        <th class="px-5 py-3">Code</th>
+        <th class="px-5 py-3">Account</th>
+        <th class="px-5 py-3">Type</th>
+        <th class="px-5 py-3">Statement Section</th>
+        <th class="px-5 py-3 text-right">Balance</th>
+        <% if (canEdit) { %><th class="px-5 py-3 w-8"></th><% } %>
+      </tr>
+    </thead>
+    <tbody>
+      <% accounts.forEach(function(a, i) { %>
+        <tr class="border-b border-ink/5 last:border-0 hover:bg-paper/50" id="acct-row-<%= i %>">
+          <td class="px-5 py-3 font-mono text-ink/50"><%= a.code || '—' %></td>
+          <td class="px-5 py-3 font-display"><%= a.name %></td>
+          <td class="px-5 py-3 text-ink/60"><%= a.type || '—' %></td>
+          <td class="px-5 py-3 text-ink/40 text-xs"><%= a.statementSection || '—' %></td>
+          <td class="px-5 py-3 text-right font-mono tabular-nums"><%= a.balance.toFixed(2) %></td>
+          <% if (canEdit && a.codeId) { %>
+            <td class="px-3 py-3 text-center">
+              <button onclick="openAccountEdit(<%= a.codeId %>, '<%= (a.code||'').replace(/'/g, '') %>', '<%= a.name.replace(/'/g, '') %>')"
+                class="text-ink/30 hover:text-till transition text-xs" title="Rename this account">✏</button>
+            </td>
+          <% } else if (canEdit) { %>
+            <td></td>
+          <% } %>
+        </tr>
+      <% }) %>
+      <% if (accounts.length === 0) { %>
+        <tr><td colspan="<%= canEdit ? 6 : 5 %>" class="px-5 py-8 text-center text-ink/40">No accounts yet.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<% if (canEdit) { %>
+<div id="account-edit-modal" class="hidden fixed inset-0 bg-ink/40 flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl border border-ink/10 p-6 w-80 shadow-xl">
+    <h2 class="font-display text-lg mb-4">Rename Account</h2>
+    <div class="space-y-3 mb-5">
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Account Code</label>
+        <input id="edit-code" type="text" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono text-sm" />
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Display Name</label>
+        <input id="edit-name" type="text" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display text-sm" />
+      </div>
+      <p id="edit-error" class="text-xs text-clay hidden"></p>
+    </div>
+    <div class="flex gap-2">
+      <button id="edit-save" class="flex-1 bg-till text-paper rounded-lg py-2 text-sm font-medium">Save</button>
+      <button onclick="document.getElementById('account-edit-modal').classList.add('hidden')" class="flex-1 border border-ink/20 rounded-lg py-2 text-sm">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let _editCodeId = null;
+function openAccountEdit(codeId, currentCode, currentName) {
+  _editCodeId = codeId;
+  document.getElementById('edit-code').value = currentCode;
+  document.getElementById('edit-name').value = currentName;
+  document.getElementById('edit-error').classList.add('hidden');
+  document.getElementById('account-edit-modal').classList.remove('hidden');
+}
+document.getElementById('edit-save').addEventListener('click', async () => {
+  const newCode = document.getElementById('edit-code').value.trim();
+  const newName = document.getElementById('edit-name').value.trim();
+  const errEl = document.getElementById('edit-error');
+  if (!newCode || !newName) { errEl.textContent = 'Both fields are required.'; errEl.classList.remove('hidden'); return; }
+  document.getElementById('edit-save').textContent = 'Saving…';
+  document.getElementById('edit-save').disabled = true;
+  try {
+    const res = await fetch('/api/accounts/' + _editCodeId + '/rename', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ newCode, newName }),
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Save failed');
+    document.getElementById('account-edit-modal').classList.add('hidden');
+    location.reload();
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.classList.remove('hidden');
+    document.getElementById('edit-save').textContent = 'Save';
+    document.getElementById('edit-save').disabled = false;
+  }
+});
+</script>
+<% } %>

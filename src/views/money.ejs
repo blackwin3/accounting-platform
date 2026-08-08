@@ -1,0 +1,66 @@
+<header class="mb-8">
+  <p class="font-mono text-xs uppercase tracking-widest text-ink/40">Money — <%= currentBusinessUnit %></p>
+  <h1 class="font-display text-3xl mt-1">Money</h1>
+  <p class="text-ink/50 text-sm mt-1">The accounting equation at work: what the business owns, and how it's financed.</p>
+</header>
+
+<section class="mb-10">
+  <div class="grid md:grid-cols-3 gap-4 mb-4">
+    <div class="bg-white rounded-xl border border-ink/10 p-5">
+      <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Assets</p>
+      <p class="font-mono text-2xl tabular-nums <%= totalAssets >= 0 ? 'text-till' : 'text-clay' %>"><%= fmt(totalAssets) %></p>
+      <div class="mt-3 pt-3 border-t border-ink/5 space-y-1 text-xs text-ink/50">
+        <div class="flex justify-between"><span>Cash Balance</span><span class="font-mono"><%= fmt(cashBalance) %></span></div>
+        <div class="flex justify-between"><span>Fixed Assets</span><span class="font-mono"><%= fmt(fixedAssetsBalance) %></span></div>
+      </div>
+    </div>
+    <div class="bg-white rounded-xl border border-ink/10 p-5">
+      <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Equity</p>
+      <p class="font-mono text-2xl tabular-nums"><%= fmt(totalEquity) %></p>
+      <div class="mt-3 pt-3 border-t border-ink/5 space-y-1 text-xs text-ink/50">
+        <div class="flex justify-between"><span>Owner Capital</span><span class="font-mono"><%= fmt(capitalBalance) %></span></div>
+        <div class="flex justify-between"><span>Re-invested Funds</span><span class="font-mono"><%= fmt(retainedEarnings) %></span></div>
+      </div>
+    </div>
+    <div class="bg-white rounded-xl border border-ink/10 p-5">
+      <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Liabilities</p>
+      <p class="font-mono text-2xl tabular-nums text-clay"><%= fmt(totalLiabilities) %></p>
+      <div class="mt-3 pt-3 border-t border-ink/5 space-y-1 text-xs text-ink/50">
+        <div class="flex justify-between"><span>Debts (Payables, Leases, Provisions)</span><span class="font-mono"><%= fmt(otherLiabilitiesBalance) %></span></div>
+        <div class="flex justify-between"><span>Loans Outstanding</span><span class="font-mono"><%= fmt(loanBalance) %></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl border border-ink/10 p-5">
+    <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Net Worth (Assets + Equity − Liabilities)</p>
+    <p class="font-mono text-2xl tabular-nums"><%= fmt(totalAssets + totalEquity - totalLiabilities) %></p>
+    <p class="text-xs text-ink/40 mt-2 font-mono">Assets [Cash Balance + Fixed Assets] + Equity [Re-invested Funds + Owner Capital] + Liabilities [Debts + Loans Outstanding] = Net Worth</p>
+  </div>
+</section>
+
+<section>
+  <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-4">Go to</p>
+  <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+    <a href="/money/funds" class="bg-till text-paper rounded-xl p-6 hover:brightness-110 transition flex flex-col justify-between h-32">
+      <span class="font-display text-xl">Funds</span>
+      <span class="text-paper/70 text-sm">Capital, loans, and unit income</span>
+    </a>
+    <a href="/money/investments" class="bg-white border border-ink/10 rounded-xl p-6 hover:border-till transition flex flex-col justify-between h-32">
+      <span class="font-display text-xl">Investments</span>
+      <span class="text-ink/50 text-sm">Bonds, shares — buy and sell</span>
+    </a>
+    <a href="/money/cash-flow" class="bg-white border border-ink/10 rounded-xl p-6 hover:border-till transition flex flex-col justify-between h-32">
+      <span class="font-display text-xl">Cash Flow</span>
+      <span class="text-ink/50 text-sm">Cash/mobile/bank, in vs out</span>
+    </a>
+    <a href="/transactions" class="bg-white border border-ink/10 rounded-xl p-6 hover:border-till transition flex flex-col justify-between h-32">
+      <span class="font-display text-xl">Transactions</span>
+      <span class="text-ink/50 text-sm">Every posted journal entry</span>
+    </a>
+    <a href="/accounts" class="bg-white border border-ink/10 rounded-xl p-6 hover:border-till transition flex flex-col justify-between h-32">
+      <span class="font-display text-xl">Accounts</span>
+      <span class="text-ink/50 text-sm">Chart of accounts</span>
+    </a>
+  </div>
+</section>

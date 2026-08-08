@@ -1,0 +1,198 @@
+<header class="mb-8">
+  <p class="font-mono text-xs uppercase tracking-widest text-ink/40">Reports</p>
+  <h1 class="font-display text-3xl mt-1">Financial Statements</h1>
+  <p class="text-ink/50 text-sm mt-1">Follows the required chain: Unadjusted Trial Balance → Adjusted Trial Balance → Income Statement / Balance Sheet.</p>
+</header>
+
+<!-- Today's live daily record (unchanged, informal operational view) -->
+<section class="mb-12">
+  <h2 class="font-display text-xl mb-4">Today — <%= todayLabel %></h2>
+  <div class="bg-white rounded-xl border border-ink/10 p-6 grid grid-cols-2 md:grid-cols-3 gap-6">
+    <div>
+      <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Sales</p>
+      <p class="font-mono text-xl tabular-nums text-till"><%= fmt(daily.sales) %></p>
+    </div>
+    <div>
+      <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">COGS</p>
+      <p class="font-mono text-xl tabular-nums text-clay"><%= fmt(daily.cogs) %></p>
+    </div>
+    <div>
+      <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Gross Profit</p>
+      <p class="font-mono text-xl tabular-nums"><%= fmt(daily.grossProfit) %></p>
+    </div>
+    <div>
+      <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Purchases (Inventory)</p>
+      <p class="font-mono text-xl tabular-nums"><%= fmt(daily.purchases) %></p>
+    </div>
+    <div>
+      <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Transactions</p>
+      <p class="font-mono text-xl tabular-nums"><%= daily.transactionCount %></p>
+    </div>
+  </div>
+</section>
+
+<!-- Formal financial statement chain -->
+<section class="mb-12">
+  <h2 class="font-display text-xl mb-4">Generate Financial Statements</h2>
+  <div class="bg-white rounded-xl border border-ink/10 p-6">
+    <ol class="space-y-4">
+      <li class="flex items-center justify-between">
+        <div>
+          <p class="font-display">1. Unadjusted Trial Balance</p>
+          <p class="text-xs text-ink/40">Snapshot of raw Journal totals right now.</p>
+        </div>
+        <form method="POST" action="/reports/generate/unadjusted-tb">
+          <button class="px-4 py-2 rounded-full bg-till text-paper text-sm hover:brightness-110">Generate</button>
+        </form>
+      </li>
+      <li class="flex items-center justify-between">
+        <div>
+          <p class="font-display">2. Adjusted Trial Balance</p>
+          <p class="text-xs text-ink/40">Confirms adjusting entries are posted, then locks the adjusted figures.</p>
+        </div>
+        <% if (latestUnadjusted) { %>
+          <form method="POST" action="/reports/generate/adjusted-tb">
+            <input type="hidden" name="parentReportId" value="<%= latestUnadjusted.Reports_id %>" />
+            <button class="px-4 py-2 rounded-full bg-till text-paper text-sm hover:brightness-110">Generate</button>
+          </form>
+        <% } else { %>
+          <span class="text-xs text-ink/30">Generate step 1 first</span>
+        <% } %>
+      </li>
+      <li class="flex items-center justify-between">
+        <div>
+          <p class="font-display">3. Income Statement (P&amp;L)</p>
+          <p class="text-xs text-ink/40">Revenue, COGS, expenses, net profit.</p>
+        </div>
+        <% if (latestAdjusted) { %>
+          <form method="POST" action="/reports/generate/income-statement">
+            <input type="hidden" name="adjustedTrialBalanceReportId" value="<%= latestAdjusted.Reports_id %>" />
+            <button class="px-4 py-2 rounded-full bg-till text-paper text-sm hover:brightness-110">Generate</button>
+          </form>
+        <% } else { %>
+          <span class="text-xs text-ink/30">Generate step 2 first</span>
+        <% } %>
+      </li>
+      <li class="flex items-center justify-between">
+        <div>
+          <p class="font-display">4. Balance Sheet</p>
+          <p class="text-xs text-ink/40">Assets, liabilities, and equity as of now.</p>
+        </div>
+        <% if (latestAdjusted) { %>
+          <form method="POST" action="/reports/generate/balance-sheet">
+            <input type="hidden" name="adjustedTrialBalanceReportId" value="<%= latestAdjusted.Reports_id %>" />
+            <button class="px-4 py-2 rounded-full bg-till text-paper text-sm hover:brightness-110">Generate</button>
+          </form>
+        <% } else { %>
+          <span class="text-xs text-ink/30">Generate step 2 first</span>
+        <% } %>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<% if (latestIncomeStatement) { %>
+<section class="mb-12">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="font-display text-xl">Income Statement — <%= new Date(latestIncomeStatement.Reports_period).toLocaleDateString('en-GB') %></h2>
+    <div class="flex items-center gap-2">
+      <span class="text-xs font-mono px-2 py-0.5 rounded-full <%= latestIncomeStatement.Report_Status === 'APPROVED' || latestIncomeStatement.Report_Status === 'ISSUED' ? 'bg-till/10 text-till' : 'bg-paper text-ink/50' %>">
+        <%= latestIncomeStatement.Report_Status || 'DRAFT' %>
+      </span>
+      <form method="POST" action="/api/reports/<%= latestIncomeStatement.Reports_id %>/status" onsubmit="event.preventDefault(); fetch(this.action, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({status: this.status.value})}).then(() => location.reload());">
+        <select name="status" class="text-xs font-mono border border-ink/20 rounded px-2 py-1 bg-paper" onchange="this.form.requestSubmit()">
+          <% ['DRAFT','REVIEWED','APPROVED','ISSUED','SUPERSEDED'].forEach(function(s) { %>
+            <option value="<%= s %>" <%= latestIncomeStatement.Report_Status === s ? 'selected' : '' %>><%= s %></option>
+          <% }) %>
+        </select>
+      </form>
+    </div>
+  </div>
+  <div class="bg-white rounded-xl border border-ink/10 p-6 max-w-md">
+    <div class="flex justify-between py-2 border-b border-ink/5"><span>Revenue</span><span class="font-mono tabular-nums"><%= fmt(incomeStatementFigures.income) %></span></div>
+    <div class="flex justify-between py-2 border-b border-ink/5"><span>Cost of Goods Sold</span><span class="font-mono tabular-nums text-clay">(<%= fmt(incomeStatementFigures.cogs) %>)</span></div>
+    <div class="flex justify-between py-2 border-b border-ink/5"><span>Operating Expenses</span><span class="font-mono tabular-nums text-clay">(<%= fmt(incomeStatementFigures.expenditure) %>)</span></div>
+    <div class="flex justify-between py-3 font-display text-lg"><span>Net Profit</span><span class="font-mono tabular-nums <%= incomeStatementFigures.netProfit >= 0 ? 'text-till' : 'text-clay' %>"><%= fmt(incomeStatementFigures.netProfit) %></span></div>
+  </div>
+  <%- include('partials/report-note', { noteKey: 'income-statement', context: 'REGULATORY' }) %>
+</section>
+<% } %>
+
+<% if (latestBalanceSheet) { %>
+<section class="mb-12">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="font-display text-xl">Balance Sheet — <%= new Date(latestBalanceSheet.Reports_period).toLocaleDateString('en-GB') %></h2>
+    <div class="flex items-center gap-2">
+      <span class="text-xs font-mono px-2 py-0.5 rounded-full <%= latestBalanceSheet.Report_Status === 'APPROVED' || latestBalanceSheet.Report_Status === 'ISSUED' ? 'bg-till/10 text-till' : 'bg-paper text-ink/50' %>">
+        <%= latestBalanceSheet.Report_Status || 'DRAFT' %>
+      </span>
+      <form method="POST" action="/api/reports/<%= latestBalanceSheet.Reports_id %>/status" onsubmit="event.preventDefault(); fetch(this.action, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({status: this.status.value})}).then(() => location.reload());">
+        <select name="status" class="text-xs font-mono border border-ink/20 rounded px-2 py-1 bg-paper" onchange="this.form.requestSubmit()">
+          <% ['DRAFT','REVIEWED','APPROVED','ISSUED','SUPERSEDED'].forEach(function(s) { %>
+            <option value="<%= s %>" <%= latestBalanceSheet.Report_Status === s ? 'selected' : '' %>><%= s %></option>
+          <% }) %>
+        </select>
+      </form>
+    </div>
+  </div>
+  <div class="grid md:grid-cols-2 gap-6">
+    <div class="bg-white rounded-xl border border-ink/10 p-6">
+      <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-3">Assets</p>
+      <% balanceSheetFigures.assetLines.forEach(function(l) { %>
+        <div class="flex justify-between py-1.5 text-sm"><span><%= l.name %></span><span class="font-mono tabular-nums"><%= fmt(l.amount) %></span></div>
+      <% }) %>
+      <div class="flex justify-between py-2 mt-2 border-t border-ink/10 font-display"><span>Total Assets</span><span class="font-mono tabular-nums"><%= fmt(balanceSheetFigures.totalAssets) %></span></div>
+    </div>
+    <div class="bg-white rounded-xl border border-ink/10 p-6">
+      <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-3">Liabilities & Equity</p>
+      <% balanceSheetFigures.liabilityLines.forEach(function(l) { %>
+        <div class="flex justify-between py-1.5 text-sm"><span><%= l.name %></span><span class="font-mono tabular-nums"><%= fmt(l.amount) %></span></div>
+      <% }) %>
+      <% balanceSheetFigures.equityLines.forEach(function(l) { %>
+        <div class="flex justify-between py-1.5 text-sm"><span><%= l.name %></span><span class="font-mono tabular-nums"><%= fmt(l.amount) %></span></div>
+      <% }) %>
+      <div class="flex justify-between py-2 mt-2 border-t border-ink/10 font-display"><span>Total Liabilities + Equity</span><span class="font-mono tabular-nums"><%= fmt(balanceSheetFigures.totalLiabilities + balanceSheetFigures.totalEquity) %></span></div>
+    </div>
+  </div>
+  <p class="mt-3 font-mono text-sm <%= balanceSheetFigures.balances ? 'text-till' : 'text-clay' %>">
+    <%= balanceSheetFigures.balances ? '✓ Balances' : '⚠ Does not balance' %>
+  </p>
+  <%- include('partials/report-note', { noteKey: 'balance-sheet', context: 'REGULATORY' }) %>
+</section>
+<% } %>
+
+<section>
+  <h2 class="font-display text-xl mb-4">Trial Balance — Live</h2>
+  <div class="bg-white rounded-xl border border-ink/10 overflow-hidden">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-ink/10 text-left text-ink/40 font-mono text-xs uppercase tracking-widest">
+          <th class="px-5 py-3">Code</th>
+          <th class="px-5 py-3">Account</th>
+          <th class="px-5 py-3 text-right">Debit</th>
+          <th class="px-5 py-3 text-right">Credit</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% trialBalance.forEach(function(row) { %>
+          <tr class="border-b border-ink/5 last:border-0">
+            <td class="px-5 py-3 font-mono text-ink/50"><%= row.code || '—' %></td>
+            <td class="px-5 py-3 font-display"><%= row.accountName %></td>
+            <td class="px-5 py-3 text-right font-mono tabular-nums"><%= row.debit > 0 ? fmt(row.debit) : '' %></td>
+            <td class="px-5 py-3 text-right font-mono tabular-nums"><%= row.credit > 0 ? fmt(row.credit) : '' %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+      <tfoot>
+        <tr class="border-t-2 border-ink/10 font-mono text-xs uppercase tracking-widest text-ink/40">
+          <td class="px-5 py-3" colspan="2">Grand Totals</td>
+          <td class="px-5 py-3 text-right tabular-nums"><%= fmt(trialBalanceTotals.debit) %></td>
+          <td class="px-5 py-3 text-right tabular-nums"><%= fmt(trialBalanceTotals.credit) %></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  <p class="mt-3 font-mono text-sm <%= trialBalanceTotals.debit === trialBalanceTotals.credit ? 'text-till' : 'text-clay' %>">
+    <%= trialBalanceTotals.debit === trialBalanceTotals.credit ? '✓ Balanced' : '⚠ Out of balance by ' + fmt(Math.abs(trialBalanceTotals.debit - trialBalanceTotals.credit)) %>
+  </p>
+</section>

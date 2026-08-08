@@ -1,0 +1,114 @@
+<header class="mb-8">
+  <p class="font-mono text-xs uppercase tracking-widest text-ink/40">Organisation</p>
+  <h1 class="font-display text-3xl mt-1">Stakeholders</h1>
+  <p class="text-ink/50 text-sm mt-1">Everyone the business deals with — family, employees, tenants, suppliers, advisors.</p>
+</header>
+
+<section class="bg-white rounded-xl border border-ink/10 p-6 mb-8 max-w-lg">
+  <h2 class="font-display text-xl mb-1">Add Stakeholder</h2>
+  <form id="stakeholder-form" class="space-y-4 mt-4">
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">First name</label>
+        <input name="firstName" type="text" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display" />
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Last name</label>
+        <input name="lastName" type="text" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display" />
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Category</label>
+        <select name="category" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display">
+          <option>Owner</option>
+          <option>Employee</option>
+          <option>Customer</option>
+          <option>Supplier</option>
+          <option>Bank</option>
+          <option>Government</option>
+          <option>Accountant</option>
+          <option>Child Successor</option>
+        </select>
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Relationship to owner</label>
+        <input name="relationship" type="text" placeholder="e.g. Son, Tenant, Supplier" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display" />
+      </div>
+    </div>
+    <div>
+      <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Location</label>
+      <input name="location" type="text" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display" />
+    </div>
+    <button type="submit" id="submit-btn" class="w-full py-3 rounded-lg bg-till text-paper font-display text-lg hover:brightness-110 transition">
+      Add Stakeholder
+    </button>
+    <div id="feedback" class="hidden text-sm p-3 rounded-lg"></div>
+  </form>
+</section>
+
+<section>
+  <h2 class="font-display text-xl mb-4">All Stakeholders (<%= stakeholders.length %>)</h2>
+  <div class="bg-white rounded-xl border border-ink/10 overflow-hidden">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-ink/10 text-left text-ink/40 font-mono text-xs uppercase tracking-widest">
+          <th class="px-5 py-3">Name</th>
+          <th class="px-5 py-3">Category</th>
+          <th class="px-5 py-3">Relationship</th>
+          <th class="px-5 py-3">Location</th>
+          <th class="px-5 py-3">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% stakeholders.forEach(function(s) { %>
+          <tr class="border-b border-ink/5 last:border-0 hover:bg-paper/50">
+            <td class="px-5 py-3 font-display"><%= s.name %></td>
+            <td class="px-5 py-3 text-ink/60"><%= s.category || '—' %></td>
+            <td class="px-5 py-3 text-ink/50 text-xs"><%= s.relationship || '—' %></td>
+            <td class="px-5 py-3 text-ink/50 text-xs"><%= s.location || '—' %></td>
+            <td class="px-5 py-3">
+              <span class="text-xs font-mono px-2 py-0.5 rounded-full <%= s.status === 'ACTIVE' ? 'bg-till/10 text-till' : 'bg-ink/10 text-ink/50' %>"><%= s.status || '—' %></span>
+            </td>
+          </tr>
+        <% }) %>
+        <% if (stakeholders.length === 0) { %>
+          <tr><td colspan="5" class="px-5 py-8 text-center text-ink/40">No stakeholders yet.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+  const form = document.getElementById("stakeholder-form");
+  const feedback = document.getElementById("feedback");
+  const submitBtn = document.getElementById("submit-btn");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Saving...";
+    const data = Object.fromEntries(new FormData(form).entries());
+    try {
+      const res = await fetch("/api/stakeholders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to add stakeholder");
+      feedback.textContent = "Added.";
+      feedback.className = "text-sm p-3 rounded-lg bg-till/10 text-till";
+      feedback.classList.remove("hidden");
+      form.reset();
+      setTimeout(() => location.reload(), 700);
+    } catch (err) {
+      feedback.textContent = err.message;
+      feedback.className = "text-sm p-3 rounded-lg bg-clay/10 text-clay";
+      feedback.classList.remove("hidden");
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Add Stakeholder";
+    }
+  });
+</script>

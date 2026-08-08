@@ -1,0 +1,46 @@
+<div class="mt-3">
+  <button type="button" onclick="document.getElementById('note-form-<%= noteKey %>').classList.toggle('hidden')" class="text-xs text-till hover:underline">+ Add Note</button>
+  <div id="note-form-<%= noteKey %>" class="hidden mt-2 max-w-md">
+    <form onsubmit="submitReportNote(event, '<%= noteKey %>', '<%= context %>')" class="flex gap-2 items-start">
+      <textarea name="explanation" rows="2" placeholder="Why does this look the way it does? What should the next person know?" required
+        class="flex-1 border border-ink/20 rounded-lg px-3 py-2 text-sm font-display bg-white"></textarea>
+      <button type="submit" class="px-4 py-2 rounded-lg bg-till text-paper text-xs font-medium hover:brightness-110 transition whitespace-nowrap">Save</button>
+    </form>
+    <p id="note-feedback-<%= noteKey %>" class="hidden text-xs mt-2"></p>
+  </div>
+</div>
+
+<script>
+  // Defined once per report-note partial instance; harmless to redefine if
+  // multiple partials render on the same page since the last one wins and
+  // all instances share the same fetch logic.
+  async function submitReportNote(e, key, context) {
+    e.preventDefault();
+    const form = e.target;
+    const feedback = document.getElementById("note-feedback-" + key);
+    const textarea = form.querySelector("textarea");
+    const btn = form.querySelector("button");
+    btn.disabled = true;
+    btn.textContent = "Saving...";
+    try {
+      const res = await fetch("/api/knowledge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ explanation: textarea.value, context }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to save note");
+      feedback.textContent = "Note saved.";
+      feedback.className = "text-xs mt-2 text-till";
+      feedback.classList.remove("hidden");
+      textarea.value = "";
+    } catch (err) {
+      feedback.textContent = err.message;
+      feedback.className = "text-xs mt-2 text-clay";
+      feedback.classList.remove("hidden");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Save";
+    }
+  }
+</script>

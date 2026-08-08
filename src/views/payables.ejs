@@ -1,0 +1,166 @@
+<header class="mb-8">
+  <a href="/claims" class="text-ink/40 hover:text-till text-sm">← Claims</a>
+  <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mt-2">Claims — <%= currentBusinessUnit %></p>
+  <h1 class="font-display text-3xl mt-1">Payables</h1>
+  <p class="text-ink/50 text-sm mt-1">What's owed to the business (Trade Receivables) and what the business owes for goods, stock, and expenses bought on credit (Trade Payables).</p>
+</header>
+
+<section class="grid grid-cols-2 gap-4 mb-10">
+  <div class="bg-white rounded-xl border border-ink/10 p-5">
+    <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Total Receivable</p>
+    <p class="font-mono text-2xl tabular-nums text-till"><%= receivablesTotal.toFixed(2) %></p>
+  </div>
+  <div class="bg-white rounded-xl border border-ink/10 p-5">
+    <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Total Payable</p>
+    <p class="font-mono text-2xl tabular-nums text-clay"><%= payablesTotal.toFixed(2) %></p>
+  </div>
+</section>
+
+<section class="mb-10">
+  <h2 class="font-display text-xl mb-4">Owed to the Business — Trade Receivables</h2>
+  <p class="text-ink/50 text-sm mb-4">Credit sales and rent not yet collected.</p>
+
+  <% if (receivablesTotal > 0) { %>
+  <div class="bg-white rounded-xl border border-ink/10 p-6 mb-4 max-w-md">
+    <h3 class="font-display text-lg mb-1">Record Payment Received</h3>
+    <p class="text-ink/50 text-sm mb-4">A customer settling some or all of what they owe.</p>
+    <form id="receivable-form" class="space-y-4">
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Amount (KES) — max <%= receivablesTotal.toFixed(2) %></label>
+        <input name="amount" type="number" min="0.01" step="0.01" max="<%= receivablesTotal %>" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Received Via</label>
+        <div class="grid grid-cols-3 gap-1.5">
+          <label><input type="radio" name="paymentMethod" value="CASH" checked class="peer sr-only" /><div class="peer-checked:bg-till peer-checked:text-paper border border-ink/20 rounded-lg py-2 text-center text-xs font-medium cursor-pointer transition">Cash</div></label>
+          <label><input type="radio" name="paymentMethod" value="MOBILE" class="peer sr-only" /><div class="peer-checked:bg-till peer-checked:text-paper border border-ink/20 rounded-lg py-2 text-center text-xs font-medium cursor-pointer transition">Mobile</div></label>
+          <label><input type="radio" name="paymentMethod" value="BANK" class="peer sr-only" /><div class="peer-checked:bg-till peer-checked:text-paper border border-ink/20 rounded-lg py-2 text-center text-xs font-medium cursor-pointer transition">Bank</div></label>
+        </div>
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Notes (optional)</label>
+        <input name="notes" type="text" placeholder="e.g. from Mama Njeri, milk account" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display" />
+      </div>
+      <button type="submit" id="receivable-submit" class="w-full py-3 rounded-lg bg-till text-paper font-display text-lg hover:brightness-110 transition">Record Payment</button>
+      <div id="receivable-feedback" class="hidden text-sm p-3 rounded-lg"></div>
+    </form>
+  </div>
+  <% } %>
+
+  <div class="bg-white rounded-xl border border-ink/10 overflow-hidden">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-ink/10 text-left text-ink/40 font-mono text-xs uppercase tracking-widest">
+          <th class="px-5 py-3">Date</th>
+          <th class="px-5 py-3">Description</th>
+          <th class="px-5 py-3 text-right">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% receivables.forEach(function(r) { %>
+          <tr class="border-b border-ink/5 last:border-0 hover:bg-paper/50">
+            <td class="px-5 py-3 font-mono text-xs text-ink/50"><%= r.date %></td>
+            <td class="px-5 py-3 text-ink/60"><%= r.description %></td>
+            <td class="px-5 py-3 text-right font-mono tabular-nums text-till"><%= r.amount.toFixed(2) %></td>
+          </tr>
+        <% }) %>
+        <% if (receivables.length === 0) { %>
+          <tr><td colspan="3" class="px-5 py-8 text-center text-ink/40">Nothing outstanding.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2 class="font-display text-xl mb-4">Owed by the Business — Trade Payables</h2>
+  <p class="text-ink/50 text-sm mb-4">Credit purchases and expenses not yet paid.</p>
+
+  <% if (payablesTotal > 0) { %>
+  <div class="bg-white rounded-xl border border-ink/10 p-6 mb-4 max-w-md">
+    <h3 class="font-display text-lg mb-1">Record Payment Made</h3>
+    <p class="text-ink/50 text-sm mb-4">Paying down what the business owes a supplier.</p>
+    <form id="payable-form" class="space-y-4">
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Amount (KES) — max <%= payablesTotal.toFixed(2) %></label>
+        <input name="amount" type="number" min="0.01" step="0.01" max="<%= payablesTotal %>" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Paid Via</label>
+        <div class="grid grid-cols-3 gap-1.5">
+          <label><input type="radio" name="paymentMethod" value="CASH" checked class="peer sr-only" /><div class="peer-checked:bg-clay peer-checked:text-paper border border-ink/20 rounded-lg py-2 text-center text-xs font-medium cursor-pointer transition">Cash</div></label>
+          <label><input type="radio" name="paymentMethod" value="MOBILE" class="peer sr-only" /><div class="peer-checked:bg-clay peer-checked:text-paper border border-ink/20 rounded-lg py-2 text-center text-xs font-medium cursor-pointer transition">Mobile</div></label>
+          <label><input type="radio" name="paymentMethod" value="BANK" class="peer sr-only" /><div class="peer-checked:bg-clay peer-checked:text-paper border border-ink/20 rounded-lg py-2 text-center text-xs font-medium cursor-pointer transition">Bank</div></label>
+        </div>
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Notes (optional)</label>
+        <input name="notes" type="text" placeholder="e.g. to Wholesale Distributors Ltd" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display" />
+      </div>
+      <button type="submit" id="payable-submit" class="w-full py-3 rounded-lg bg-clay text-paper font-display text-lg hover:brightness-110 transition">Record Payment</button>
+      <div id="payable-feedback" class="hidden text-sm p-3 rounded-lg"></div>
+    </form>
+  </div>
+  <% } %>
+
+  <div class="bg-white rounded-xl border border-ink/10 overflow-hidden">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-ink/10 text-left text-ink/40 font-mono text-xs uppercase tracking-widest">
+          <th class="px-5 py-3">Date</th>
+          <th class="px-5 py-3">Description</th>
+          <th class="px-5 py-3 text-right">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% payables.forEach(function(p) { %>
+          <tr class="border-b border-ink/5 last:border-0 hover:bg-paper/50">
+            <td class="px-5 py-3 font-mono text-xs text-ink/50"><%= p.date %></td>
+            <td class="px-5 py-3 text-ink/60"><%= p.description %></td>
+            <td class="px-5 py-3 text-right font-mono tabular-nums text-clay"><%= p.amount.toFixed(2) %></td>
+          </tr>
+        <% }) %>
+        <% if (payables.length === 0) { %>
+          <tr><td colspan="3" class="px-5 py-8 text-center text-ink/40">Nothing outstanding.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+  function wireSettlement(formId, feedbackId, submitId, url, successField, successLabel) {
+    const form = document.getElementById(formId);
+    if (!form) return;
+    const feedback = document.getElementById(feedbackId);
+    const submitBtn = document.getElementById(submitId);
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Posting...";
+      const data = Object.fromEntries(new FormData(form).entries());
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount: Number(data.amount), paymentMethod: data.paymentMethod, notes: data.notes }),
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || "Failed to record payment");
+        feedback.textContent = `Recorded — remaining ${successLabel} KES ${result[successField].toFixed(2)}.`;
+        feedback.className = "text-sm p-3 rounded-lg bg-till/10 text-till";
+        feedback.classList.remove("hidden");
+        setTimeout(() => location.reload(), 900);
+      } catch (err) {
+        feedback.textContent = err.message;
+        feedback.className = "text-sm p-3 rounded-lg bg-clay/10 text-clay";
+        feedback.classList.remove("hidden");
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Record Payment";
+      }
+    });
+  }
+
+  wireSettlement("receivable-form", "receivable-feedback", "receivable-submit", "/api/settle-receivable", "remainingReceivable", "receivable");
+  wireSettlement("payable-form", "payable-feedback", "payable-submit", "/api/settle-payable", "remainingPayable", "payable");
+</script>

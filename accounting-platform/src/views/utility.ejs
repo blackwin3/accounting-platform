@@ -1,0 +1,67 @@
+<header class="mb-8">
+  <a href="/resources" class="text-ink/40 hover:text-till text-sm">← Resources</a>
+  <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mt-2">Resources — <%= currentBusinessUnit %></p>
+  <h1 class="font-display text-3xl mt-1">Utility</h1>
+  <p class="text-ink/50 text-sm mt-1">Electricity, water, internet, and similar — how they're billed and what they've cost.</p>
+</header>
+
+<section class="mb-10">
+  <h2 class="font-display text-xl mb-4">Catalogue</h2>
+  <div class="bg-white rounded-xl border border-ink/10 overflow-hidden">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-ink/10 text-left text-ink/40 font-mono text-xs uppercase tracking-widest">
+          <th class="px-5 py-3">Utility</th>
+          <th class="px-5 py-3">Billing Cycle</th>
+          <th class="px-5 py-3 text-right">Typical Charge</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% items.forEach(function(u) { %>
+          <tr class="border-b border-ink/5 last:border-0 hover:bg-paper/50">
+            <td class="px-5 py-3 font-display"><%= u.name %></td>
+            <td class="px-5 py-3 text-ink/60 text-xs"><%= (u.billingCycle || '').replace(/_/g, ' ') || '—' %></td>
+            <td class="px-5 py-3 text-right font-mono tabular-nums"><%= u.price.toFixed(2) %></td>
+          </tr>
+        <% }) %>
+        <% if (items.length === 0) { %>
+          <tr><td colspan="3" class="px-5 py-8 text-center text-ink/40">No utilities set up for <%= currentBusinessUnit %> yet. Add one from Products.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2 class="font-display text-xl mb-4">Cost Incurred</h2>
+  <p class="text-ink/50 text-sm mb-4">From the Utilities expense category — actual amounts paid.</p>
+  <div class="bg-white rounded-xl border border-ink/10 overflow-hidden">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-ink/10 text-left text-ink/40 font-mono text-xs uppercase tracking-widest">
+          <th class="px-5 py-3">Date</th>
+          <th class="px-5 py-3 text-right">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% usage.forEach(function(e) { %>
+          <tr class="border-b border-ink/5 last:border-0">
+            <td class="px-5 py-3 font-mono text-xs text-ink/50"><%= e.date %></td>
+            <td class="px-5 py-3 text-right font-mono tabular-nums text-clay"><%= e.amount.toFixed(2) %></td>
+          </tr>
+        <% }) %>
+        <% if (usage.length === 0) { %>
+          <tr><td colspan="2" class="px-5 py-8 text-center text-ink/40">No utility costs recorded yet.</td></tr>
+        <% } %>
+      </tbody>
+      <% if (usage.length > 0) { %>
+        <tfoot>
+          <tr class="border-t-2 border-ink/10 font-mono text-xs uppercase tracking-widest text-ink/40">
+            <td class="px-5 py-3">Total</td>
+            <td class="px-5 py-3 text-right tabular-nums"><%= usageTotal.toFixed(2) %></td>
+          </tr>
+        </tfoot>
+      <% } %>
+    </table>
+  </div>
+</section>

@@ -1,0 +1,50 @@
+<header class="mb-8">
+  <p class="font-mono text-xs uppercase tracking-widest text-ink/40">Resources — <%= currentBusinessUnit %></p>
+  <h1 class="font-display text-3xl mt-1">Resources</h1>
+  <p class="text-ink/50 text-sm mt-1">What the business owns and stocks.</p>
+</header>
+
+<section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+  <div class="bg-white rounded-xl border border-ink/10 p-5">
+    <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Products</p>
+    <p class="font-mono text-2xl tabular-nums"><%= productCount %></p>
+  </div>
+  <div class="bg-white rounded-xl border border-ink/10 p-5">
+    <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Low Stock</p>
+    <p class="font-mono text-2xl tabular-nums <%= lowStockCount > 0 ? 'text-clay' : 'text-till' %>"><%= lowStockCount %></p>
+  </div>
+  <div class="bg-white rounded-xl border border-ink/10 p-5">
+    <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Assets</p>
+    <p class="font-mono text-2xl tabular-nums"><%= assetCount %></p>
+  </div>
+  <div class="bg-white rounded-xl border border-ink/10 p-5">
+    <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Total Asset Value</p>
+    <p class="font-mono text-2xl tabular-nums"><%= fmt(assetCarryingValue) %></p>
+  </div>
+</section>
+
+<section>
+  <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-4">Go to</p>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+    <a href="/products" class="bg-till text-paper rounded-xl p-6 hover:brightness-110 transition flex flex-col justify-between h-32">
+      <span class="font-display text-xl">Products</span>
+      <span class="text-paper/70 text-sm">Add or remove from the catalogue</span>
+    </a>
+    <a href="/resources/inventory" class="bg-white border border-ink/10 rounded-xl p-6 hover:border-till transition flex flex-col justify-between h-32">
+      <span class="font-display text-xl">Inventory</span>
+      <span class="text-ink/50 text-sm">Goods in stock</span>
+    </a>
+    <a href="/resources/services" class="bg-white border border-ink/10 rounded-xl p-6 hover:border-till transition flex flex-col justify-between h-32">
+      <span class="font-display text-xl">Services</span>
+      <span class="text-ink/50 text-sm">Sold to or bought for the business</span>
+    </a>
+    <a href="/resources/utility" class="bg-white border border-ink/10 rounded-xl p-6 hover:border-till transition flex flex-col justify-between h-32">
+      <span class="font-display text-xl">Utility</span>
+      <span class="text-ink/50 text-sm">Usage and cost incurred</span>
+    </a>
+    <a href="/assets" class="bg-white border border-ink/10 rounded-xl p-6 hover:border-till transition flex flex-col justify-between h-32">
+      <span class="font-display text-xl">Assets</span>
+      <span class="text-ink/50 text-sm">Vehicles, equipment, property</span>
+    </a>
+  </div>
+</section>

@@ -1,0 +1,32 @@
+<header class="mb-8">
+  <p class="font-mono text-xs uppercase tracking-widest text-ink/40">Settings</p>
+  <h1 class="font-display text-3xl mt-1">Profile</h1>
+  <p class="text-ink/50 text-sm mt-1">Your account and what it can access.</p>
+</header>
+
+<div class="max-w-lg space-y-6">
+  <section class="bg-white rounded-xl border border-ink/10 p-6">
+    <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-3">Account</p>
+    <div class="space-y-2 text-sm">
+      <div class="flex justify-between"><span class="text-ink/50">Name</span><span class="font-display"><%= profile.name %></span></div>
+      <div class="flex justify-between"><span class="text-ink/50">Username</span><span class="font-mono">@<%= profile.username %></span></div>
+      <div class="flex justify-between"><span class="text-ink/50">Role</span><span><%= profile.role %></span></div>
+      <div class="flex justify-between"><span class="text-ink/50">Access Level</span><span class="font-mono text-xs px-2 py-0.5 rounded-full bg-paper"><%= profile.accessLevel %></span></div>
+      <% if (profile.inheritanceStatus) { %>
+        <div class="flex justify-between"><span class="text-ink/50">Succession Status</span><span class="font-mono text-xs"><%= profile.inheritanceStatus %></span></div>
+      <% } %>
+    </div>
+  </section>
+
+  <section class="bg-white rounded-xl border border-ink/10 p-6">
+    <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-3">What you can access</p>
+    <div class="grid grid-cols-2 gap-2">
+      <% permissions.forEach(function(p) { %>
+        <div class="flex items-center gap-2 text-sm">
+          <span class="w-1.5 h-1.5 rounded-full <%= p.allowed ? 'bg-till' : 'bg-ink/15' %>"></span>
+          <span class="<%= p.allowed ? 'text-ink' : 'text-ink/30' %>"><%= p.label %></span>
+        </div>
+      <% }) %>
+    </div>
+  </section>
+</div>

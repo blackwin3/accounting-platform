@@ -1,0 +1,181 @@
+<header class="mb-8">
+  <p class="font-mono text-xs uppercase tracking-widest text-ink/40">Organisation</p>
+  <h1 class="font-display text-3xl mt-1">Business</h1>
+  <p class="text-ink/50 text-sm mt-1">The enterprise profile that ties all business units together.</p>
+</header>
+
+<div class="grid lg:grid-cols-3 gap-8">
+<div class="lg:col-span-2">
+
+<section class="bg-white rounded-xl border border-ink/10 p-6 mb-8 max-w-lg">
+  <h2 class="font-display text-xl mb-1">Business Units</h2>
+  <p class="text-ink/50 text-sm mb-4">Switch which unit you're working in — the same switcher as under Operations.</p>
+  <div class="space-y-2 mb-5">
+    <% (typeof allBusinessUnits !== 'undefined' ? allBusinessUnits : []).forEach(function(u) { %>
+      <form method="POST" action="/switch-unit">
+        <input type="hidden" name="unit" value="<%= u.Structures_Name %>" />
+        <button type="submit" class="w-full flex items-center justify-between px-4 py-3 rounded-lg border transition <%= currentBusinessUnit === u.Structures_Name ? 'bg-till text-paper border-till' : 'border-ink/20 hover:bg-paper' %>">
+          <span class="font-display"><%= u.Structures_Name %></span>
+          <% if (currentBusinessUnit === u.Structures_Name) { %>
+            <span class="text-xs font-mono opacity-80">Active</span>
+          <% } %>
+        </button>
+      </form>
+    <% }) %>
+    <% if (typeof allBusinessUnits === 'undefined' || allBusinessUnits.length === 0) { %>
+      <p class="text-ink/40 text-sm italic">No business units set up yet.</p>
+    <% } %>
+  </div>
+
+  <div class="border-t border-ink/10 pt-5">
+    <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-3">Add a Business Unit</p>
+    <form id="add-unit-form" class="space-y-3">
+      <div class="grid grid-cols-2 gap-3">
+        <input name="code" type="text" required placeholder="e.g. WORKSHOP" class="border border-ink/20 rounded-lg px-3 py-2 font-mono uppercase" />
+        <input name="description" type="text" placeholder="Short description" class="border border-ink/20 rounded-lg px-3 py-2 font-display" />
+      </div>
+      <button type="submit" id="add-unit-submit" class="w-full py-2 rounded-lg bg-till text-paper font-display hover:brightness-110 transition">Add Business Unit</button>
+      <div id="add-unit-feedback" class="hidden text-sm p-3 rounded-lg"></div>
+    </form>
+  </div>
+</section>
+
+<script>
+  const addUnitForm = document.getElementById("add-unit-form");
+  const addUnitFeedback = document.getElementById("add-unit-feedback");
+  const addUnitSubmit = document.getElementById("add-unit-submit");
+
+  addUnitForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    addUnitSubmit.disabled = true;
+    addUnitSubmit.textContent = "Adding...";
+    const data = Object.fromEntries(new FormData(addUnitForm).entries());
+    try {
+      const res = await fetch("/api/setup/business-unit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to add business unit");
+      addUnitFeedback.textContent = `Added ${data.code.toUpperCase()}.`;
+      addUnitFeedback.className = "text-sm p-3 rounded-lg bg-till/10 text-till";
+      addUnitFeedback.classList.remove("hidden");
+      setTimeout(() => location.reload(), 700);
+    } catch (err) {
+      addUnitFeedback.textContent = err.message;
+      addUnitFeedback.className = "text-sm p-3 rounded-lg bg-clay/10 text-clay";
+      addUnitFeedback.classList.remove("hidden");
+      addUnitSubmit.disabled = false;
+      addUnitSubmit.textContent = "Add Business Unit";
+    }
+  });
+</script>
+
+<% if (!organisation) { %>
+  <div class="bg-white rounded-xl border border-ink/10 p-6 max-w-lg">
+    <p class="text-ink/60 mb-4">No business profile set up yet.</p>
+    <button onclick="document.getElementById('org-form').classList.remove('hidden'); this.classList.add('hidden');" class="px-4 py-2 rounded-full bg-till text-paper text-sm">Set up Business Profile</button>
+  </div>
+<% } %>
+
+<div id="org-form" class="bg-white rounded-xl border border-ink/10 p-6 max-w-lg <%= organisation ? '' : 'hidden' %>">
+  <form id="business-form" class="space-y-4">
+    <div>
+      <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Organisation Name</label>
+      <input name="name" type="text" required value="<%= organisation ? organisation.name : '' %>" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display" />
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Industry</label>
+        <input name="industry" type="text" value="<%= organisation ? (organisation.industry || '') : '' %>" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display" />
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Type</label>
+        <input name="type" type="text" placeholder="e.g. Retail" value="<%= organisation ? (organisation.type || '') : '' %>" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display" />
+      </div>
+    </div>
+    <div>
+      <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Address</label>
+      <input name="address" type="text" value="<%= organisation ? (organisation.address || '') : '' %>" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display" />
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Country</label>
+        <input name="country" type="text" value="<%= organisation ? (organisation.country || 'Kenya') : 'Kenya' %>" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display" />
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Currency</label>
+        <input name="currency" type="text" value="<%= organisation ? (organisation.currency || 'KES') : 'KES' %>" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      </div>
+    </div>
+    <div>
+      <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Business Units (comma-separated)</label>
+      <input name="businessUnits" type="text" value="<%= organisation ? (organisation.businessUnits || '') : 'SHOP,FARM,RENTAL,INVESTMENTS' %>" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+    </div>
+
+    <button type="submit" id="submit-btn" class="w-full py-3 rounded-lg bg-till text-paper font-display text-lg hover:brightness-110 transition">
+      <%= organisation ? 'Save Changes' : 'Create Business Profile' %>
+    </button>
+    <div id="feedback" class="hidden text-sm p-3 rounded-lg"></div>
+  </form>
+</div>
+
+<script>
+  const form = document.getElementById("business-form");
+  const feedback = document.getElementById("feedback");
+  const submitBtn = document.getElementById("submit-btn");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Saving...";
+    const data = Object.fromEntries(new FormData(form).entries());
+    try {
+      const res = await fetch("/api/organisation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to save");
+      feedback.textContent = "Saved.";
+      feedback.className = "text-sm p-3 rounded-lg bg-till/10 text-till";
+      feedback.classList.remove("hidden");
+      setTimeout(() => location.reload(), 700);
+    } catch (err) {
+      feedback.textContent = err.message;
+      feedback.className = "text-sm p-3 rounded-lg bg-clay/10 text-clay";
+      feedback.classList.remove("hidden");
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Save Changes";
+    }
+  });
+</script>
+
+</div>
+
+<div class="lg:col-span-1">
+  <section class="bg-white rounded-xl border border-ink/10 p-6">
+    <h2 class="font-display text-lg mb-1">Source of Truth</h2>
+    <p class="text-ink/50 text-xs mb-4">For any question about the business, exactly one table is the authority. Reports are derived from the Journal — never the other way around. Knowledge never overrides a ledger balance.</p>
+    <div class="space-y-3">
+      <% (typeof sourceOfTruth !== 'undefined' ? sourceOfTruth : []).forEach(function(r) { %>
+        <div class="border-b border-ink/5 last:border-0 pb-3 last:pb-0">
+          <p class="text-xs text-ink/60 mb-1"><%= r.question %></p>
+          <div class="flex items-center justify-between">
+            <span class="font-mono text-sm text-till"><%= r.table %></span>
+            <span class="text-xs font-mono px-2 py-0.5 rounded-full <%= r.isPopulated ? 'bg-till/10 text-till' : 'bg-clay/10 text-clay' %>">
+              <%= r.isPopulated ? 'Active' : 'Not yet populated' %>
+            </span>
+          </div>
+        </div>
+      <% }) %>
+      <% if (typeof sourceOfTruth === 'undefined' || sourceOfTruth.length === 0) { %>
+        <p class="text-ink/40 text-sm italic">Not seeded yet.</p>
+      <% } %>
+    </div>
+  </section>
+</div>
+
+</div>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About — Nzovu</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { paper: '#F6F3EC', ink: '#232019', till: '#1F5E45', tillDark: '#153F2E', clay: '#B45B3C' },
+          fontFamily: { display: ['Georgia', 'serif'], mono: ['"Courier New"', 'monospace'] },
+        },
+      },
+    };
+  </script>
+</head>
+<body class="bg-paper text-ink font-sans">
+
+  <header class="border-b-2 border-ink/10">
+    <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      <a href="/" class="font-display text-xl tracking-tight">Nzovu</a>
+      <nav class="flex items-center gap-3">
+        <a href="/about" class="text-sm text-till font-medium mr-3">About</a>
+        <% if (typeof showSignup !== 'undefined' && showSignup) { %>
+          <a href="/setup" class="px-5 py-2 rounded-full border border-ink/20 text-sm font-medium hover:bg-white transition">Sign up</a>
+        <% } %>
+        <a href="/login" class="px-5 py-2 rounded-full bg-till text-paper text-sm font-medium hover:brightness-110 transition">Sign in</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="max-w-3xl mx-auto px-6 pt-20 pb-24">
+    <p class="font-mono text-xs uppercase tracking-widest text-till mb-4">About Nzovu</p>
+    <h1 class="font-display text-4xl md:text-5xl leading-tight mb-8">
+      Small businesses rarely stay small and simple.
+    </h1>
+
+    <div class="space-y-6 text-ink/70 text-lg leading-relaxed">
+      <p>
+        A shop owner buys a few acres and starts a farm. A landlord takes out a loan to build another rental unit. A family business that started as one till becomes three or four different income streams, run by different people, under one roof, one name, one set of decisions to hand down.
+      </p>
+      <p>
+        Most accounting tools are built for a single business with a single owner. Nzovu is built for the version of small business that's actually common everywhere — a family enterprise with several moving parts, several people involved at different levels, and a real intention to pass it on to the next generation someday.
+      </p>
+    </div>
+
+    <!-- Custom illustration: four business units side by side -->
+    <div class="my-12 bg-white rounded-xl border border-ink/10 p-8">
+      <svg viewBox="0 0 640 160" class="w-full h-auto">
+        <!-- ground line -->
+        <rect x="0" y="128" width="640" height="3" fill="#23201A" fill-opacity="0.08"/>
+
+        <!-- Shop -->
+        <rect x="20" y="70" width="110" height="58" rx="4" fill="#1F5E45"/>
+        <polygon points="15,70 135,70 125,48 25,48" fill="#153F2E"/>
+        <rect x="60" y="95" width="30" height="33" fill="#F6F3EC"/>
+        <text x="75" y="150" text-anchor="middle" font-family="Courier New" font-size="11" fill="#23201A" fill-opacity="0.5">SHOP</text>
+
+        <!-- Farm -->
+        <rect x="180" y="85" width="100" height="43" rx="4" fill="#B45B3C"/>
+        <polygon points="175,85 230,55 285,85" fill="#8f3f27"/>
+        <circle cx="300" cy="115" r="10" fill="#1F5E45" fill-opacity="0.5"/>
+        <circle cx="316" cy="122" r="7" fill="#1F5E45" fill-opacity="0.4"/>
+        <text x="230" y="150" text-anchor="middle" font-family="Courier New" font-size="11" fill="#23201A" fill-opacity="0.5">FARM</text>
+
+        <!-- Rental -->
+        <rect x="360" y="45" width="90" height="83" rx="4" fill="#23201A" fill-opacity="0.75"/>
+        <rect x="374" y="58" width="14" height="14" fill="#F6F3EC" fill-opacity="0.8"/>
+        <rect x="396" y="58" width="14" height="14" fill="#F6F3EC" fill-opacity="0.8"/>
+        <rect x="418" y="58" width="14" height="14" fill="#F6F3EC" fill-opacity="0.8"/>
+        <rect x="374" y="82" width="14" height="14" fill="#F6F3EC" fill-opacity="0.8"/>
+        <rect x="396" y="82" width="14" height="14" fill="#F6F3EC" fill-opacity="0.8"/>
+        <rect x="418" y="82" width="14" height="14" fill="#F6F3EC" fill-opacity="0.8"/>
+        <text x="405" y="150" text-anchor="middle" font-family="Courier New" font-size="11" fill="#23201A" fill-opacity="0.5">RENTAL</text>
+
+        <!-- Investments -->
+        <rect x="500" y="100" width="16" height="28" fill="#1F5E45" fill-opacity="0.6"/>
+        <rect x="524" y="85" width="16" height="43" fill="#B45B3C" fill-opacity="0.6"/>
+        <rect x="548" y="70" width="16" height="58" fill="#1F5E45" fill-opacity="0.8"/>
+        <rect x="572" y="90" width="16" height="38" fill="#B45B3C" fill-opacity="0.8"/>
+        <text x="544" y="150" text-anchor="middle" font-family="Courier New" font-size="11" fill="#23201A" fill-opacity="0.5">INVESTMENTS</text>
+      </svg>
+    </div>
+
+    <div class="my-16 grid md:grid-cols-2 gap-8">
+      <div>
+        <p class="font-display text-xl mb-2">One ledger, several units</p>
+        <p class="text-ink/60">Shop, farm, rentals, investments — each business unit keeps its own products, transactions, and reports, while everything rolls up into one consolidated set of accounts. Money moving between units — farm produce sold through the shop, rental income covering a business expense — is tracked as an internal transfer, not counted twice.</p>
+      </div>
+      <div>
+        <p class="font-display text-xl mb-2">Real double-entry accounting</p>
+        <p class="text-ink/60">Every sale posts a balanced journal entry. Every expense, every asset purchase, every loan drawdown follows proper debit-and-credit accounting — built toward IFRS for SMEs, with trial balances, income statements, and balance sheets generated from the actual ledger rather than approximated after the fact.</p>
+      </div>
+      <div>
+        <p class="font-display text-xl mb-2">Roles for everyone involved</p>
+        <p class="text-ink/60">An owner, a family member managing day-to-day operations, an external accountant reviewing the books, a trusted advisor — each signs in with their own access, seeing what's relevant to their role without needing to understand the whole system to be useful.</p>
+      </div>
+      <div>
+        <p class="font-display text-xl mb-2">Built to be inherited</p>
+        <p class="text-ink/60">Numbers alone don't explain a business. Nzovu keeps a record of why decisions were made — not just what happened — so that whoever takes over next inherits the reasoning behind the business, not just a balance to interpret from scratch.</p>
+      </div>
+    </div>
+
+    <div class="border-t border-ink/10 pt-10">
+      <p class="font-display text-xl mb-3">Who it's for</p>
+      <p class="text-ink/60 text-lg leading-relaxed">
+        Nzovu is for the family enterprise that's already more complex than a single shop, whether that's two units or five — and for anyone thinking a few years ahead about who runs it next.
+      </p>
+    </div>
+
+    <div class="mt-16 text-center">
+      <a href="/login" class="inline-block px-6 py-3 rounded-full bg-till text-paper font-display text-lg hover:brightness-110 transition">Sign in to Nzovu</a>
+    </div>
+  </section>
+
+  <footer class="border-t-2 border-ink/10">
+    <div class="max-w-6xl mx-auto px-6 py-8 flex items-center justify-between text-sm text-ink/40">
+      <span class="font-display">Nzovu</span>
+      <div class="flex gap-6">
+        <a href="/" class="hover:text-ink transition">Home</a>
+        <a href="/login" class="hover:text-ink transition">Sign in</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

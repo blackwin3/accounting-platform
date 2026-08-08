@@ -1,0 +1,49 @@
+<header class="mb-8">
+  <p class="font-mono text-xs uppercase tracking-widest text-ink/40">Books of Entry</p>
+  <h1 class="font-display text-3xl mt-1">Journal</h1>
+  <p class="text-ink/50 text-sm mt-1">Every entry across all business units, in the order it was posted — the book of original entry.</p>
+</header>
+
+<div class="bg-white rounded-xl border border-ink/10 overflow-hidden">
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="border-b border-ink/10 text-left text-ink/40 font-mono text-xs uppercase tracking-widest">
+        <th class="px-5 py-3">Date</th>
+        <th class="px-5 py-3">Unit</th>
+        <th class="px-5 py-3">Account</th>
+        <th class="px-5 py-3">Description</th>
+        <th class="px-5 py-3 text-right">Debit</th>
+        <th class="px-5 py-3 text-right">Credit</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% entries.forEach(function(j) { %>
+        <tr class="border-b border-ink/5 last:border-0 hover:bg-paper/50">
+          <td class="px-5 py-3 font-mono text-xs text-ink/50 whitespace-nowrap"><%= j.date %></td>
+          <td class="px-5 py-3"><span class="text-xs font-mono px-2 py-0.5 rounded-full bg-paper text-ink/50"><%= j.unit || '—' %></span></td>
+          <td class="px-5 py-3 font-display"><%= j.accountName %></td>
+          <td class="px-5 py-3 text-ink/60"><%= j.description %></td>
+          <td class="px-5 py-3 text-right font-mono tabular-nums"><%= j.debit > 0 ? j.debit.toFixed(2) : '' %></td>
+          <td class="px-5 py-3 text-right font-mono tabular-nums"><%= j.credit > 0 ? j.credit.toFixed(2) : '' %></td>
+        </tr>
+      <% }) %>
+      <% if (entries.length === 0) { %>
+        <tr><td colspan="6" class="px-5 py-8 text-center text-ink/40">No journal entries yet.</td></tr>
+      <% } %>
+    </tbody>
+    <% if (entries.length > 0) { %>
+      <tfoot>
+        <tr class="border-t-2 border-ink/10 font-mono text-xs uppercase tracking-widest text-ink/40">
+          <td class="px-5 py-3" colspan="4">Totals</td>
+          <td class="px-5 py-3 text-right tabular-nums"><%= totals.debit.toFixed(2) %></td>
+          <td class="px-5 py-3 text-right tabular-nums"><%= totals.credit.toFixed(2) %></td>
+        </tr>
+      </tfoot>
+    <% } %>
+  </table>
+</div>
+<% if (totals.debit !== totals.credit) { %>
+  <p class="mt-4 text-clay text-sm font-mono">⚠ Debits and credits do not match — out of balance by <%= Math.abs(totals.debit - totals.credit).toFixed(2) %>.</p>
+<% } else if (entries.length > 0) { %>
+  <p class="mt-4 text-till text-sm font-mono">✓ Balanced</p>
+<% } %>

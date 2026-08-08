@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign in — Nzovu</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { paper: '#F6F3EC', ink: '#232019', till: '#1F5E45', tillDark: '#153F2E', clay: '#B45B3C' },
+          fontFamily: { display: ['Georgia', 'serif'], mono: ['"Courier New"', 'monospace'] },
+        },
+      },
+    };
+  </script>
+</head>
+<body class="bg-paper text-ink min-h-screen font-sans flex items-center justify-center">
+  <div class="w-full max-w-sm">
+    <p class="font-mono text-xs uppercase tracking-widest text-ink/40 text-center mb-2">Welcome to</p>
+    <h1 class="font-display text-4xl text-center mb-8">Nzovu</h1>
+
+    <form method="POST" action="/login" class="bg-white rounded-xl border border-ink/10 p-6 space-y-4">
+      <% if (typeof error !== 'undefined' && error) { %>
+        <p class="text-sm p-3 rounded-lg bg-clay/10 text-clay"><%= error %></p>
+      <% } %>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Username</label>
+        <input name="username" type="text" required autofocus class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display" />
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Password</label>
+        <input name="password" type="password" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display" />
+      </div>
+      <div class="flex gap-2">
+        <button type="submit" class="flex-1 py-3 rounded-lg bg-till text-paper font-display text-lg hover:brightness-110 transition">
+          Sign in
+        </button>
+        <% if (typeof showSignup !== 'undefined' && showSignup) { %>
+          <a href="/setup" class="flex-1 py-3 rounded-lg border border-ink/20 font-display text-lg text-center hover:bg-paper transition">
+            Sign up
+          </a>
+        <% } %>
+      </div>
+    </form>
+  </div>
+</body>
+</html>

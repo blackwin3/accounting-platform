@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Set Up — Nzovu</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { paper: '#F6F3EC', ink: '#232019', till: '#1F5E45', tillDark: '#153F2E', clay: '#B45B3C' },
+          fontFamily: { display: ['Georgia', 'serif'], mono: ['"Courier New"', 'monospace'] },
+        },
+      },
+    };
+  </script>
+</head>
+<body class="bg-paper text-ink font-sans min-h-screen">
+
+  <div class="max-w-2xl mx-auto px-6 py-12">
+    <p class="font-mono text-xs uppercase tracking-widest text-till mb-2">Welcome to Nzovu</p>
+    <h1 class="font-display text-3xl mb-8">Let's set up your business</h1>
+
+    <!-- Step indicator -->
+    <div class="flex gap-2 mb-10">
+      <% [1,2,3,4].forEach(function(n) { %>
+        <div id="step-dot-<%= n %>" class="flex-1 h-1.5 rounded-full <%= n === 1 ? 'bg-till' : 'bg-ink/10' %>"></div>
+      <% }) %>
+    </div>
+
+    <!-- Step 1: Sign Up -->
+    <section id="step-1" class="space-y-5">
+      <div>
+        <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Step 1 of 4</p>
+        <h2 class="font-display text-2xl">Create Your Account</h2>
+        <p class="text-ink/50 text-sm mt-1">You'll be the Owner — full access to everything, including adding others later.</p>
+      </div>
+      <form id="signup-form" class="space-y-4">
+        <div>
+          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Your Name</label>
+          <input name="name" type="text" required placeholder="e.g. Daniel Chebet" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display" />
+        </div>
+        <div>
+          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Username</label>
+          <input name="username" type="text" required placeholder="e.g. daniel" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+        </div>
+        <div>
+          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Password</label>
+          <input name="password" type="password" required minlength="6" placeholder="At least 6 characters" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+        </div>
+        <button type="submit" class="w-full py-3 rounded-lg bg-till text-paper font-display text-lg hover:brightness-110 transition">Create Account &amp; Continue</button>
+        <p id="feedback-1" class="hidden text-sm p-3 rounded-lg"></p>
+      </form>
+    </section>
+
+    <!-- Step 2: Business -->
+    <section id="step-2" class="space-y-5 hidden">
+      <div>
+        <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Step 2 of 4</p>
+        <h2 class="font-display text-2xl">Your Business</h2>
+        <p class="text-ink/50 text-sm mt-1">The enterprise profile that ties everything together.</p>
+      </div>
+      <form id="business-form" class="space-y-4">
+        <div>
+          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Organisation Name</label>
+          <input name="name" type="text" required placeholder="e.g. Village Hope Enterprises" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display" />
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Industry</label>
+            <select name="industry" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display">
+              <option value="">Select…</option>
+              <option value="Retail Trade">Retail Trade</option>
+              <option value="Agriculture">Agriculture</option>
+              <option value="Livestock and Dairy">Livestock and Dairy</option>
+              <option value="Real Estate and Rentals">Real Estate and Rentals</option>
+              <option value="Financial Services">Financial Services</option>
+              <option value="Hospitality and Food Service">Hospitality and Food Service</option>
+              <option value="Transport and Logistics">Transport and Logistics</option>
+              <option value="Personal Care Services">Personal Care Services</option>
+              <option value="Manufacturing">Manufacturing</option>
+              <option value="Construction">Construction</option>
+              <option value="Education">Education</option>
+              <option value="Healthcare">Healthcare</option>
+              <option value="Technology Services">Technology Services</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Type</label>
+            <select name="type" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display">
+              <option value="">Select…</option>
+              <option value="Retail">Retail</option>
+              <option value="Wholesale">Wholesale</option>
+              <option value="Salon">Salon</option>
+              <option value="Agrovet">Agrovet</option>
+              <option value="Cyber">Cyber</option>
+              <option value="Restaurant">Restaurant</option>
+              <option value="Transport">Transport</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Address</label>
+          <input name="address" type="text" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display" />
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Country</label>
+            <input name="country" type="text" value="Kenya" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display" />
+          </div>
+          <div>
+            <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Currency</label>
+            <input name="currency" type="text" value="KES" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+          </div>
+        </div>
+        <button type="submit" class="w-full py-3 rounded-lg bg-till text-paper font-display text-lg hover:brightness-110 transition">Continue</button>
+        <p id="feedback-2" class="hidden text-sm p-3 rounded-lg"></p>
+      </form>
+    </section>
+
+    <!-- Step 3: Business Units -->
+    <section id="step-3" class="space-y-5 hidden">
+      <div>
+        <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Step 3 of 4</p>
+        <h2 class="font-display text-2xl">Business Units</h2>
+        <p class="text-ink/50 text-sm mt-1">The distinct parts of your business — a shop, a farm, rentals, anything you'll track separately.</p>
+      </div>
+      <div id="unit-list" class="space-y-2"></div>
+      <form id="unit-form" class="flex gap-2">
+        <input name="code" type="text" required list="unit-code-suggestions" placeholder="e.g. SHOP" class="flex-1 border border-ink/20 rounded-lg px-3 py-2 font-mono uppercase" />
+        <datalist id="unit-code-suggestions">
+          <option value="SHOP">
+          <option value="FARM">
+          <option value="RENTAL">
+          <option value="INVESTMENTS">
+          <option value="WORKSHOP">
+          <option value="TRANSPORT">
+          <option value="SALON">
+        </datalist>
+        <input name="description" type="text" placeholder="Short description" class="flex-1 border border-ink/20 rounded-lg px-3 py-2 font-display" />
+        <button type="submit" class="px-4 py-2 rounded-lg bg-ink/10 hover:bg-ink/20 text-sm font-medium transition">Add</button>
+      </form>
+      <p class="text-xs text-ink/40">Common examples are suggested as you type — feel free to type your own if none fit.</p>
+      <p id="feedback-3" class="hidden text-sm p-3 rounded-lg"></p>
+      <button id="units-continue" type="button" onclick="goToStep(4)" disabled class="w-full py-3 rounded-lg bg-till text-paper font-display text-lg hover:brightness-110 transition disabled:opacity-40 disabled:cursor-not-allowed">Continue</button>
+    </section>
+
+    <!-- Step 4: Add other users -->
+    <section id="step-4" class="space-y-5 hidden">
+      <div>
+        <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Step 4 of 4</p>
+        <h2 class="font-display text-2xl">Add Your Team</h2>
+        <p class="text-ink/50 text-sm mt-1">Optional — an accountant, an advisor, a cashier. You can always add more later from Organisation → Management.</p>
+      </div>
+      <div id="user-list" class="space-y-2"></div>
+      <form id="user-form" class="space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+          <input name="firstName" type="text" placeholder="First name" class="border border-ink/20 rounded-lg px-3 py-2 font-display" />
+          <input name="lastName" type="text" placeholder="Last name" class="border border-ink/20 rounded-lg px-3 py-2 font-display" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <select name="accessLevel" class="border border-ink/20 rounded-lg px-3 py-2 font-mono text-sm">
+            <option value="ACCOUNTANT">Accountant</option>
+            <option value="ADVISOR">Advisor</option>
+            <option value="MANAGER">Manager</option>
+            <option value="CASHIER">Cashier</option>
+          </select>
+          <button type="submit" class="px-4 py-2 rounded-lg bg-ink/10 hover:bg-ink/20 text-sm font-medium transition">Add</button>
+        </div>
+      </form>
+      <p id="feedback-4" class="hidden text-sm p-3 rounded-lg"></p>
+      <button type="button" onclick="finishSetup()" class="w-full py-3 rounded-lg bg-clay text-paper font-display text-lg hover:brightness-110 transition">Finish Setup</button>
+    </section>
+  </div>
+
+  <script>
+    let currentStep = 1;
+    let createdUnits = [];
+    let createdUsers = [];
+
+    function goToStep(n) {
+      document.getElementById("step-" + currentStep).classList.add("hidden");
+      document.getElementById("step-" + n).classList.remove("hidden");
+      for (let i = 1; i <= 4; i++) {
+        document.getElementById("step-dot-" + i).className = "flex-1 h-1.5 rounded-full " + (i <= n ? "bg-till" : "bg-ink/10");
+      }
+      currentStep = n;
+    }
+
+    function showFeedback(stepN, msg, ok) {
+      const el = document.getElementById("feedback-" + stepN);
+      el.textContent = msg;
+      el.className = "text-sm p-3 rounded-lg " + (ok ? "bg-till/10 text-till" : "bg-clay/10 text-clay");
+      el.classList.remove("hidden");
+    }
+
+    document.getElementById("signup-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(e.target).entries());
+      try {
+        const res = await fetch("/api/setup/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || "Failed to create your account");
+        goToStep(2);
+      } catch (err) {
+        showFeedback(1, err.message, false);
+      }
+    });
+
+    document.getElementById("business-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(e.target).entries());
+      try {
+        const res = await fetch("/api/organisation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || "Failed to save business");
+        goToStep(3);
+      } catch (err) {
+        showFeedback(2, err.message, false);
+      }
+    });
+
+    function renderUnitList() {
+      const list = document.getElementById("unit-list");
+      list.innerHTML = createdUnits.map((u) =>
+        `<div class="flex justify-between items-center bg-white rounded-lg border border-ink/10 px-4 py-2">
+          <span class="font-mono text-sm">${u.code}</span>
+          <span class="text-ink/50 text-xs">${u.description || ""}</span>
+        </div>`
+      ).join("");
+      document.getElementById("units-continue").disabled = createdUnits.length === 0;
+    }
+
+    document.getElementById("unit-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = Object.fromEntries(new FormData(form).entries());
+      try {
+        const res = await fetch("/api/setup/business-unit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || "Failed to add unit");
+        createdUnits.push({ code: data.code.toUpperCase(), description: data.description });
+        renderUnitList();
+        form.reset();
+      } catch (err) {
+        showFeedback(3, err.message, false);
+      }
+    });
+
+    function renderUserList() {
+      const list = document.getElementById("user-list");
+      list.innerHTML = createdUsers.map((u) =>
+        `<div class="flex justify-between items-center bg-white rounded-lg border border-ink/10 px-4 py-2">
+          <span class="font-display text-sm">${u.name}</span>
+          <span class="font-mono text-xs text-ink/50">${u.accessLevel}</span>
+        </div>`
+      ).join("");
+    }
+
+    document.getElementById("user-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = Object.fromEntries(new FormData(form).entries());
+      if (!data.firstName) return;
+      try {
+        const stakeholderRes = await fetch("/api/stakeholders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ firstName: data.firstName, lastName: data.lastName, category: "Employee", relationship: "", location: "" }),
+        });
+        const stakeholder = await stakeholderRes.json();
+        if (!stakeholderRes.ok) throw new Error(stakeholder.error || "Failed to add person");
+
+        const mgmtRes = await fetch("/api/management", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ stakeholderId: stakeholder.stakeholderId, role: data.accessLevel, accessLevel: data.accessLevel }),
+        });
+        const mgmt = await mgmtRes.json();
+        if (!mgmtRes.ok) throw new Error(mgmt.error || "Failed to add role");
+
+        createdUsers.push({ name: [data.firstName, data.lastName].filter(Boolean).join(" "), accessLevel: data.accessLevel });
+        renderUserList();
+        form.reset();
+      } catch (err) {
+        showFeedback(4, err.message, false);
+      }
+    });
+
+    async function finishSetup() {
+      window.location.href = "/dashboard";
+    }
+  </script>
+</body>
+</html>

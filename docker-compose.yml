@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: accounting_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5434:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: accounting_app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}?schema=public
+      NODE_ENV: development
+    ports:
+      - "3000:3000"
+    volumes:
+      # Bind mount source from laptop disk for live-reload dev
+      - .:/app
+      # Anonymous volume so host node_modules doesn't shadow container's
+      - /app/node_modules
+    # First boot: run `docker compose run app npx prisma db pull` once (see setup notes)
+    # to introspect the schema loaded by db-init/01-schema.sql, then `prisma generate`.
+    # After that, this command just generates the client and starts the dev server.
+    command: sh -c "npx prisma generate && npm run dev"
+
+volumes:
+  db_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      # Must be a native Linux filesystem (ext4/btrfs/xfs). /mnt/Store is
+      # fuseblk (NTFS-3G) and cannot hold Postgres's required uid:gid 999:999
+      # ownership — every file there shows as root:root regardless of chown.
+      device: /home/autarch/.local/share/accounting-db-data

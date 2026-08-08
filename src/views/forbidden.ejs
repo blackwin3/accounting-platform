@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Access Denied — Nzovu</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { paper: '#F6F3EC', ink: '#232019', till: '#1F5E45', clay: '#B45B3C' },
+          fontFamily: { display: ['Georgia', 'serif'], mono: ['"Courier New"', 'monospace'] },
+        },
+      },
+    };
+  </script>
+</head>
+<body class="bg-paper text-ink min-h-screen font-sans flex items-center justify-center">
+  <div class="text-center">
+    <p class="font-mono text-xs uppercase tracking-widest text-clay mb-2">Access Denied</p>
+    <h1 class="font-display text-2xl mb-4">Your role doesn't include the "<%= section %>" section.</h1>
+    <a href="/dashboard" class="inline-block px-5 py-2 rounded-full bg-till text-paper font-medium">Back to Home</a>
+  </div>
+</body>
+</html>

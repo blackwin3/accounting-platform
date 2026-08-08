@@ -1,0 +1,193 @@
+<header class="mb-8">
+  <a href="/money" class="text-ink/40 hover:text-till text-sm">← Money</a>
+  <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mt-2">Money Movement</p>
+  <h1 class="font-display text-3xl mt-1">Cash Flow</h1>
+  <p class="text-ink/50 text-sm mt-1">Cash available right now, and where it came from or went. Operating Activities is shown two ways — Investing and Financing are identical either way, so each appears once.</p>
+</header>
+
+<section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+  <div class="bg-white rounded-xl border border-ink/10 p-5">
+    <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Cash / Till</p>
+    <p class="font-mono text-2xl tabular-nums <%= byMethod.CASH >= 0 ? '' : 'text-clay' %>"><%= fmt(byMethod.CASH) %></p>
+  </div>
+  <div class="bg-white rounded-xl border border-ink/10 p-5">
+    <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Mobile Money</p>
+    <p class="font-mono text-2xl tabular-nums <%= byMethod.MOBILE >= 0 ? '' : 'text-clay' %>"><%= fmt(byMethod.MOBILE) %></p>
+  </div>
+  <div class="bg-white rounded-xl border border-ink/10 p-5">
+    <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Bank</p>
+    <p class="font-mono text-2xl tabular-nums <%= byMethod.BANK >= 0 ? '' : 'text-clay' %>"><%= fmt(byMethod.BANK) %></p>
+  </div>
+  <div class="bg-tillDark rounded-xl p-5">
+    <p class="font-mono text-xs uppercase tracking-widest text-paper/50 mb-2">Total Available Cash</p>
+    <p class="font-mono text-2xl tabular-nums text-paper"><%= fmt(totalAvailable) %></p>
+  </div>
+</section>
+
+<!-- 1. OPERATING ACTIVITIES -->
+<section class="mb-6">
+  <h2 class="font-display text-2xl mb-1">1. Operating Activities</h2>
+  <p class="text-ink/50 text-sm mb-4">Shown two ways: the actual cash movements (Direct), and the same result reached by adjusting profit (Indirect). Both are computed independently from the same Journal history.</p>
+
+  <div class="grid md:grid-cols-2 gap-6">
+    <!-- A. Direct Method -->
+    <div class="bg-white rounded-xl border border-ink/10 p-6">
+      <div class="flex items-center justify-between mb-1">
+        <h3 class="font-display text-lg">A. Direct Method</h3>
+        <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-till/10 text-till">Actual cash</span>
+      </div>
+      <p class="text-ink/50 text-xs mb-4">The real cash received and cash paid.</p>
+
+      <div class="space-y-1.5 font-mono text-sm">
+        <p class="font-mono text-xs uppercase tracking-widest text-ink/40 pt-1">Cash Received</p>
+        <div class="flex justify-between"><span class="text-ink/60">Cash received from customers</span><span class="tabular-nums"><%= fmt(directOperatingIn.customers) %></span></div>
+        <div class="flex justify-between"><span class="text-ink/60">Customers settling credit sales</span><span class="tabular-nums"><%= fmt(directOperatingIn.receivableSettlements) %></span></div>
+        <div class="flex justify-between"><span class="text-ink/60">Other operating income (rent, interest)</span><span class="tabular-nums"><%= fmt(directOperatingIn.unitIncome) %></span></div>
+        <% if (directOperatingIn.discountAllowed > 0) { %>
+          <div class="flex justify-between text-ink/40"><span class="pl-3">↳ of which, discount given</span><span class="tabular-nums">(<%= fmt(directOperatingIn.discountAllowed) %>)</span></div>
+        <% } %>
+        <p class="text-xs text-ink/30 pt-1">"Cash received from customers" is already net of any discount given and any portion left on credit at the point of sale — a KES 100 sale with a KES 10 discount shows here as KES 90, since that's genuinely what changed hands.</p>
+
+        <p class="font-mono text-xs uppercase tracking-widest text-ink/40 pt-3">Cash Paid</p>
+        <div class="flex justify-between"><span class="text-ink/60">Cash paid to suppliers</span><span class="tabular-nums">(<%= fmt(directOperatingOut.suppliers) %>)</span></div>
+        <div class="flex justify-between"><span class="text-ink/60">Settling credit purchases</span><span class="tabular-nums">(<%= fmt(directOperatingOut.payableSettlements) %>)</span></div>
+        <div class="flex justify-between"><span class="text-ink/60">Cash paid to employees</span><span class="tabular-nums">(<%= fmt(directOperatingOut.employees) %>)</span></div>
+        <div class="flex justify-between"><span class="text-ink/60">Cash paid for other operating expenses</span><span class="tabular-nums">(<%= fmt(directOperatingOut.otherOperating) %>)</span></div>
+        <div class="flex justify-between"><span class="text-ink/60">Income taxes paid</span><span class="tabular-nums">(<%= fmt(directOperatingOut.tax) %>)</span></div>
+        <% if (directOperatingOut.discountReceived > 0) { %>
+          <div class="flex justify-between text-ink/40"><span class="pl-3">↳ of which, discount received</span><span class="tabular-nums"><%= fmt(directOperatingOut.discountReceived) %></span></div>
+        <% } %>
+        <p class="text-xs text-ink/30 pt-1">"Cash paid to suppliers" is likewise already net of any discount received. Interest paid isn't shown — this system doesn't yet post loan interest as its own expense (an honestly-documented gap, see Settings → Rules).</p>
+
+        <div class="flex justify-between pt-2 mt-2 border-t border-ink/10 font-display text-base">
+          <span>Net Cash from Operating Activities</span>
+          <span class="<%= directOperatingNet >= 0 ? 'text-till' : 'text-clay' %>"><%= fmt(directOperatingNet) %></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- B. Indirect Method -->
+    <div class="bg-white rounded-xl border border-ink/10 p-6">
+      <div class="flex items-center justify-between mb-1">
+        <h3 class="font-display text-lg">B. Indirect Method</h3>
+        <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-paper text-ink/50">Most common</span>
+      </div>
+      <p class="text-ink/50 text-xs mb-4">Starts from Net Income and adjusts for non-cash items and working-capital changes.</p>
+
+      <div class="space-y-1.5 font-mono text-sm">
+        <div class="flex justify-between"><span class="text-ink/60">Net Income</span><span class="tabular-nums"><%= fmt(indirect.netProfit) %></span></div>
+
+        <p class="font-mono text-xs uppercase tracking-widest text-ink/40 pt-3">Add back non-cash expenses</p>
+        <div class="flex justify-between"><span class="text-ink/60">Depreciation, Impairment &amp; Revaluation Losses</span><span class="tabular-nums"><%= fmt(indirect.depreciationAddBack) %></span></div>
+        <% if (indirect.gainOnDisposalAdjustment !== 0) { %>
+        <div class="flex justify-between"><span class="text-ink/60"><%= indirect.gainOnDisposalAdjustment > 0 ? '− Gain on disposal of assets (moved to Investing)' : '+ Loss on disposal of assets (moved to Investing)' %></span><span class="tabular-nums">(<%= fmt(indirect.gainOnDisposalAdjustment) %>)</span></div>
+        <% } %>
+
+        <p class="font-mono text-xs uppercase tracking-widest text-ink/40 pt-3">Working capital changes</p>
+        <div class="flex justify-between"><span class="text-ink/60">Δ Accounts Receivable</span><span class="tabular-nums"><%= indirect.receivablesChange >= 0 ? '(' + fmt(indirect.receivablesChange) + ')' : fmt(-indirect.receivablesChange) %></span></div>
+        <div class="flex justify-between"><span class="text-ink/60">Δ Inventory</span><span class="tabular-nums"><%= indirect.inventoryChange >= 0 ? '(' + fmt(indirect.inventoryChange) + ')' : fmt(-indirect.inventoryChange) %></span></div>
+        <div class="flex justify-between"><span class="text-ink/60">Δ Accounts Payable</span><span class="tabular-nums"><%= indirect.payablesChange >= 0 ? fmt(indirect.payablesChange) : '(' + fmt(-indirect.payablesChange) + ')' %></span></div>
+
+        <div class="flex justify-between pt-2 mt-2 border-t border-ink/10 font-display text-base">
+          <span>Net Cash from Operating Activities</span>
+          <span class="<%= indirect.operatingCashFlow >= 0 ? 'text-till' : 'text-clay' %>"><%= fmt(indirect.operatingCashFlow) %></span>
+        </div>
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-ink/10">
+        <% if (indirect.matchesDirectMethod) { %>
+          <p class="text-xs text-till flex items-center gap-2">
+            <span class="font-mono px-2 py-0.5 rounded-full bg-till/10">✓ Reconciled</span>
+            Matches the Direct Method exactly.
+          </p>
+        <% } else { %>
+          <p class="text-xs text-clay flex items-center gap-2">
+            <span class="font-mono px-2 py-0.5 rounded-full bg-clay/10">⚠ Out of balance</span>
+            Indirect gives <%= fmt(indirect.operatingCashFlow) %>, Direct gives <%= fmt(indirect.directMethodOperatingTotal) %> — worth investigating.
+          </p>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. INVESTING ACTIVITIES -->
+<section class="mb-6">
+  <div class="flex items-center justify-between mb-1">
+    <h2 class="font-display text-2xl">2. Investing Activities</h2>
+    <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-paper text-ink/50">Same for both methods</span>
+  </div>
+  <p class="text-ink/50 text-sm mb-4">Cash used for or generated from long-term assets.</p>
+  <div class="bg-white rounded-xl border border-ink/10 p-6">
+    <div class="space-y-1.5 font-mono text-sm">
+      <div class="flex justify-between"><span class="text-ink/60">Purchase of property, plant &amp; equipment</span><span class="tabular-nums">(<%= fmt(investingDetail.assetPurchases) %>)</span></div>
+      <div class="flex justify-between"><span class="text-ink/60">Sale of property, plant &amp; equipment</span><span class="tabular-nums"><%= fmt(investingDetail.assetDisposals) %></span></div>
+      <div class="flex justify-between"><span class="text-ink/60">Purchase of investments</span><span class="tabular-nums">(<%= fmt(investingDetail.investmentPurchases) %>)</span></div>
+      <div class="flex justify-between"><span class="text-ink/60">Sale of investments</span><span class="tabular-nums"><%= fmt(investingDetail.investmentSales) %></span></div>
+      <div class="flex justify-between pt-2 mt-2 border-t border-ink/10 font-display text-base">
+        <span>Net Cash from Investing Activities</span>
+        <span class="<%= investingDetail.net >= 0 ? 'text-till' : 'text-clay' %>"><%= fmt(investingDetail.net) %></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. FINANCING ACTIVITIES -->
+<section class="mb-10">
+  <div class="flex items-center justify-between mb-1">
+    <h2 class="font-display text-2xl">3. Financing Activities</h2>
+    <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-paper text-ink/50">Same for both methods</span>
+  </div>
+  <p class="text-ink/50 text-sm mb-4">Cash related to owners and creditors.</p>
+  <div class="bg-white rounded-xl border border-ink/10 p-6">
+    <div class="space-y-1.5 font-mono text-sm">
+      <div class="flex justify-between"><span class="text-ink/60">Owner capital injected</span><span class="tabular-nums"><%= fmt(financingDetail.capital) %></span></div>
+      <div class="flex justify-between"><span class="text-ink/60">Loans drawn down</span><span class="tabular-nums"><%= fmt(financingDetail.loans) %></span></div>
+      <p class="text-xs text-ink/30 pt-1">Dividends and loan repayments aren't shown as their own lines — this system doesn't yet post either as a distinct event.</p>
+      <div class="flex justify-between pt-2 mt-2 border-t border-ink/10 font-display text-base">
+        <span>Net Cash from Financing Activities</span>
+        <span class="<%= financingDetail.net >= 0 ? 'text-till' : 'text-clay' %>"><%= fmt(financingDetail.net) %></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BOTTOM OF THE STATEMENT -->
+<section class="mb-10">
+  <h2 class="font-display text-xl mb-1">Summary</h2>
+  <p class="text-ink/50 text-sm mb-4">Same for both methods — Operating differs by which method is used above, Investing and Financing never do.</p>
+  <div class="bg-tillDark rounded-xl p-6 text-paper">
+    <div class="space-y-1.5 font-mono text-sm">
+      <div class="flex justify-between"><span class="text-paper/70">Net Cash from Operating Activities</span><span class="tabular-nums"><%= fmt(directOperatingNet) %></span></div>
+      <div class="flex justify-between"><span class="text-paper/70">Net Cash from Investing Activities</span><span class="tabular-nums"><%= fmt(investingDetail.net) %></span></div>
+      <div class="flex justify-between"><span class="text-paper/70">Net Cash from Financing Activities</span><span class="tabular-nums"><%= fmt(financingDetail.net) %></span></div>
+      <div class="flex justify-between pt-2 mt-2 border-t border-paper/20 font-display text-base">
+        <span>Net Increase / (Decrease) in Cash</span>
+        <span><%= fmt(netChangeInCash) %></span>
+      </div>
+      <div class="flex justify-between"><span class="text-paper/70">Cash at Beginning of Period</span><span class="tabular-nums"><%= fmt(beginningCash) %></span></div>
+      <div class="flex justify-between pt-2 mt-2 border-t border-paper/20 font-display text-lg">
+        <span>Cash at End of Period</span>
+        <span><%= fmt(endingCash) %></span>
+      </div>
+    </div>
+    <p class="text-xs text-paper/40 mt-4">This ending figure matches Total Available Cash above and the Cash/Mobile/Bank balances on the Money page — the same number, reached three different ways.</p>
+  </div>
+</section>
+
+<section>
+  <h2 class="font-display text-xl mb-4">Outstanding (Not Yet Cash)</h2>
+  <p class="text-ink/50 text-sm mb-4">Credit sales and credit expenses show up in the Journal and Reports, but haven't moved cash yet.</p>
+  <div class="grid md:grid-cols-2 gap-6">
+    <div class="bg-white rounded-xl border border-ink/10 p-5">
+      <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Owed to the Business</p>
+      <p class="font-mono text-2xl tabular-nums"><%= fmt(receivables) %></p>
+      <p class="text-xs text-ink/40 mt-1">Trade Receivables — credit sales and rent not yet collected</p>
+    </div>
+    <div class="bg-white rounded-xl border border-ink/10 p-5">
+      <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Owed by the Business</p>
+      <p class="font-mono text-2xl tabular-nums"><%= fmt(payables) %></p>
+      <p class="text-xs text-ink/40 mt-1">Trade Payables — credit purchases and expenses not yet paid</p>
+    </div>
+  </div>
+</section>

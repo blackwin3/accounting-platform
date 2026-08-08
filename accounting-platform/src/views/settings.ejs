@@ -1,0 +1,149 @@
+<header class="mb-8">
+  <p class="font-mono text-xs uppercase tracking-widest text-ink/40">System</p>
+  <h1 class="font-display text-3xl mt-1">Settings &amp; Structures</h1>
+  <p class="text-ink/50 text-sm mt-1">The rules, periods, and policies that govern how the business posts entries — shown as they actually relate to each other, not just grouped by type.</p>
+</header>
+
+<section class="mb-12">
+  <div class="flex items-center justify-between mb-2">
+    <h2 class="font-display text-xl">Trading Days</h2>
+  </div>
+  <p class="text-ink/50 text-sm mb-4">Today's day now opens automatically — no daily manual step required. Click a day to open or close it if you need to make a change.</p>
+
+  <div class="grid md:grid-cols-2 gap-6">
+    <!-- Calendar — left half, smaller -->
+    <div class="bg-white rounded-xl border border-ink/10 p-4 max-w-sm">
+      <div class="flex items-center justify-between mb-3">
+        <a href="/settings?year=<%= calendar.prevYear %>&month=<%= calendar.prevMonth %>" class="px-2 py-1 rounded-lg border border-ink/20 hover:bg-paper text-xs">←</a>
+        <span class="font-display text-sm"><%= calendar.monthLabel %></span>
+        <a href="/settings?year=<%= calendar.nextYear %>&month=<%= calendar.nextMonth %>" class="px-2 py-1 rounded-lg border border-ink/20 hover:bg-paper text-xs">→</a>
+      </div>
+      <div class="grid grid-cols-7 gap-1 mb-1">
+        <% ['S','M','T','W','T','F','S'].forEach(function(d) { %>
+          <div class="text-center font-mono text-[10px] uppercase tracking-widest text-ink/40 py-1"><%= d %></div>
+        <% }) %>
+      </div>
+      <div class="grid grid-cols-7 gap-1">
+        <% for (let i = 0; i < calendar.firstWeekday; i++) { %>
+          <div></div>
+        <% } %>
+        <% calendar.days.forEach(function(d) { %>
+          <button
+            type="button"
+            class="calendar-day aspect-square rounded-md border text-xs font-mono flex items-center justify-center transition
+              <%= d.status === 'OPEN' ? 'bg-till/10 border-till text-till hover:bg-till/20' : '' %>
+              <%= d.status === 'CLOSED' ? 'bg-ink/10 border-ink/20 text-ink/50 hover:bg-ink/20' : '' %>
+              <%= !d.status ? 'border-ink/10 text-ink/40 hover:border-ink/30 hover:bg-paper' : '' %>
+              <%= d.isToday ? 'ring-2 ring-clay ring-offset-1' : '' %>"
+            data-date="<%= d.dateStr %>"
+            data-structures-id="<%= d.structuresId || '' %>"
+            data-status="<%= d.status || '' %>"
+            onclick="handleDayClick(this)"
+            title="<%= d.dateStr %><%= d.status ? ' — ' + d.status : ' — never opened' %>"
+          >
+            <%= d.day %>
+          </button>
+        <% }) %>
+      </div>
+      <div class="flex items-center gap-3 mt-3 pt-3 border-t border-ink/5 text-[10px] font-mono text-ink/40">
+        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-till/20 border border-till inline-block"></span>Open</span>
+        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-ink/10 border border-ink/20 inline-block"></span>Closed</span>
+        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full border border-ink/10 inline-block"></span>Never opened</span>
+      </div>
+      <div id="calendar-feedback" class="hidden mt-3 text-sm p-3 rounded-lg"></div>
+    </div>
+
+    <!-- Period list — right half -->
+    <div class="bg-white rounded-xl border border-ink/10 overflow-hidden">
+      <div class="px-4 py-3 border-b border-ink/10">
+        <p class="font-mono text-xs uppercase tracking-widest text-ink/40">Days This Month</p>
+      </div>
+      <div class="max-h-96 overflow-y-auto">
+        <% const openedDays = calendar.days.filter(function(d) { return d.status; }); %>
+        <% if (openedDays.length === 0) { %>
+          <p class="text-ink/40 text-sm p-4">No days opened yet this month.</p>
+        <% } else { %>
+          <table class="w-full text-sm">
+            <tbody>
+              <% openedDays.slice().reverse().forEach(function(d) { %>
+                <tr class="border-b border-ink/5 last:border-0 hover:bg-paper/50">
+                  <td class="px-4 py-2.5 font-mono text-xs <%= d.isToday ? 'text-clay font-medium' : 'text-ink/60' %>"><%= d.dateStr %><% if (d.isToday) { %> · Today<% } %></td>
+                  <td class="px-4 py-2.5 text-right">
+                    <span class="text-xs font-mono px-2 py-0.5 rounded-full <%= d.status === 'OPEN' ? 'bg-till/10 text-till' : 'bg-ink/10 text-ink/50' %>"><%= d.status %></span>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  async function handleDayClick(btn) {
+    const date = btn.dataset.date;
+    const structuresId = btn.dataset.structuresId;
+    const status = btn.dataset.status;
+    const feedback = document.getElementById("calendar-feedback");
+    btn.disabled = true;
+
+    try {
+      let res, result;
+      if (status === "OPEN") {
+        // Already open — clicking again closes it
+        res = await fetch(`/settings/period/${structuresId}/close`, { method: "POST" });
+        result = await res.json();
+        if (!res.ok) throw new Error(result.error || "Failed to close period");
+        feedback.textContent = `${date} closed.`;
+      } else {
+        // Never opened, or previously closed — open (or re-open) it
+        res = await fetch("/settings/period/open", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ date }),
+        });
+        result = await res.json();
+        if (!res.ok) throw new Error(result.error || "Failed to open period");
+        feedback.textContent = `${date} opened.`;
+      }
+      feedback.className = "text-sm p-3 rounded-lg bg-till/10 text-till";
+      feedback.classList.remove("hidden");
+      setTimeout(() => location.reload(), 600);
+    } catch (err) {
+      feedback.textContent = err.message;
+      feedback.className = "text-sm p-3 rounded-lg bg-clay/10 text-clay";
+      feedback.classList.remove("hidden");
+      btn.disabled = false;
+    }
+  }
+</script>
+
+<%
+  // Build a real parent -> children tree from Parent_Structure_id, so a
+  // multi-level hierarchy (Framework -> Standard -> Policy, or eventually
+  // Division -> Business Unit for a multi-unit enterprise like a group
+  // with several divisions) renders as nested structure, not a flat list
+  // grouped only by Structures_Type.
+  const byId = {};
+  structures.forEach(function(s) { byId[s.id] = s; });
+  const childrenOf = {};
+  structures.forEach(function(s) {
+    // Treat a dangling parent reference as a root too, so nothing silently
+    // disappears from the tree if its Parent_Structure_id points to a row
+    // that isn't in this result set.
+    const parentExists = s.parentId && byId[s.parentId];
+    const key = parentExists ? s.parentId : 'root';
+    (childrenOf[key] = childrenOf[key] || []).push(s);
+  });
+  const roots = childrenOf['root'] || [];
+%>
+
+<% if (structures.length === 0) { %>
+  <p class="text-ink/40">No Structures rows yet. Run the seed script.</p>
+<% } %>
+
+<% roots.forEach(function(s) { %>
+  <%- include('partials/structure-node', { s: s, depth: 0, childrenOf: childrenOf }) %>
+<% }) %>

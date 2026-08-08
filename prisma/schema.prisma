@@ -1,0 +1,1266 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model Account {
+  Account_id               Int               @id @default(autoincrement())
+  Catalogue_id             Int?
+  Product_id               Int?
+  Stakeholder_id           Int?
+  Origin_Record_id         Int?
+  Account_Name             String?           @db.VarChar(100)
+  Account_Type             String?           @db.VarChar(45)
+  Account_Code_id          Int?
+  Account_subType          String?           @db.VarChar(45)
+  Financial_Statement      String?           @db.VarChar(25)
+  Financial_Statement_Line String?           @db.VarChar(100)
+  Measurement_Basis        String?           @db.VarChar(20)
+  Normal_Balance           String?           @db.VarChar(10)
+  Authoritative_Source     String?           @db.VarChar(20)
+  Current_Balance          Decimal?          @db.Decimal(15, 2)
+  Created_at               DateTime?         @default(now()) @db.Timestamp(6)
+  Is_Active                Int?              @db.SmallInt
+  Entreprise_id            Int?
+  Account_codes            Account_codes?    @relation(fields: [Account_Code_id], references: [Account_codes_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Account_fk_Accnt_Acc_Code_5")
+  Catalogue                Catalogue?        @relation(fields: [Catalogue_id], references: [Catalogue_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Account_fk_Accnt_Catlge_3")
+  Product                  Product?          @relation(fields: [Product_id], references: [Product_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Account_fk_Accnt_Prdct_2")
+  Records                  Records?          @relation(fields: [Origin_Record_id], references: [Records_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Account_fk_Accnt_Recrd_4")
+  Stakeholder              Stakeholder?      @relation(fields: [Stakeholder_id], references: [Stakeholder_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Account_fk_Accnt_Stkhldr_1")
+  Account_History          Account_History[]
+  Assets                   Assets[]
+  Equity                   Equity[]
+  Evidence                 Evidence[]
+  Expenditure              Expenditure[]
+  Income                   Income[]
+  Journal                  Journal[]
+  Knowledge                Knowledge[]
+  Ledger                   Ledger[]
+  Liability                Liability[]
+  LogicConditions          LogicConditions[]
+  Money                    Money[]
+  Narrative                Narrative[]
+  Organisation             Organisation[]
+  Reports                  Reports[]
+  Structures               Structures[]
+  Transactions             Transactions[]
+
+  @@index([Account_Code_id], map: "fk_Account_Code_idx_Account")
+  @@index([Catalogue_id], map: "fk_Catalogue_idx_Account")
+  @@index([Product_id], map: "fk_Product_idx_Account")
+  @@index([Origin_Record_id], map: "fk_Records_idx_Account")
+  @@index([Stakeholder_id], map: "fk_Stakeholder_idx_Account")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model Account_History {
+  History_id                                         Int              @id @default(autoincrement())
+  Account_id                                         Int
+  Transaction_id                                     Int
+  Old_Balance                                        Decimal?         @db.Decimal(15, 2)
+  Debit                                              Decimal?         @db.Decimal(15, 2)
+  Credit                                             Decimal?         @db.Decimal(15, 2)
+  New_Balance                                        Decimal?         @db.Decimal(15, 2)
+  Balance_Type                                       String?          @db.VarChar(45)
+  Reason                                             String?          @db.VarChar(255)
+  Entry_date                                         DateTime?        @db.Date
+  Created_at                                         DateTime?        @db.Timestamp(6)
+  Author                                             Int?
+  Approved_by                                        Int?
+  Approval_date                                      DateTime?        @db.Timestamp(6)
+  Previous_value                                     String?          @db.VarChar(255)
+  New_value                                          String?          @db.VarChar(255)
+  Trigger_rule                                       Int?
+  Account                                            Account          @relation(fields: [Account_id], references: [Account_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Account_History_fk_Acc_His_Accounts_1")
+  Management_Account_History_Approved_byToManagement Management?      @relation("Account_History_Approved_byToManagement", fields: [Approved_by], references: [Administration_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Account_History_fk_Acc_His_Apprvr_4")
+  Management_Account_History_AuthorToManagement      Management?      @relation("Account_History_AuthorToManagement", fields: [Author], references: [Administration_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Account_History_fk_Acc_His_Author_3")
+  Transactions                                       Transactions     @relation(fields: [Transaction_id], references: [Transactions_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Account_History_fk_Acc_His_Transxn_2")
+  LogicConditions                                    LogicConditions? @relation(fields: [Trigger_rule], references: [LogicConditions_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Account_History_fk_Acc_His_TrigRule_5")
+
+  @@index([Account_id], map: "fk_Accounts_idx_Account_History")
+  @@index([Approved_by], map: "fk_Approver_idx_Account_History")
+  @@index([Author], map: "fk_Author_idx_Account_History")
+  @@index([Transaction_id], map: "fk_Transactions_idx_Account_History")
+  @@index([Trigger_rule], map: "fk_TriggerRule_idx_Account_History")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model Account_codes {
+  Account_codes_id                                          Int             @id @default(autoincrement())
+  Code                                                      String          @db.VarChar(10)
+  Code_name                                                 String          @db.VarChar(100)
+  Code_categories                                           String?         @db.VarChar(45)
+  Standard_Reference                                        String?         @db.VarChar(45)
+  Parent_code_id                                            Int?
+  Statement_Section                                         String?         @db.VarChar(45)
+  Is_Active                                                 Int             @default(1) @db.SmallInt
+  Entreprise_id                                             Int?
+  Account                                                   Account[]
+  Account_codes                                             Account_codes?  @relation("Account_codesToAccount_codes", fields: [Parent_code_id], references: [Account_codes_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Account_codes_fk_Parent_code_1")
+  other_Account_codes                                       Account_codes[] @relation("Account_codesToAccount_codes")
+  Catalogue_Catalogue_Credit_Account_fk_idToAccount_codes   Catalogue[]     @relation("Catalogue_Credit_Account_fk_idToAccount_codes")
+  Catalogue_Catalogue_Debit_Account_fk_idToAccount_codes    Catalogue[]     @relation("Catalogue_Debit_Account_fk_idToAccount_codes")
+  Catalogue_Catalogue_Secondary_Credit_fk_idToAccount_codes Catalogue[]     @relation("Catalogue_Secondary_Credit_fk_idToAccount_codes")
+  Catalogue_Catalogue_Secondary_Debit_fk_idToAccount_codes  Catalogue[]     @relation("Catalogue_Secondary_Debit_fk_idToAccount_codes")
+
+  @@index([Parent_code_id], map: "fk_Parent_code_idx_Account_codes")
+  @@index([Code], map: "uq_account_code_Account_codes")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model Assets {
+  Assets_id                     Int            @id @default(autoincrement())
+  Catalogue_id                  Int
+  Account_id                    Int
+  Records_id                    Int
+  Assets_Type                   String?        @db.VarChar(45)
+  Asset_Classification          String?        @db.VarChar(20)
+  Cost_Amount                   Decimal?       @db.Decimal(15, 2)
+  Residual_Value                Decimal?       @default(0) @db.Decimal(15, 2)
+  Useful_Life_Years             Decimal?       @db.Decimal(15, 2)
+  Depreciation_Method           String?        @db.VarChar(20)
+  Accumulated_Depreciation      Decimal?       @default(0) @db.Decimal(15, 2)
+  Accumulated_Impairment        Decimal?       @default(0) @db.Decimal(15, 2)
+  Carrying_Amount               Decimal?       @db.Decimal(15, 2)
+  Acquisition_Date              DateTime?      @db.Date
+  Placed_In_Service_Date        DateTime?      @db.Date
+  Disposal_Date                 DateTime?      @db.Date
+  Net_Amount                    Decimal?       @db.Decimal(15, 2)
+  Period                        DateTime?      @db.Date
+  Period_end                    DateTime?      @db.Date
+  Entreprise_id                 Int?
+  Ownership_Type                String?        @default("BUSINESS") @db.VarChar(20)
+  Tenant_Stakeholder_id         Int?
+  Is_Rental_Property            Int?           @default(0) @db.SmallInt
+  Monthly_Rent                  Decimal?       @db.Decimal(15, 2)
+  Equipment_For_Hire            Int?           @default(0) @db.SmallInt
+  Current_Renter_Stakeholder_id Int?
+  Daily_Hire_Rate               Decimal?       @db.Decimal(15, 2)
+  Account                       Account        @relation(fields: [Account_id], references: [Account_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Assets_fk_Assets_Account_2")
+  Catalogue                     Catalogue      @relation(fields: [Catalogue_id], references: [Catalogue_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Assets_fk_Assets_Catalogue_3")
+  Records                       Records        @relation(fields: [Records_id], references: [Records_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Assets_fk_Assets_Records_1")
+  Ledger                        Ledger[]
+  Money                         Money[]
+  Organisation                  Organisation[]
+
+  @@index([Account_id], map: "fk_Account_idx_Assets")
+  @@index([Catalogue_id], map: "fk_Catalogue_idx_Assets")
+  @@index([Records_id], map: "fk_Records_idx_Assets")
+  @@index([Ownership_Type], map: "idx_assets_ownership_type")
+  @@index([Tenant_Stakeholder_id], map: "idx_assets_tenant")
+  @@index([Current_Renter_Stakeholder_id], map: "idx_assets_renter")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model Catalogue {
+  Catalogue_id                                                  Int               @id @default(autoincrement())
+  LogicConditons_id                                             Int?
+  Structures_id                                                 Int?
+  ProcessActions_id                                             Int?
+  Event_Name                                                    String?           @db.VarChar(45)
+  Event_Description                                             String?           @db.VarChar(255)
+  Debit_Account_code                                            String?           @db.VarChar(10)
+  Credit_Account_code                                           String?           @db.VarChar(10)
+  Secondary_Debit_code                                          String?           @db.VarChar(10)
+  Secondary_Credit_code                                         String?           @db.VarChar(10)
+  Debit_Account_fk_id                                           Int?
+  Credit_Account_fk_id                                          Int?
+  Secondary_Debit_fk_id                                         Int?
+  Secondary_Credit_fk_id                                        Int?
+  Cash_Flow_Category                                            String?           @db.VarChar(15)
+  Operational_Impact                                            String?           @db.VarChar(45)
+  Risk_Level                                                    String?           @db.VarChar(10)
+  Documentation_type                                            String?           @db.VarChar(45)
+  Report_trigger                                                String?           @db.VarChar(45)
+  Escalation_Role                                               String?           @db.VarChar(45)
+  Cycle_type                                                    String?           @db.VarChar(20)
+  Alert_Required                                                Int?              @db.SmallInt
+  Posting_Complexity                                            String?           @db.VarChar(10)
+  Narrative_template                                            String?
+  Evidence_template                                             String?           @db.VarChar(100)
+  Report_sections                                               String?
+  Review_Level_copy1                                            String?           @db.VarChar(45)
+  Logic_rules_to_check                                          String?           @db.VarChar(255)
+  Primary_Logic_id                                              Int?
+  Account_id                                                    Int?
+  Review_Level                                                  String?           @db.VarChar(45)
+  Default_Business_Unit                                         String?           @db.VarChar(20)
+  Effective_From                                                DateTime?         @db.Date
+  Effective_To                                                  DateTime?         @db.Date
+  Version_No                                                    Int?
+  Is_Active                                                     Int?              @db.SmallInt
+  Entreprise_id                                                 Int?
+  Account                                                       Account[]
+  Assets                                                        Assets[]
+  ProcessActions                                                ProcessActions?   @relation(fields: [ProcessActions_id], references: [ProcessActions_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Catalogue_fk_Catlog_Action_3")
+  LogicConditions_Catalogue_LogicConditons_idToLogicConditions  LogicConditions?  @relation("Catalogue_LogicConditons_idToLogicConditions", fields: [LogicConditons_id], references: [LogicConditions_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Catalogue_fk_Catlog_Logic_2")
+  LogicConditions_Catalogue_Primary_Logic_idToLogicConditions   LogicConditions?  @relation("Catalogue_Primary_Logic_idToLogicConditions", fields: [Primary_Logic_id], references: [LogicConditions_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Catalogue_fk_Catlog_PrimLgc_4")
+  Structures                                                    Structures?       @relation(fields: [Structures_id], references: [Structures_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Catalogue_fk_Catlog_Struct_1")
+  Account_codes_Catalogue_Credit_Account_fk_idToAccount_codes   Account_codes?    @relation("Catalogue_Credit_Account_fk_idToAccount_codes", fields: [Credit_Account_fk_id], references: [Account_codes_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Catalogue_fk_cat_credit_acct_6")
+  Account_codes_Catalogue_Debit_Account_fk_idToAccount_codes    Account_codes?    @relation("Catalogue_Debit_Account_fk_idToAccount_codes", fields: [Debit_Account_fk_id], references: [Account_codes_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Catalogue_fk_cat_debit_acct_5")
+  Account_codes_Catalogue_Secondary_Credit_fk_idToAccount_codes Account_codes?    @relation("Catalogue_Secondary_Credit_fk_idToAccount_codes", fields: [Secondary_Credit_fk_id], references: [Account_codes_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Catalogue_fk_cat_sec_credit_8")
+  Account_codes_Catalogue_Secondary_Debit_fk_idToAccount_codes  Account_codes?    @relation("Catalogue_Secondary_Debit_fk_idToAccount_codes", fields: [Secondary_Debit_fk_id], references: [Account_codes_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Catalogue_fk_cat_sec_debit_7")
+  Equity                                                        Equity[]
+  Expenditure                                                   Expenditure[]
+  Income                                                        Income[]
+  Journal                                                       Journal[]
+  Liability                                                     Liability[]
+  LogicConditions_LogicConditions_Catalogue_idToCatalogue       LogicConditions[] @relation("LogicConditions_Catalogue_idToCatalogue")
+  Management                                                    Management[]
+  Organisation                                                  Organisation[]
+  Records                                                       Records[]
+
+  @@index([ProcessActions_id], map: "fk_Action_idx_Catalogue")
+  @@index([LogicConditons_id], map: "fk_Logic_idx_Catalogue")
+  @@index([Primary_Logic_id], map: "fk_PrimaryLogic_idx_Catalogue")
+  @@index([Structures_id], map: "fk_Structures_idx_Catalogue")
+  @@index([Credit_Account_fk_id], map: "fk_cat_credit_acct_idx_Catalogue")
+  @@index([Debit_Account_fk_id], map: "fk_cat_debit_acct_idx_Catalogue")
+  @@index([Secondary_Credit_fk_id], map: "fk_cat_sec_credit_idx_Catalogue")
+  @@index([Secondary_Debit_fk_id], map: "fk_cat_sec_debit_idx_Catalogue")
+  @@index([Is_Active], map: "idx_catalogue_active_Catalogue")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model Documents {
+  Document_id                                          Int           @id @default(autoincrement())
+  Reports_id                                           Int?
+  Cycle_id                                             Int?
+  Transactions_id                                      Int?
+  Document_type                                        String?       @db.VarChar(45)
+  Documents_no                                         String?       @db.VarChar(45)
+  Documents_version                                    Int?
+  Stakeholder_id                                       Int?
+  Organisation_id                                      Int?
+  Document_Title                                       String?       @db.VarChar(45)
+  Action                                               String?       @db.VarChar(45)
+  Device                                               String?       @db.VarChar(45)
+  Document_date                                        DateTime?     @db.Date
+  Due_date                                             DateTime?     @db.Date
+  Gross_amount                                         Decimal?      @db.Decimal(15, 2)
+  Tax_amount                                           Decimal?      @db.Decimal(15, 2)
+  Net_Amount                                           Decimal?      @db.Decimal(15, 2)
+  Document_status                                      String?       @db.VarChar(45)
+  Document_Authenticity                                String?       @db.VarChar(20)
+  Is_Original                                          Int?          @db.SmallInt
+  Is_Legally_Signed                                    Int?          @db.SmallInt
+  Is_Digitally_Signed                                  Int?          @db.SmallInt
+  Is_Witnessed                                         Int?          @db.SmallInt
+  Expiry_date                                          DateTime?     @db.Date
+  Issued_by                                            String?       @db.VarChar(100)
+  Custodian                                            Int?
+  File_path                                            String?       @db.VarChar(255)
+  File_Format                                          String?       @db.VarChar(45)
+  File_Hash                                            String?       @db.VarChar(45)
+  Generated                                            Int?          @db.SmallInt
+  Generated_By                                         Int?
+  Approved_By                                          Int?
+  Confidence_Level                                     Int?          @default(1) @db.SmallInt
+  Notes                                                String?
+  Modified_by                                          Int?
+  Created_at                                           DateTime      @default(now()) @db.Timestamp(6)
+  Entreprise_id                                        Int?
+  Management_Documents_Approved_ByToManagement         Management?   @relation("Documents_Approved_ByToManagement", fields: [Approved_By], references: [Administration_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Documents_fk_Doc_Apprvd_By_6")
+  Management_Documents_Modified_byToManagement         Management?   @relation("Documents_Modified_byToManagement", fields: [Modified_by], references: [Administration_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Documents_fk_Doc_Chngd_by_3")
+  Transactions_Documents_Cycle_idToTransactions        Transactions? @relation("Documents_Cycle_idToTransactions", fields: [Cycle_id], references: [Transactions_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Documents_fk_Doc_Cycle_4")
+  Management_Documents_Generated_ByToManagement        Management?   @relation("Documents_Generated_ByToManagement", fields: [Generated_By], references: [Administration_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Documents_fk_Doc_Gnrtd_By_5")
+  Organisation                                         Organisation? @relation(fields: [Organisation_id], references: [Entreprise_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Documents_fk_Doc_Orgsntn_8")
+  Reports                                              Reports?      @relation(fields: [Reports_id], references: [Reports_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Documents_fk_Doc_Reprt_2")
+  Stakeholder                                          Stakeholder?  @relation(fields: [Stakeholder_id], references: [Stakeholder_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Documents_fk_Doc_Stkhldr_1")
+  Transactions_Documents_Transactions_idToTransactions Transactions? @relation("Documents_Transactions_idToTransactions", fields: [Transactions_id], references: [Transactions_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Documents_fk_Doc_Transxn_7")
+  Evidence                                             Evidence[]
+  Knowledge                                            Knowledge[]
+  Management_Management_Document_idToDocuments         Management[]  @relation("Management_Document_idToDocuments")
+  Narrative                                            Narrative[]
+
+  @@unique([Document_type, Documents_no, Organisation_id], map: "uq_doc_number_Documents")
+  @@index([Approved_By], map: "fk_Approved_By_idx_Documents")
+  @@index([Modified_by], map: "fk_Changed_by_idx_Documents")
+  @@index([Organisation_id], map: "fk_Doc_Orgsntn_idx_Documents")
+  @@index([Reports_id], map: "fk_Report_idx_Documents")
+  @@index([Stakeholder_id], map: "fk_Stakeholder_idx_Documents")
+  @@index([Transactions_id], map: "fk_Transactions_idx_Documents")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model Equity {
+  Equity_id    Int            @id @default(autoincrement())
+  Catalogue_id Int
+  Account_id   Int
+  Records_id   Int
+  Equity_type  String?        @db.VarChar(45)
+  Net_Amount   Decimal?       @db.Decimal(15, 2)
+  Period       DateTime?      @db.Date
+  Period_end   DateTime?      @db.Date
+  Account      Account        @relation(fields: [Account_id], references: [Account_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Equity_fk_Equity_Account_2")
+  Catalogue    Catalogue      @relation(fields: [Catalogue_id], references: [Catalogue_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Equity_fk_Equity_Catalogue_3")
+  Records      Records        @relation(fields: [Records_id], references: [Records_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Equity_fk_Equity_Records_1")
+  Ledger       Ledger[]
+  Organisation Organisation[]
+
+  @@index([Account_id], map: "fk_Account_idx_Equity")
+  @@index([Catalogue_id], map: "fk_Catalogue_idx_Equity")
+  @@index([Records_id], map: "fk_Records_idx_Equity")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model Evidence {
+  Evidence_id                                         Int            @id @default(autoincrement())
+  Account_id                                          Int?
+  Transactions_id                                     Int?
+  Records_id                                          Int?
+  Evidence_level                                      Int?
+  Required_Evidence_level                             Int?
+  Evidence_Status                                     String?        @db.VarChar(15)
+  Evidence_type                                       String?        @db.VarChar(45)
+  Evidence_Strength                                   Int?           @db.SmallInt
+  Source                                              String?        @db.VarChar(255)
+  Document_id                                         Int?
+  Verified                                            Int?
+  Verified_by                                         Int?
+  Entry_date                                          DateTime?      @db.Timestamp(6)
+  Confidence_Level                                    Int?           @default(1)
+  Original_Evidence_level                             Int?
+  Original_Confidence_Level                           Int?
+  Evidence_Improved_date                              DateTime?      @db.Date
+  Evidence_Improved_by                                Int?
+  Entreprise_id                                       Int?
+  Account                                             Account?       @relation(fields: [Account_id], references: [Account_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Evidence_fk_Evidns_Account_3")
+  Documents                                           Documents?     @relation(fields: [Document_id], references: [Document_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Evidence_fk_Evidns_Docs_1")
+  Management                                          Management?    @relation(fields: [Verified_by], references: [Administration_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Evidence_fk_Evidns_Mgmnt_2")
+  Records                                             Records?       @relation(fields: [Records_id], references: [Records_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Evidence_fk_Evidns_Recrd_5")
+  Transactions_Evidence_Transactions_idToTransactions Transactions?  @relation("Evidence_Transactions_idToTransactions", fields: [Transactions_id], references: [Transactions_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Evidence_fk_Evidns_Transxn_4")
+  Transactions_Transactions_Evidence_idToEvidence     Transactions[] @relation("Transactions_Evidence_idToEvidence")
+
+  @@index([Account_id], map: "fk_Account_idx_Evidence")
+  @@index([Document_id], map: "fk_Documents_idx_Evidence")
+  @@index([Verified_by], map: "fk_Management_idx_Evidence")
+  @@index([Records_id], map: "fk_Records_idx_Evidence")
+  @@index([Transactions_id], map: "fk_Transaction_idx_Evidence")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model Expenditure {
+  Expenditure_id          Int           @id @default(autoincrement())
+  Catalogue_id            Int
+  Account_id              Int
+  Records_id              Int
+  Transactions_id         Int?
+  Expenditure_type        String?       @db.VarChar(45)
+  Expenditure_subtype     String?       @db.VarChar(20)
+  Is_Prepaid              Int?          @default(0) @db.SmallInt
+  Billing_Reference       String?       @db.VarChar(45)
+  Consumption_Unit        Decimal?      @db.Decimal(15, 3)
+  Expenditure_Category    String?       @db.VarChar(45)
+  Expenditure_Behaviour   String?       @db.VarChar(10)
+  Expenditure_Frequency   String?       @db.VarChar(10)
+  Business_Unit           String?       @db.VarChar(20)
+  Expenditure_Paid        Decimal?      @db.Decimal(15, 2)
+  Expenditure_Outstanding Decimal?      @db.Decimal(15, 2)
+  Net_Amount              Decimal?      @db.Decimal(15, 2)
+  Period_id               Int?
+  Period                  DateTime?     @db.Date
+  Period_end              DateTime?     @db.Date
+  Is_Capitalizable        Int?          @default(0) @db.SmallInt
+  Capital_Treatment       String?       @default("EXPENSE") @db.VarChar(20)
+  Accounting_Nature       String?       @db.VarChar(25)
+  Entreprise_id           Int?
+  Account                 Account       @relation(fields: [Account_id], references: [Account_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Expenditure_fk_Expend_Account_2")
+  Catalogue               Catalogue     @relation(fields: [Catalogue_id], references: [Catalogue_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Expenditure_fk_Expend_Catalogue_3")
+  Records                 Records       @relation(fields: [Records_id], references: [Records_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Expenditure_fk_Expend_Records_1")
+  Structures              Structures?   @relation(fields: [Period_id], references: [Structures_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Expenditure_fk_Expend_Struct_5")
+  Transactions            Transactions? @relation(fields: [Transactions_id], references: [Transactions_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Expenditure_fk_Expend_Transxn_4")
+  Ledger                  Ledger[]
+
+  @@index([Account_id], map: "fk_Account_idx_Expenditure")
+  @@index([Catalogue_id], map: "fk_Catalogue_idx_Expenditure")
+  @@index([Period_id], map: "fk_Expend_Struct_idx_Expenditure")
+  @@index([Records_id], map: "fk_Records_idx_Expenditure")
+  @@index([Period, Period_end], map: "idx_exp_period_Expenditure")
+  @@index([Business_Unit], map: "idx_exp_unit_Expenditure")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model Income {
+  Income_id          Int           @id @default(autoincrement())
+  Catalogue_id       Int
+  Account_id         Int
+  Records_id         Int
+  Transactions_id    Int?
+  Income_type        String?       @db.VarChar(45)
+  Income_Source      String?       @db.VarChar(45)
+  Income_Category    String?       @db.VarChar(45)
+  Income_Recognition String?       @db.VarChar(10)
+  Recognition_Method String?       @db.VarChar(20)
+  Is_Recurring       Int?          @default(0) @db.SmallInt
+  Accounting_Nature  String?       @db.VarChar(25)
+  Business_Unit      String?       @db.VarChar(20)
+  Marketing_Channel  String?       @db.VarChar(45)
+  Standard_Reference String?       @db.VarChar(45)
+  Net_Amount         Decimal?      @db.Decimal(15, 2)
+  Cash_Received      Decimal?      @db.Decimal(15, 2)
+  Outstanding_Amount Decimal?      @db.Decimal(15, 2)
+  Period_id          Int?
+  Period             DateTime?     @db.Date
+  Period_end         DateTime?     @db.Date
+  Entreprise_id      Int?
+  Account            Account       @relation(fields: [Account_id], references: [Account_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Income_fk_Income_Account_2")
+  Catalogue          Catalogue     @relation(fields: [Catalogue_id], references: [Catalogue_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Income_fk_Income_Catalogue_3")
+  Structures         Structures?   @relation(fields: [Period_id], references: [Structures_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Income_fk_Income_Period_5")
+  Records            Records       @relation(fields: [Records_id], references: [Records_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Income_fk_Income_Records_1")
+  Transactions       Transactions? @relation(fields: [Transactions_id], references: [Transactions_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Income_fk_Income_Transaction_4")
+  Ledger             Ledger[]
+  Money              Money[]
+
+  @@index([Account_id], map: "fk_Account_idx_Income")
+  @@index([Catalogue_id], map: "fk_Catalogue_idx_Income")
+  @@index([Period_id], map: "fk_Income_Period_idx_Income")
+  @@index([Records_id], map: "fk_Records_idx_Income")
+  @@index([Transactions_id], map: "fk_Transaction_idx_Income")
+  @@index([Period, Period_end], map: "idx_income_period_Income")
+  @@index([Business_Unit], map: "idx_income_unit_Income")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model Journal {
+  Journal_id                                       Int           @id @default(autoincrement())
+  Account_id                                       Int
+  Correction_of                                    Int?
+  Correction_Reason                                String?       @db.VarChar(255)
+  Corrected_By                                     Int?
+  Correction_Date                                  DateTime?     @db.Date
+  Correction_Status                                String?       @default("ORIGINAL") @db.VarChar(15)
+  Catalogue_id                                     Int
+  Transactions_id                                  Int?
+  Administration_id                                Int?
+  Product_id                                       Int?
+  Debit                                            Decimal?      @db.Decimal(15, 2)
+  Credit                                           Decimal?      @db.Decimal(15, 2)
+  Running_Balance                                  Decimal?      @db.Decimal(15, 2)
+  Net_Amount                                       Decimal?      @db.Decimal(15, 2)
+  Created_at                                       DateTime      @default(now()) @db.Timestamp(6)
+  Transaction_Date                                 DateTime?     @db.Date
+  Posting_Date                                     DateTime?     @db.Date
+  Period_id                                        Int?
+  Description                                      String?       @db.VarChar(255)
+  Recognition_Basis                                String?       @db.VarChar(10)
+  Entreprise_id                                    Int?
+  Account                                          Account       @relation(fields: [Account_id], references: [Account_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Journal_fk_jnl_Account_2")
+  Management_Journal_Administration_idToManagement Management?   @relation("Journal_Administration_idToManagement", fields: [Administration_id], references: [Administration_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Journal_fk_jnl_Administration_5")
+  Catalogue                                        Catalogue     @relation(fields: [Catalogue_id], references: [Catalogue_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Journal_fk_jnl_Catalogue_3")
+  Management_Journal_Corrected_ByToManagement      Management?   @relation("Journal_Corrected_ByToManagement", fields: [Corrected_By], references: [Administration_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Journal_fk_jnl_Corrected_By_8")
+  Journal                                          Journal?      @relation("JournalToJournal", fields: [Correction_of], references: [Journal_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Journal_fk_jnl_Correction_6")
+  other_Journal                                    Journal[]     @relation("JournalToJournal")
+  Structures                                       Structures?   @relation(fields: [Period_id], references: [Structures_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Journal_fk_jnl_Period_7")
+  Product                                          Product?      @relation(fields: [Product_id], references: [Product_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Journal_fk_jnl_Product_4")
+  Transactions                                     Transactions? @relation(fields: [Transactions_id], references: [Transactions_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Journal_fk_jnl_Transactions_1")
+  Ledger                                           Ledger[]
+  Money                                            Money[]
+  Reports                                          Reports[]
+
+  @@index([Account_id], map: "fk_Account_idx_Journal")
+  @@index([Administration_id], map: "fk_Administration_idx_Journal")
+  @@index([Catalogue_id], map: "fk_Catalogue_idx_Journal")
+  @@index([Corrected_By], map: "fk_Corrected_By_idx_Journal")
+  @@index([Correction_of], map: "fk_Correction_idx_Journal")
+  @@index([Period_id], map: "fk_Period_idx_Journal")
+  @@index([Product_id], map: "fk_Product_idx_Journal")
+  @@index([Transactions_id], map: "fk_Transactions_idx_Journal")
+  @@index([Correction_Status], map: "idx_correction_status_Journal")
+  @@index([Account_id, Created_at], map: "idx_journal_account_date_Journal")
+  @@index([Account_id, Period_id], map: "idx_journal_account_period_Journal")
+  @@index([Recognition_Basis], map: "idx_journal_basis_Journal")
+  @@index([Created_at], map: "idx_journal_date_Journal")
+  @@index([Entreprise_id], map: "idx_journal_entreprise")
+  @@index([Transaction_Date], map: "idx_journal_txn_date_Journal")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model Knowledge {
+  Knowledge_id           Int           @id @default(autoincrement())
+  Account_id             Int?
+  Transactions_id        Int?
+  Records_id             Int?
+  Document_id            Int?
+  Explanation            String?
+  Knowledge_type         String?       @db.VarChar(20)
+  Recommendation         String?
+  Lesson_Learned         String?
+  Decision_Reason        String?
+  Alternative_Considered String?
+  Context                String?       @db.VarChar(45)
+  Confidence_Level       Int?          @db.SmallInt
+  Language               String?       @db.VarChar(20)
+  Audience               Int?
+  Author                 Int?
+  Entry_date             DateTime?     @db.Date
+  Entreprise_id          Int?
+  Account                Account?      @relation(fields: [Account_id], references: [Account_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Knowledge_fk_Knwldg_Accnts_1")
+  Documents              Documents?    @relation(fields: [Document_id], references: [Document_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Knowledge_fk_Knwldg_Docs_2")
+  Management             Management?   @relation(fields: [Audience], references: [Administration_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Knowledge_fk_Knwldg_Mngnt_3")
+  Records                Records?      @relation(fields: [Records_id], references: [Records_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Knowledge_fk_Knwldg_Rcrd_6")
+  Stakeholder            Stakeholder?  @relation(fields: [Author], references: [Stakeholder_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Knowledge_fk_Knwldg_Stkhldr_4")
+  Transactions           Transactions? @relation(fields: [Transactions_id], references: [Transactions_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Knowledge_fk_Knwldg_Transxs_5")
+
+  @@index([Account_id], map: "fk_Accounts_idx_Knowledge")
+  @@index([Document_id], map: "fk_Documents_idx_Knowledge")
+  @@index([Audience], map: "fk_Management_idx_Knowledge")
+  @@index([Records_id], map: "fk_Records_idx_Knowledge")
+  @@index([Author], map: "fk_Stakeholder_idx_Knowledge")
+  @@index([Transactions_id], map: "fk_Transactions_idx_Knowledge")
+}
+
+model Ledger {
+  Ledger_id                                Int            @id @default(autoincrement())
+  Account_id                               Int?
+  Journal_id                               Int?
+  Administration_id                        Int?
+  Asset_id                                 Int?
+  Liablity_id                              Int?
+  Equity_id                                Int?
+  Income_id                                Int?
+  Expenditure_id                           Int?
+  Transactions_id                          Int?
+  Ledger_Name                              String?        @db.VarChar(100)
+  Ledger_Description                       String?        @db.VarChar(255)
+  Ledger_Amount                            Decimal?       @db.Decimal(15, 2)
+  Ledger_Total                             Decimal?       @db.Decimal(15, 2)
+  Parent_Report_id                         Int?           @default(0)
+  Report_Stage                             Int?           @default(0)
+  Account                                  Account?       @relation(fields: [Account_id], references: [Account_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Ledger_fk_Ldgr_Accounts_6")
+  Management                               Management?    @relation(fields: [Administration_id], references: [Administration_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Ledger_fk_Ldgr_Admin_9")
+  Assets                                   Assets?        @relation(fields: [Asset_id], references: [Assets_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Ledger_fk_Ldgr_Assets_1")
+  Equity                                   Equity?        @relation(fields: [Equity_id], references: [Equity_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Ledger_fk_Ldgr_Equity_3")
+  Expenditure                              Expenditure?   @relation(fields: [Expenditure_id], references: [Expenditure_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Ledger_fk_Ldgr_Expenditure_5")
+  Income                                   Income?        @relation(fields: [Income_id], references: [Income_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Ledger_fk_Ldgr_Income_4")
+  Journal                                  Journal?       @relation(fields: [Journal_id], references: [Journal_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Ledger_fk_Ldgr_Journal_7")
+  Liability                                Liability?     @relation(fields: [Liablity_id], references: [Liability_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Ledger_fk_Ldgr_Liability_2")
+  Reports_Ledger_Parent_Report_idToReports Reports?       @relation("Ledger_Parent_Report_idToReports", fields: [Parent_Report_id], references: [Reports_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Ledger_fk_Ldgr_Prnt_Rprt_10")
+  Transactions                             Transactions?  @relation(fields: [Transactions_id], references: [Transactions_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Ledger_fk_Ldgr_Trxns_8")
+  Organisation                             Organisation[]
+  Reports_Reports_Ledger_idToLedger        Reports[]      @relation("Reports_Ledger_idToLedger")
+
+  @@index([Administration_id], map: "fk_Administration_idx_Ledger")
+  @@index([Asset_id], map: "fk_Assets_idx_Ledger")
+  @@index([Equity_id], map: "fk_Equity_idx_Ledger")
+  @@index([Expenditure_id], map: "fk_Expenditure_idx_Ledger")
+  @@index([Income_id], map: "fk_Income_idx_Ledger")
+  @@index([Journal_id], map: "fk_Journal_idx_Ledger")
+  @@index([Liablity_id], map: "fk_Liability_idx_Ledger")
+  @@index([Parent_Report_id], map: "fk_Parent_Report_idx_Ledger")
+  @@index([Transactions_id], map: "fk_Tranactions_idx_Ledger")
+  @@index([Report_Stage], map: "idx_report_stage_Ledger")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model Liability {
+  Liability_id             Int       @id @default(autoincrement())
+  Catalogue_id             Int
+  Account_id               Int
+  Records_id               Int
+  Liability_Type           String?   @db.VarChar(45)
+  Liability_Classification String?   @db.VarChar(20)
+  Net_Amount               Decimal?  @db.Decimal(15, 2)
+  Period                   DateTime? @db.Date
+  Period_end               DateTime? @db.Date
+  Entreprise_id            Int?
+  Ledger                   Ledger[]
+  Account                  Account   @relation(fields: [Account_id], references: [Account_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Liability_fk_Liability_Account_2")
+  Catalogue                Catalogue @relation(fields: [Catalogue_id], references: [Catalogue_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Liability_fk_Liability_Catalogue_3")
+  Records                  Records   @relation(fields: [Records_id], references: [Records_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Liability_fk_Liability_Records_1")
+
+  @@index([Account_id], map: "fk_Account_idx_Liability")
+  @@index([Catalogue_id], map: "fk_Catalogue_idx_Liability")
+  @@index([Records_id], map: "fk_Records_idx_Liability")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model LogicConditions {
+  LogicConditions_id                                     Int               @id @default(autoincrement())
+  Catalogue_id                                           Int?
+  Account_id                                             Int?
+  Structure_id                                           Int?
+  Parent_Logic                                           Int?
+  Conditons_Name                                         String?           @db.VarChar(45)
+  When_Event                                             String?           @db.VarChar(20)
+  Then_Actions                                           String?
+  Else_Actions                                           String?
+  Owner_Message                                          String?           @db.VarChar(255)
+  Accountant_Message                                     String?           @db.VarChar(255)
+  System_Action                                          String?           @db.VarChar(100)
+  Left_Operand                                           String?           @db.VarChar(100)
+  Operator                                               String?           @db.VarChar(10)
+  Right_Operand                                          String?           @db.VarChar(100)
+  Check_Expression                                       String?           @db.VarChar(500)
+  Enforcement                                            String?           @db.VarChar(10)
+  Review_Level                                           String?           @db.VarChar(20)
+  Fact_Type                                              String?           @db.VarChar(15)
+  Confidence_Level                                       Int?              @db.SmallInt
+  Logic_Explanation                                      String?
+  Failure_Message                                        String?           @db.VarChar(255)
+  Logic_type                                             String?           @db.VarChar(20)
+  Rule_Result                                            String?           @db.VarChar(15)
+  Rule_Reason                                            String?           @db.VarChar(30)
+  Rule_Override_by                                       Int?
+  Rule_Override_date                                     DateTime?         @db.Date
+  Rule_Override_reason                                   String?           @db.VarChar(255)
+  Validation_Tier                                        String?           @default("ACCOUNTING") @db.VarChar(15)
+  Account_History                                        Account_History[]
+  Catalogue_Catalogue_LogicConditons_idToLogicConditions Catalogue[]       @relation("Catalogue_LogicConditons_idToLogicConditions")
+  Catalogue_Catalogue_Primary_Logic_idToLogicConditions  Catalogue[]       @relation("Catalogue_Primary_Logic_idToLogicConditions")
+  Account                                                Account?          @relation(fields: [Account_id], references: [Account_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_LogicConditions_fk_lc_Account_1")
+  Catalogue_LogicConditions_Catalogue_idToCatalogue      Catalogue?        @relation("LogicConditions_Catalogue_idToCatalogue", fields: [Catalogue_id], references: [Catalogue_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_LogicConditions_fk_lc_Catalogue_4")
+  LogicConditions                                        LogicConditions?  @relation("LogicConditionsToLogicConditions", fields: [Parent_Logic], references: [LogicConditions_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_LogicConditions_fk_lc_Logic_3")
+  other_LogicConditions                                  LogicConditions[] @relation("LogicConditionsToLogicConditions")
+  Structures                                             Structures?       @relation(fields: [Structure_id], references: [Structures_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_LogicConditions_fk_lc_Structure_2")
+  Management                                             Management[]
+
+  @@index([Account_id], map: "fk_Account_idx_LogicConditions")
+  @@index([Catalogue_id], map: "fk_Catalogue_idx_LogicConditions")
+  @@index([Parent_Logic], map: "fk_Logic_idx_LogicConditions")
+  @@index([Structure_id], map: "fk_Structure_idx_LogicConditions")
+  @@index([Validation_Tier], map: "idx_logicconditions_tier")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model Management {
+  Administration_id                                       Int                       @id @default(autoincrement())
+  Catalogue_id                                            Int
+  LogicConditons_id                                       Int?
+  ProcessActions_id                                       Int?
+  Stakeholder_id                                          Int?
+  Records_id                                              Int?
+  Product_id                                              Int?
+  Review_Level                                            String?                   @db.VarChar(45)
+  Administration_type                                     String?                   @db.VarChar(45)
+  Inheritance_Status                                      String?                   @db.VarChar(20)
+  Management_Role                                         String?                   @db.VarChar(45)
+  Management_Name                                         String?                   @db.VarChar(45)
+  Management_Cost                                         Decimal?                  @db.Decimal(15, 2)
+  Arrangement_Type                                        String?                   @db.VarChar(20)
+  Arrangement_Rate                                        Decimal?                  @db.Decimal(5, 2)
+  Access_Level                                            String?                   @db.VarChar(20)
+  Organisation_id                                         Int?
+  Document_id                                             Int?
+  Username                                                String?                   @db.VarChar(45)
+  Password_Hash                                           String?                   @db.VarChar(255)
+  Entreprise_id                                           Int?
+  Account_History_Account_History_Approved_byToManagement Account_History[]         @relation("Account_History_Approved_byToManagement")
+  Account_History_Account_History_AuthorToManagement      Account_History[]         @relation("Account_History_AuthorToManagement")
+  Documents_Documents_Approved_ByToManagement             Documents[]               @relation("Documents_Approved_ByToManagement")
+  Documents_Documents_Modified_byToManagement             Documents[]               @relation("Documents_Modified_byToManagement")
+  Documents_Documents_Generated_ByToManagement            Documents[]               @relation("Documents_Generated_ByToManagement")
+  Evidence                                                Evidence[]
+  Journal_Journal_Administration_idToManagement           Journal[]                 @relation("Journal_Administration_idToManagement")
+  Journal_Journal_Corrected_ByToManagement                Journal[]                 @relation("Journal_Corrected_ByToManagement")
+  Knowledge                                               Knowledge[]
+  Ledger                                                  Ledger[]
+  Catalogue                                               Catalogue                 @relation(fields: [Catalogue_id], references: [Catalogue_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Management_fk_Mgmt_Catlge_1")
+  LogicConditions                                         LogicConditions?          @relation(fields: [LogicConditons_id], references: [LogicConditions_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Management_fk_Mgmt_Logic_2")
+  Organisation_Management_Organisation_idToOrganisation   Organisation?             @relation("Management_Organisation_idToOrganisation", fields: [Organisation_id], references: [Entreprise_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Management_fk_Mgmt_Orgstn_7")
+  ProcessActions                                          ProcessActions?           @relation(fields: [ProcessActions_id], references: [ProcessActions_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Management_fk_Mgmt_Prcss_3")
+  Product                                                 Product?                  @relation(fields: [Product_id], references: [Product_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Management_fk_Mgmt_Prdct_5")
+  Records_Management_Records_idToRecords                  Records?                  @relation("Management_Records_idToRecords", fields: [Records_id], references: [Records_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Management_fk_Mgmt_Rcrds_6")
+  Stakeholder                                             Stakeholder?              @relation(fields: [Stakeholder_id], references: [Stakeholder_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Management_fk_Mgmt_Stkhlder_4")
+  Documents_Management_Document_idToDocuments             Documents?                @relation("Management_Document_idToDocuments", fields: [Document_id], references: [Document_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Management_fk_Mngmt_Doc_8")
+  Narrative                                               Narrative[]
+  Organisation_Organisation_Administration_idToManagement Organisation[]            @relation("Organisation_Administration_idToManagement")
+  Records_Records_Administration_idToManagement           Records[]                 @relation("Records_Administration_idToManagement")
+  Structures_Structures_Approved_ByToManagement           Structures[]              @relation("Structures_Approved_ByToManagement")
+  Structures_Structures_Created_ByToManagement            Structures[]              @relation("Structures_Created_ByToManagement")
+  Till_Denomination_Count                                 Till_Denomination_Count[]
+  Transactions                                            Transactions[]
+
+  @@index([Catalogue_id], map: "fk_Catalogue_idx_Management")
+  @@index([LogicConditons_id], map: "fk_Logic_idx_Management")
+  @@index([Document_id], map: "fk_Mngmt_Doc_idx_Management")
+  @@index([ProcessActions_id], map: "fk_Process_idx_Management")
+  @@index([Product_id], map: "fk_Product_idx_Management")
+  @@index([Records_id], map: "fk_Records_idx_Management")
+  @@index([Stakeholder_id], map: "fk_Stakeholder_idx_Management")
+  @@index([Entreprise_id], map: "idx_management_entreprise")
+  @@index([Username], map: "idx_management_username")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model Money {
+  Money_id                                                   Int           @id @default(autoincrement())
+  Account_id                                                 Int
+  Stakeholder_id                                             Int?
+  Asset_id                                                   Int?
+  Structures_id                                              Int?
+  Product_id                                                 Int?
+  Income_id                                                  Int?
+  Payment_id                                                 Int?
+  Journal_id                                                 Int?
+  Transactions_id                                            Int?
+  Settlement_transaction_id                                  Int?
+  Cycle_id                                                   Int?
+  Instrument_type                                            String?       @db.VarChar(45)
+  Instrument_Class                                           String?       @db.VarChar(20)
+  Accounting_Treatment                                       String?       @db.VarChar(30)
+  Money_Status                                               String        @db.VarChar(20)
+  Repayment_Frequency                                        String?       @db.VarChar(10)
+  Risk_Level                                                 String?       @db.VarChar(10)
+  Money_Name                                                 String?       @db.VarChar(45)
+  Principal_amount                                           Decimal?      @db.Decimal(15, 2)
+  Interest_rate                                              Decimal?      @db.Decimal(10, 6)
+  Outstanding_Amount                                         Decimal?      @db.Decimal(15, 2)
+  Start_date                                                 DateTime?     @db.Timestamp(6)
+  Maturity_date                                              DateTime?     @db.Timestamp(6)
+  Due_Date                                                   DateTime?     @db.Date
+  Risk_note                                                  String?       @db.VarChar(255)
+  Entreprise_id                                              Int?
+  Account                                                    Account       @relation(fields: [Account_id], references: [Account_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Money_fk_Mony_Accnt_3")
+  Assets                                                     Assets?       @relation(fields: [Asset_id], references: [Assets_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Money_fk_Mony_Assets_4")
+  Transactions_Money_Cycle_idToTransactions                  Transactions? @relation("Money_Cycle_idToTransactions", fields: [Cycle_id], references: [Transactions_id], onDelete: Restrict, onUpdate: Restrict, map: "fk_Money_fk_Mony_Cycle_10")
+  Income                                                     Income?       @relation(fields: [Income_id], references: [Income_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Money_fk_Mony_Incom_5")
+  Journal                                                    Journal?      @relation(fields: [Journal_id], references: [Journal_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Money_fk_Mony_Jrnl_8")
+  Payment_Money_Payment_idToPayment                          Payment?      @relation("Money_Payment_idToPayment", fields: [Payment_id], references: [Payment_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Money_fk_Mony_Paymnt_1")
+  Product                                                    Product?      @relation(fields: [Product_id], references: [Product_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Money_fk_Mony_Prdct_7")
+  Transactions_Money_Settlement_transaction_idToTransactions Transactions? @relation("Money_Settlement_transaction_idToTransactions", fields: [Settlement_transaction_id], references: [Transactions_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Money_fk_Mony_Setlmt_transxn_11")
+  Stakeholder                                                Stakeholder?  @relation(fields: [Stakeholder_id], references: [Stakeholder_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Money_fk_Mony_Stkhldr_9")
+  Structures                                                 Structures?   @relation(fields: [Structures_id], references: [Structures_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Money_fk_Mony_Struct_6")
+  Transactions_Money_Transactions_idToTransactions           Transactions? @relation("Money_Transactions_idToTransactions", fields: [Transactions_id], references: [Transactions_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Money_fk_Mony_Transxn_2")
+  Payment_Payment_Money_idToMoney                            Payment[]     @relation("Payment_Money_idToMoney")
+
+  @@index([Account_id], map: "fk_Account_idx_Money")
+  @@index([Asset_id], map: "fk_Assets_idx_Money")
+  @@index([Payment_id], map: "fk_Cost_idx_Money")
+  @@index([Journal_id], map: "fk_Journal_idx_Money")
+  @@index([Product_id], map: "fk_Product_idx_Money")
+  @@index([Income_id], map: "fk_Revenue_idx_Money")
+  @@index([Settlement_transaction_id], map: "fk_Settlement_transaction_idx_Money")
+  @@index([Stakeholder_id], map: "fk_Stakeholder_idx_Money")
+  @@index([Structures_id], map: "fk_Structures_idx_Money")
+  @@index([Transactions_id], map: "fk_Transaction_idx_Money")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model Narrative {
+  Narrative_id             Int           @id @default(autoincrement())
+  Account_id               Int?
+  Transaction_id           Int?
+  Records_id               Int?
+  Document_id              Int?
+  Narrative_type           String?       @db.VarChar(45)
+  Narrative_audience       String?       @db.VarChar(15)
+  Is_Generated             Int           @default(1)
+  Generated_from_catalogue Int?
+  Narrative_source         String?       @db.VarChar(20)
+  Description              String?
+  Language                 String?       @db.VarChar(20)
+  Author                   Int?
+  Narrative_date           DateTime?     @db.Timestamp(6)
+  Entreprise_id            Int?
+  Account                  Account?      @relation(fields: [Account_id], references: [Account_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Narrative_fk_Nartiv_Accnt_1")
+  Documents                Documents?    @relation(fields: [Document_id], references: [Document_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Narrative_fk_Nartiv_Docs_2")
+  Records                  Records?      @relation(fields: [Records_id], references: [Records_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Narrative_fk_Nartiv_Recrd_5")
+  Management               Management?   @relation(fields: [Author], references: [Administration_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Narrative_fk_Nartiv_Stkhldrs_3")
+  Transactions             Transactions? @relation(fields: [Transaction_id], references: [Transactions_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Narrative_fk_Nartiv_Transxn_4")
+
+  @@index([Account_id], map: "fk_Account_idx_Narrative")
+  @@index([Document_id], map: "fk_Documents_idx_Narrative")
+  @@index([Records_id], map: "fk_Nartiv_Recrd_Narrative")
+  @@index([Transaction_id], map: "fk_Nartiv_Transxn_Narrative")
+  @@index([Author], map: "fk_Stakeholders_idx_Narrative")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model Organisation {
+  Entreprise_id                                         Int           @id @default(autoincrement())
+  Administration_id                                     Int?
+  Account_id                                            Int
+  Catalogue_id                                          Int
+  Ledger_id                                             Int?
+  Resources_id                                          Int?
+  Product_id                                            Int?
+  Equity_id                                             Int?
+  Asset_id                                              Int?
+  Transaction_id                                        Int?
+  Organisational_Name                                   String?       @db.VarChar(45)
+  Organisation_category                                 String?       @db.VarChar(45)
+  Organisation_Value                                    Decimal?      @db.Decimal(15, 2)
+  Industry                                              String?       @db.VarChar(45)
+  Business_Units                                        String?
+  Organisation_Type                                     String?       @db.VarChar(45)
+  Organisation_Address                                  String?       @db.VarChar(45)
+  Country                                               String?       @db.VarChar(100)
+  Business_Maturity                                     Decimal?      @db.Decimal(15, 2)
+  Fiscal_Year_Start                                     DateTime?     @db.Date
+  Fiscal_Year                                           DateTime?     @db.Date
+  Organisation_Currency                                 String?       @db.VarChar(45)
+  Organisation_Country                                  String?       @db.VarChar(45)
+  Worth_Estimated                                       Decimal?      @db.Decimal(15, 3)
+  Worth_Book_Value                                      Decimal?      @db.Decimal(15, 3)
+  Worth_Method                                          String?       @db.VarChar(20)
+  Worth_Date                                            DateTime?     @db.Date
+  Documents                                             Documents[]
+  Management_Management_Organisation_idToOrganisation   Management[]  @relation("Management_Organisation_idToOrganisation")
+  Account                                               Account       @relation(fields: [Account_id], references: [Account_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Organisation_fk_Orgsn_Account_1")
+  Assets                                                Assets?       @relation(fields: [Asset_id], references: [Assets_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Organisation_fk_Orgsn_Assets_3")
+  Catalogue                                             Catalogue     @relation(fields: [Catalogue_id], references: [Catalogue_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Organisation_fk_Orgsn_Catlge_6")
+  Equity                                                Equity?       @relation(fields: [Equity_id], references: [Equity_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Organisation_fk_Orgsn_Equity_4")
+  Ledger                                                Ledger?       @relation(fields: [Ledger_id], references: [Ledger_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Organisation_fk_Orgsn_Ledger_7")
+  Management_Organisation_Administration_idToManagement Management?   @relation("Organisation_Administration_idToManagement", fields: [Administration_id], references: [Administration_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Organisation_fk_Orgsn_Mngmnt_9")
+  Product                                               Product?      @relation(fields: [Product_id], references: [Product_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Organisation_fk_Orgsn_Prdct_5")
+  Resources                                             Resources?    @relation(fields: [Resources_id], references: [Resources_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Organisation_fk_Orgsn_Resrcs_2")
+  Transactions                                          Transactions? @relation(fields: [Transaction_id], references: [Transactions_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Organisation_fk_Orgsn_Trxn_8")
+  Records                                               Records[]
+
+  @@index([Account_id], map: "fk_Account_idx_Organisation")
+  @@index([Asset_id], map: "fk_Assets_idx_Organisation")
+  @@index([Catalogue_id], map: "fk_Catalogue_idx_Organisation")
+  @@index([Equity_id], map: "fk_Equity_idx_Organisation")
+  @@index([Ledger_id], map: "fk_Ledger_idx_Organisation")
+  @@index([Administration_id], map: "fk_Management_idx_Organisation")
+  @@index([Product_id], map: "fk_Product_idx_Organisation")
+  @@index([Resources_id], map: "fk_Resources_idx_Organisation")
+  @@index([Transaction_id], map: "fk_Transaction_idx_Organisation")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model Payment {
+  Payment_id                      Int       @id @default(autoincrement())
+  Money_id                        Int?
+  Product_id                      Int
+  Records_id                      Int?
+  Payment_type                    String?   @db.VarChar(45)
+  Payment_Status                  String?   @db.VarChar(20)
+  Payment_Due_Date                DateTime? @db.Date
+  Payment_Received_Date           DateTime? @db.Date
+  Payment_Method                  String?   @db.VarChar(45)
+  Payment_Price                   Decimal?  @db.Decimal(15, 2)
+  Payment_Quantity                Decimal?  @db.Decimal(15, 3)
+  Payment_Duration                String?   @db.VarChar(45)
+  Inventory_Cost                  Decimal?  @db.Decimal(15, 2)
+  Mobile_money_provider           String?   @db.VarChar(45)
+  Mobile_money_ref                String?   @db.VarChar(45)
+  Till_Number                     String?   @db.VarChar(45)
+  Paybill_Number                  String?   @db.VarChar(45)
+  Payment_Phone_Number            String?   @db.VarChar(45)
+  Payment_Transaction_Reference   String?   @db.VarChar(100)
+  Payment_Reference               String?   @db.VarChar(100)
+  Payment_Amount                  Decimal?  @db.Decimal(15, 2)
+  Money_Money_Payment_idToPayment Money[]   @relation("Money_Payment_idToPayment")
+  Money_Payment_Money_idToMoney   Money?    @relation("Payment_Money_idToMoney", fields: [Money_id], references: [Money_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Payment_fk_pay_Money_3")
+  Product                         Product   @relation(fields: [Product_id], references: [Product_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Payment_fk_pay_Product_1")
+  Records                         Records?  @relation(fields: [Records_id], references: [Records_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Payment_fk_pay_Records_2")
+
+  @@index([Product_id], map: "fk_Product_idx_Payment")
+  @@index([Records_id], map: "fk_Records_idx_Payment")
+  @@index([Money_id], map: "fk_pay_Money_idx_Payment")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ProcessActions {
+  ProcessActions_id        Int            @id @default(autoincrement())
+  Process_name             String         @db.VarChar(45)
+  Action_Type              String?        @db.VarChar(20)
+  Cycle_type               String?        @db.VarChar(20)
+  Sequence_No              Int?
+  Accounting_Event         Int?           @default(0) @db.SmallInt
+  Operational_Event        Int?           @default(0) @db.SmallInt
+  From_State               String?        @db.VarChar(20)
+  To_State                 String?        @db.VarChar(20)
+  Applies_To               String?        @db.VarChar(20)
+  Affects_Cash             Int?           @default(0) @db.SmallInt
+  Affects_Resources        Int?           @default(0) @db.SmallInt
+  Requires_Approval        Int?           @default(0) @db.SmallInt
+  Approval_Level           String?        @db.VarChar(20)
+  ParentAction_id          Int?
+  Process_Description      String?        @db.VarChar(255)
+  Default_Journal_Template String?        @db.VarChar(45)
+  Evidence_Event           Int?           @db.SmallInt
+  Reversal_Method          String?        @db.VarChar(20)
+  Required_Document        String?        @db.VarChar(45)
+  Required_Evidence        String?        @db.VarChar(45)
+  Scheduled_date           String?        @db.VarChar(45)
+  Is_Recurring             Int?           @db.SmallInt
+  Recurrence_Pattern       String?        @db.VarChar(20)
+  Catalogue                Catalogue[]
+  Management               Management[]
+  Transactions             Transactions[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model Product {
+  Product_id              Int            @id @default(autoincrement())
+  Stakeholder_id          Int?
+  Product_type            String?        @db.VarChar(45)
+  Product_Name            String?        @db.VarChar(45)
+  Product_Price           Decimal?       @db.Decimal(15, 2)
+  Product_Rate            Decimal?       @db.Decimal(15, 2)
+  Product_Provider        Int?
+  Product_Unit            String?        @db.VarChar(45)
+  Product_Category        String?        @db.VarChar(45)
+  Product_Barcode         String?        @db.VarChar(45)
+  Product_Cost            Decimal?       @db.Decimal(15, 2)
+  Product_Reorder_Level   Decimal?       @db.Decimal(15, 3)
+  Product_Expiry_Tracking Int?           @default(0) @db.SmallInt
+  Is_Asset                Int?           @default(0) @db.SmallInt
+  Is_Service              Int?           @default(0) @db.SmallInt
+  Business_Unit           String?        @db.VarChar(20)
+  Is_Utility              Int?           @default(0) @db.SmallInt
+  Billing_Cycle           String?        @db.VarChar(20)
+  Entreprise_id           Int?
+  Account                 Account[]
+  Journal                 Journal[]
+  Management              Management[]
+  Money                   Money[]
+  Organisation            Organisation[]
+  Payment                 Payment[]
+  Stakeholder             Stakeholder?   @relation(fields: [Stakeholder_id], references: [Stakeholder_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Product_fk_prod_stakeHolder_1")
+  Resources               Resources[]
+  Transactions            Transactions[]
+
+  @@index([Stakeholder_id], map: "fk_StakeHolder_idx_Product")
+  @@index([Business_Unit], map: "idx_product_business_unit")
+  @@index([Entreprise_id], map: "idx_product_entreprise")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model Records {
+  Records_id                                         Int            @id @default(autoincrement())
+  Catalogue_id                                       Int
+  Transactions_id                                    Int?
+  Administration_id                                  Int?
+  Entreprise_id                                      Int?
+  Records_Totals                                     Decimal?       @db.Decimal(15, 2)
+  Records_type                                       String?        @db.VarChar(20)
+  Records_date                                       DateTime?      @db.Date
+  Period_start                                       DateTime?      @db.Timestamp(6)
+  Period_end                                         DateTime?      @db.Timestamp(6)
+  Business_Unit                                      String?        @db.VarChar(45)
+  Total_Income                                       Decimal?       @default(0) @db.Decimal(15, 2)
+  Total_Expenditure                                  Decimal?       @default(0) @db.Decimal(15, 2)
+  Total_Cash_In                                      Decimal?       @default(0) @db.Decimal(15, 2)
+  Total_Cash_Out                                     Decimal?       @default(0) @db.Decimal(15, 2)
+  Transaction_Count                                  Int?           @default(0)
+  Net_Position                                       Decimal?       @default(0) @db.Decimal(15, 2)
+  Structures_id                                      Int?
+  Period_id                                          Int?
+  Opening_Cash                                       Decimal?       @default(0) @db.Decimal(15, 2)
+  Expected_Closing_Cash                              Decimal?       @default(0) @db.Decimal(15, 2)
+  Actual_Closing_Cash                                Decimal?       @default(0) @db.Decimal(15, 2)
+  Cash_Variance                                      Decimal?       @default(0) @db.Decimal(15, 2)
+  Stock_Reconciliation                               Json?          @db.Json
+  Batch_Status                                       String?        @default("OPEN") @db.VarChar(10)
+  Stakeholder_id                                     Int?
+  Account                                            Account[]
+  Assets                                             Assets[]
+  Equity                                             Equity[]
+  Evidence                                           Evidence[]
+  Expenditure                                        Expenditure[]
+  Income                                             Income[]
+  Knowledge                                          Knowledge[]
+  Liability                                          Liability[]
+  Management_Management_Records_idToRecords          Management[]   @relation("Management_Records_idToRecords")
+  Narrative                                          Narrative[]
+  Payment                                            Payment[]
+  Management_Records_Administration_idToManagement   Management?    @relation("Records_Administration_idToManagement", fields: [Administration_id], references: [Administration_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Records_fk_Recrd_Admin_3")
+  Catalogue                                          Catalogue      @relation(fields: [Catalogue_id], references: [Catalogue_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Records_fk_Recrd_Catlge_1")
+  Organisation                                       Organisation?  @relation(fields: [Entreprise_id], references: [Entreprise_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Records_fk_Recrd_Organstn_4")
+  Structures_Records_Period_idToStructures           Structures?    @relation("Records_Period_idToStructures", fields: [Period_id], references: [Structures_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Records_fk_Recrd_Period_6")
+  Structures_Records_Structures_idToStructures       Structures?    @relation("Records_Structures_idToStructures", fields: [Structures_id], references: [Structures_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Records_fk_Recrd_Struct_5")
+  Transactions_Records_Transactions_idToTransactions Transactions?  @relation("Records_Transactions_idToTransactions", fields: [Transactions_id], references: [Transactions_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Records_fk_Recrd_Transxn_2")
+  Reports                                            Reports[]
+  Resources                                          Resources[]
+  Transactions_Transactions_Records_idToRecords      Transactions[] @relation("Transactions_Records_idToRecords")
+
+  @@index([Administration_id], map: "fk_Administration_idx_Records")
+  @@index([Catalogue_id], map: "fk_Catalogue_idx_Records")
+  @@index([Entreprise_id], map: "fk_Organisation_idx_Records")
+  @@index([Period_id], map: "fk_Period_idx_Records")
+  @@index([Structures_id], map: "fk_Structures_idx_Records")
+  @@index([Transactions_id], map: "fk_Transaction_idx_Records")
+  @@index([Records_date], map: "idx_records_date_Records")
+  @@index([Entreprise_id], map: "idx_records_entreprise")
+  @@index([Stakeholder_id], map: "idx_records_stakeholder")
+  @@index([Records_type], map: "idx_records_type_Records")
+  @@index([Business_Unit], map: "idx_records_unit_Records")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model Reports {
+  Reports_id                              Int           @id @default(autoincrement())
+  Account_id                              Int?
+  Journal_id                              Int?
+  Ledger_id                               Int?
+  Transactions_id                         Int?
+  Records_id                              Int?
+  Reports_type                            String?       @db.VarChar(45)
+  Report_category                         String?       @db.VarChar(20)
+  Reports_period                          DateTime?     @db.Date
+  Reports_Period_Start                    DateTime?     @db.Timestamp(6)
+  Reports_Period_End                      DateTime?     @db.Timestamp(6)
+  Reports_NetValue                        Decimal?      @db.Decimal(15, 2)
+  CF_Category                             String?       @db.VarChar(20)
+  CF_Operating                            Decimal?      @db.Decimal(15, 2)
+  CF_Investing                            Decimal?      @db.Decimal(15, 2)
+  CF_Financing                            Decimal?      @db.Decimal(15, 2)
+  Free_Cash_Flow                          Decimal?      @db.Decimal(15, 2)
+  Net_Profit                              Decimal?      @db.Decimal(15, 2)
+  Report_basis                            String?       @db.VarChar(10)
+  Report_Stage                            String?       @db.VarChar(30)
+  Is_Adjusted                             Int?          @default(0) @db.SmallInt
+  Parent_Report_id                        Int?          @default(0)
+  Adjustment_count                        Int?          @default(0)
+  Entreprise_id                           Int?
+  Report_Status                           String?       @default("DRAFT") @db.VarChar(20)
+  Documents                               Documents[]
+  Ledger_Ledger_Parent_Report_idToReports Ledger[]      @relation("Ledger_Parent_Report_idToReports")
+  Account                                 Account?      @relation(fields: [Account_id], references: [Account_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Reports_fk_Rprt_Account_4")
+  Journal                                 Journal?      @relation(fields: [Journal_id], references: [Journal_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Reports_fk_Rprt_Journal_5")
+  Ledger_Reports_Ledger_idToLedger        Ledger?       @relation("Reports_Ledger_idToLedger", fields: [Ledger_id], references: [Ledger_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Reports_fk_Rprt_Ledger_3")
+  Reports                                 Reports?      @relation("ReportsToReports", fields: [Parent_Report_id], references: [Reports_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Reports_fk_Rprt_Parent_6")
+  other_Reports                           Reports[]     @relation("ReportsToReports")
+  Records                                 Records?      @relation(fields: [Records_id], references: [Records_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Reports_fk_Rprt_Records_2")
+  Transactions                            Transactions? @relation(fields: [Transactions_id], references: [Transactions_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Reports_fk_Rprt_Transaction_1")
+
+  @@index([Account_id], map: "fk_Account_idx_Reports")
+  @@index([Journal_id], map: "fk_Journal_idx_Reports")
+  @@index([Ledger_id], map: "fk_Ledger_idx_Reports")
+  @@index([Parent_Report_id], map: "fk_Parent_idx_Reports")
+  @@index([Records_id], map: "fk_Records_idx_Reports")
+  @@index([Transactions_id], map: "fk_Transaction_idx_Reports")
+  @@index([Report_Status], map: "idx_reports_status")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model Resources {
+  Resources_id                Int            @id @default(autoincrement())
+  Product_id                  Int
+  Resource_type               String?        @db.VarChar(20)
+  Resource_Class              String?        @db.VarChar(20)
+  Resource_Category           String?        @db.VarChar(45)
+  Consumption_Method          String?        @db.VarChar(20)
+  Records_id                  Int?
+  Stakeholder_id              Int?
+  Resources_Quantity          Decimal?       @db.Decimal(15, 3)
+  Fair_Value                  Decimal?       @db.Decimal(15, 2)
+  Fair_Value_Date             DateTime?      @db.Date
+  Fair_Value_Basis            String?        @db.VarChar(25)
+  Resources_Price             Decimal?       @db.Decimal(15, 2)
+  Unit_Cost                   Decimal?       @db.Decimal(15, 2)
+  Margin_rate                 Decimal?       @db.Decimal(5, 2)
+  Resources_Life              String?        @db.VarChar(45)
+  Resources_Quality           String?        @db.VarChar(45)
+  Resources_Status            String?        @db.VarChar(20)
+  Resources_Source            String?        @db.VarChar(20)
+  Resources_Purchase_Document String?        @db.VarChar(255)
+  Inventory_Batch_Number      String?        @db.VarChar(45)
+  Resources_Manufacture_Date  DateTime?      @db.Date
+  Resources_Expiry_Date       DateTime?      @db.Date
+  Last_updated                DateTime?      @db.Timestamp(6)
+  Selling_Price               Decimal?       @db.Decimal(15, 2)
+  Entreprise_id               Int?
+  Animal_Tag                  String?        @db.VarChar(20)
+  Animal_Sex                  String?        @db.VarChar(10)
+  Last_Review_Date            DateTime?      @db.Date
+  Growth_Stage                String?        @db.VarChar(20)
+  Parent_Resources_id         Int?
+  Hourly_Rate                 Decimal?       @db.Decimal(15, 2)
+  Hours_Logged                Decimal?       @default(0) @db.Decimal(15, 2)
+  Service_Client              String?        @db.VarChar(100)
+  Organisation                Organisation[]
+  Product                     Product        @relation(fields: [Product_id], references: [Product_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Resources_fk_res_Product_1")
+  Stakeholder                 Stakeholder?   @relation(fields: [Stakeholder_id], references: [Stakeholder_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Resources_fk_res_Provider_3")
+  Records                     Records?       @relation(fields: [Records_id], references: [Records_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Resources_fk_res_Records_2")
+
+  @@index([Product_id], map: "fk_Product_idx_Resources")
+  @@index([Stakeholder_id], map: "fk_Provider_idx_Resources")
+  @@index([Records_id], map: "fk_Records_idx_Resources")
+  @@index([Animal_Tag], map: "idx_resources_animal_tag")
+  @@index([Parent_Resources_id], map: "idx_resources_parent")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model Stakeholder {
+  Stakeholder_id        Int          @id @default(autoincrement())
+  First_name            String?      @db.VarChar(45)
+  Last_name             String?      @db.VarChar(45)
+  Business_name         String?      @db.VarChar(150)
+  ID_Number             String?      @db.VarChar(45)
+  ID_type               String?      @db.VarChar(45)
+  Location              String?      @db.VarChar(45)
+  Address               String?      @db.VarChar(45)
+  Email_1               String?      @db.VarChar(45)
+  Tel_1                 String?      @db.VarChar(45)
+  Tel_2                 String?      @db.VarChar(45)
+  Email_2               String?      @db.VarChar(45)
+  Website               String?      @db.VarChar(150)
+  Stakeholder_Category  String?      @db.VarChar(45)
+  Stakeholder_Role      String?      @db.VarChar(45)
+  Relationship_to_owner String?      @db.VarChar(45)
+  Relationship_Status   String?      @db.VarChar(45)
+  Entreprise_id         Int?
+  Account               Account[]
+  Documents             Documents[]
+  Knowledge             Knowledge[]
+  Management            Management[]
+  Money                 Money[]
+  Product               Product[]
+  Resources             Resources[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model Structures {
+  Structures_id                                 Int               @id @default(autoincrement())
+  Parent_Structure_id                           Int?
+  Structure_Level                               String?           @db.VarChar(15)
+  Account_id                                    Int?
+  Structures_Type                               String?           @db.VarChar(45)
+  Effective_From                                DateTime?         @db.Date
+  Effective_To                                  DateTime?         @db.Date
+  Mandatory                                     Int?              @default(0) @db.SmallInt
+  Compliance_Level                              String?           @db.VarChar(20)
+  Business_Maturity                             String?           @db.VarChar(20)
+  Escalation_Role                               String?           @db.VarChar(20)
+  Measurement_Basis                             String?           @db.VarChar(20)
+  Created_By                                    Int?
+  Approved_By                                   Int?
+  Framework_Name                                String?           @db.VarChar(20)
+  Framework_Version                             String?           @db.VarChar(20)
+  Framework_Priority                            Int?              @db.SmallInt
+  Rule_Code                                     String?           @db.VarChar(20)
+  Standard_Reference                            String?           @db.VarChar(45)
+  Rule_Severity                                 String?           @db.VarChar(10)
+  Applies_To_Table                              String?           @db.VarChar(45)
+  Structures_Name                               String?           @db.VarChar(45)
+  Structures_Rule                               String?           @db.VarChar(45)
+  Structures_Condition                          String?           @db.VarChar(45)
+  Structures_Description                        String?           @db.VarChar(255)
+  Recognition_Method                            String?           @db.VarChar(45)
+  Structures_Period                             DateTime?         @db.Date
+  Preference_key                                String?           @db.VarChar(255)
+  Preference_value                              String?           @db.VarChar(255)
+  Period_Status                                 String?           @default("OPEN") @db.VarChar(10)
+  Period_name                                   String?           @db.VarChar(45)
+  Entreprise_id                                 Int?
+  Catalogue                                     Catalogue[]
+  Expenditure                                   Expenditure[]
+  Income                                        Income[]
+  Journal                                       Journal[]
+  LogicConditions                               LogicConditions[]
+  Money                                         Money[]
+  Records_Records_Period_idToStructures         Records[]         @relation("Records_Period_idToStructures")
+  Records_Records_Structures_idToStructures     Records[]         @relation("Records_Structures_idToStructures")
+  Account                                       Account?          @relation(fields: [Account_id], references: [Account_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Structures_fk_Struct_Account_1")
+  Management_Structures_Approved_ByToManagement Management?       @relation("Structures_Approved_ByToManagement", fields: [Approved_By], references: [Administration_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Structures_fk_Struct_ApprovedBy_3")
+  Management_Structures_Created_ByToManagement  Management?       @relation("Structures_Created_ByToManagement", fields: [Created_By], references: [Administration_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Structures_fk_Struct_CreatedBy_2")
+  Structures                                    Structures?       @relation("StructuresToStructures", fields: [Parent_Structure_id], references: [Structures_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Structures_fk_Struct_Parent_4")
+  other_Structures                              Structures[]      @relation("StructuresToStructures")
+
+  @@index([Account_id], map: "fk_Account_idx_Structures")
+  @@index([Parent_Structure_id], map: "fk_Parent_idx_Structures")
+  @@index([Entreprise_id], map: "idx_structures_entreprise")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model Till_Denomination_Count {
+  Till_Denomination_Count_id Int         @id @default(autoincrement())
+  Entreprise_id              Int
+  Business_Unit              String      @db.VarChar(20)
+  Count_Date                 DateTime    @db.Date
+  Count_1000                 Int         @default(0)
+  Count_500                  Int         @default(0)
+  Count_200                  Int         @default(0)
+  Count_100                  Int         @default(0)
+  Count_50                   Int         @default(0)
+  Count_40                   Int         @default(0)
+  Count_20                   Int         @default(0)
+  Count_10                   Int         @default(0)
+  Count_5                    Int         @default(0)
+  Count_1                    Int         @default(0)
+  Updated_By                 Int?
+  Updated_At                 DateTime    @default(now()) @db.Timestamp(6)
+  Management                 Management? @relation(fields: [Updated_By], references: [Administration_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_till_denomination_management")
+
+  @@unique([Entreprise_id, Business_Unit, Count_Date], map: "idx_till_denom_unique_day")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model Transactions {
+  Transactions_id                                             Int               @id @default(autoincrement())
+  Account_id                                                  Int
+  Records_id                                                  Int?
+  Correction_of                                               Int?
+  Correction_Reason                                           String?           @db.VarChar(255)
+  Corrected_By                                                Int?
+  Correction_Date                                             DateTime?         @db.Date
+  Correction_Status                                           String?           @default("ORIGINAL") @db.VarChar(15)
+  Cycle_id                                                    Int?
+  Cycle_type                                                  String?           @db.VarChar(20)
+  Cycle_parent                                                Int?
+  Cycle_stage                                                 Int?
+  Cycle_status                                                String?           @db.VarChar(20)
+  Cycle_reference                                             String?           @db.VarChar(45)
+  Product_id                                                  Int
+  ProcessActions_id                                           Int?
+  Transactions_date                                           DateTime          @db.Timestamp(6)
+  Quantity                                                    Decimal?          @db.Decimal(15, 3)
+  Amount                                                      Decimal?          @db.Decimal(15, 2)
+  Business_Event                                              String?           @db.VarChar(45)
+  Transaction_Nature                                          String?           @db.VarChar(20)
+  Reference_no                                                String?           @db.VarChar(45)
+  Tax_rate                                                    Decimal?          @db.Decimal(5, 2)
+  Tax_amount                                                  Decimal?          @db.Decimal(15, 2)
+  Created_at                                                  DateTime          @default(now()) @db.Timestamp(6)
+  Description                                                 String?           @db.VarChar(255)
+  Business_Unit                                               String?           @db.VarChar(20)
+  Confidence_Level                                            Int               @default(4) @db.SmallInt
+  Operational_Event                                           String?           @db.VarChar(45)
+  Accounting_Event                                            String?           @db.VarChar(45)
+  Evidence_id                                                 Int?
+  Entreprise_id                                               Int?
+  Account_History                                             Account_History[]
+  Documents_Documents_Cycle_idToTransactions                  Documents[]       @relation("Documents_Cycle_idToTransactions")
+  Documents_Documents_Transactions_idToTransactions           Documents[]       @relation("Documents_Transactions_idToTransactions")
+  Evidence_Evidence_Transactions_idToTransactions             Evidence[]        @relation("Evidence_Transactions_idToTransactions")
+  Expenditure                                                 Expenditure[]
+  Income                                                      Income[]
+  Journal                                                     Journal[]
+  Knowledge                                                   Knowledge[]
+  Ledger                                                      Ledger[]
+  Money_Money_Cycle_idToTransactions                          Money[]           @relation("Money_Cycle_idToTransactions")
+  Money_Money_Settlement_transaction_idToTransactions         Money[]           @relation("Money_Settlement_transaction_idToTransactions")
+  Money_Money_Transactions_idToTransactions                   Money[]           @relation("Money_Transactions_idToTransactions")
+  Narrative                                                   Narrative[]
+  Organisation                                                Organisation[]
+  Records_Records_Transactions_idToTransactions               Records[]         @relation("Records_Transactions_idToTransactions")
+  Reports                                                     Reports[]
+  Account                                                     Account           @relation(fields: [Account_id], references: [Account_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Transactions_fk_txn_Account_3")
+  Management                                                  Management?       @relation(fields: [Corrected_By], references: [Administration_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Transactions_fk_txn_Corrected_By_9")
+  Transactions_Transactions_Correction_ofToTransactions       Transactions?     @relation("Transactions_Correction_ofToTransactions", fields: [Correction_of], references: [Transactions_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Transactions_fk_txn_Correction_4")
+  other_Transactions_Transactions_Correction_ofToTransactions Transactions[]    @relation("Transactions_Correction_ofToTransactions")
+  Transactions_Transactions_Cycle_idToTransactions            Transactions?     @relation("Transactions_Cycle_idToTransactions", fields: [Cycle_id], references: [Transactions_id], onDelete: Restrict, onUpdate: Restrict, map: "fk_Transactions_fk_txn_Cycle_5")
+  other_Transactions_Transactions_Cycle_idToTransactions      Transactions[]    @relation("Transactions_Cycle_idToTransactions")
+  Evidence_Transactions_Evidence_idToEvidence                 Evidence?         @relation("Transactions_Evidence_idToEvidence", fields: [Evidence_id], references: [Evidence_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Transactions_fk_txn_Evidence_7")
+  Transactions_Transactions_Cycle_parentToTransactions        Transactions?     @relation("Transactions_Cycle_parentToTransactions", fields: [Cycle_parent], references: [Transactions_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Transactions_fk_txn_Parent_6")
+  other_Transactions_Transactions_Cycle_parentToTransactions  Transactions[]    @relation("Transactions_Cycle_parentToTransactions")
+  ProcessActions                                              ProcessActions?   @relation(fields: [ProcessActions_id], references: [ProcessActions_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Transactions_fk_txn_Process_2")
+  Product                                                     Product           @relation(fields: [Product_id], references: [Product_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Transactions_fk_txn_Product_1")
+  Records_Transactions_Records_idToRecords                    Records?          @relation("Transactions_Records_idToRecords", fields: [Records_id], references: [Records_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Transactions_fk_txn_Records_8")
+
+  @@index([Account_id], map: "fk_Account_idx_Transactions")
+  @@index([Corrected_By], map: "fk_Corrected_By_idx_Transactions")
+  @@index([Correction_of], map: "fk_Correction_idx_Transactions")
+  @@index([Evidence_id], map: "fk_Evidence_idx_Transactions")
+  @@index([Cycle_parent], map: "fk_Parent_idx_Transactions")
+  @@index([Product_id], map: "fk_Product_idx_Transactions")
+  @@index([Records_id], map: "fk_Records_idx_Transactions")
+  @@index([Cycle_id], map: "idx_Cycle_Transactions")
+  @@index([Cycle_status], map: "idx_correction_status_txn_Transactions")
+  @@index([Entreprise_id], map: "idx_transactions_entreprise")
+  @@index([Cycle_status], map: "idx_txn_cycle_status_Transactions")
+  @@index([Cycle_type], map: "idx_txn_cycle_type_Transactions")
+  @@index([Transactions_date], map: "idx_txn_date_Transactions")
+  @@index([Transactions_date, Business_Unit], map: "idx_txn_date_unit_Transactions")
+  @@index([Business_Unit], map: "idx_txn_unit_Transactions")
+}

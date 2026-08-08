@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= typeof title !== 'undefined' ? title + ' — Nzovu' : 'Nzovu' %></title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            paper: '#F6F3EC',
+            ink: '#232019',
+            till: '#1F5E45',
+            tillDark: '#153F2E',
+            clay: '#B45B3C',
+          },
+          fontFamily: {
+            display: ['Georgia', 'serif'],
+            mono: ['"Courier New"', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+</head>
+<body class="bg-paper text-ink min-h-screen font-sans">
+
+  <!-- Top bar: brand and session only -->
+  <header class="border-b-2 border-ink/10 bg-white h-14 flex items-center justify-between px-6 sticky top-0 z-20">
+    <a href="/" class="font-display text-lg tracking-tight">Nzovu</a>
+    <div class="flex items-center gap-3">
+      <span class="text-xs font-mono px-2 py-1 rounded-full bg-paper text-ink/60"><%= currentBusinessUnit %></span>
+      <div class="w-px h-6 bg-ink/10"></div>
+      <span class="text-xs text-ink/50 font-mono"><%= currentUser ? currentUser.Management_Name : '' %> · <%= roleLabel %></span>
+      <form method="POST" action="/logout"><button type="submit" class="text-xs text-ink/40 hover:text-clay px-2 py-1">Sign out</button></form>
+    </div>
+  </header>
+
+  <div class="flex">
+    <!-- Sidebar: collapsible groups, each landing on a group dashboard -->
+    <aside class="w-56 flex-shrink-0 border-r-2 border-ink/10 bg-white min-h-[calc(100vh-3.5rem)] py-4 px-3 sticky top-14 self-start">
+
+      <a href="/dashboard" class="block px-3 py-2 rounded-lg text-sm font-medium transition mb-3 <%= active === 'home' ? 'bg-till text-paper' : 'text-ink/70 hover:bg-paper' %>">Home</a>
+
+      <%
+        // Each group: dashboard link + label + submenu items (each with an explicit
+        // 'key' matching the route's active value) + which 'active' values belong
+        // to this group overall (for auto-expand)
+        const groups = [
+          { key: 'operations', dashboard: '/pos', label: 'Operations', items: [
+              { href: '/pos', label: 'Till', key: 'pos' },
+              { href: '/journal', label: 'Journal', key: 'journal' },
+              { href: '/ledger', label: 'Ledger', key: 'ledger' },
+            ], members: ['operations', 'pos', 'journal', 'ledger'] },
+          { key: 'resources', dashboard: '/resources', label: 'Resources', items: [
+              { href: '/products', label: 'Products', key: 'products' },
+              { href: '/resources/inventory', label: 'Inventory', key: 'inventory' },
+              { href: '/resources/services', label: 'Services', key: 'services' },
+              { href: '/resources/utility', label: 'Utility', key: 'utility' },
+              { href: '/assets', label: 'Assets', key: 'assets' },
+            ], members: ['resources', 'products', 'inventory', 'services', 'utility', 'assets'] },
+          { key: 'claims', dashboard: '/claims', label: 'Claims', items: [
+              { href: '/expense', label: 'Expenses', key: 'expense' },
+              { href: '/payables', label: 'Payables', key: 'payables' },
+              { href: '/liability', label: 'Liability', key: 'liability' },
+              { href: '/claims/leases-provisions', label: 'Leases & Provisions', key: 'leases-provisions' },
+              { href: '/claims/risks-insurance', label: 'Risks & Insurance', key: 'risks-insurance' },
+            ], members: ['claims', 'expense', 'payables', 'liability', 'leases-provisions', 'risks-insurance'] },
+          { key: 'money', dashboard: '/money', label: 'Money', items: [
+              { href: '/money/funds', label: 'Funds', key: 'money-funds' },
+              { href: '/money/investments', label: 'Investments', key: 'money-investments' },
+              { href: '/money/cash-flow', label: 'Cash Flow', key: 'money-cash-flow' },
+              { href: '/transactions', label: 'Transactions', key: 'transactions' },
+              { href: '/accounts', label: 'Accounts', key: 'accounts' },
+            ], members: ['money', 'money-funds', 'money-investments', 'money-cash-flow', 'transactions', 'accounts'] },
+          { key: 'organisation', dashboard: null, label: 'Organisation', items: [
+              { href: '/organisation/business', label: 'Business', key: 'business' },
+              { href: '/organisation/stakeholders', label: 'Stakeholders', key: 'stakeholders' },
+              { href: '/organisation/management', label: 'Management', key: 'management' },
+              { href: '/organisation/processing', label: 'Processing', key: 'processing' },
+            ], members: ['business', 'stakeholders', 'management', 'processing'] },
+          { key: 'insights', dashboard: null, label: 'Insights', items: [
+              { href: '/reports', label: 'Reports', key: 'reports' },
+              { href: '/knowledge', label: 'Knowledge', key: 'knowledge' },
+              { href: '/narrative', label: 'Narrative', key: 'narrative' },
+              { href: '/documents', label: 'Documents', key: 'documents' },
+            ], members: ['reports', 'knowledge', 'narrative', 'documents'] },
+          { key: 'settingsGroup', dashboard: null, label: 'Settings', items: [
+              { href: '/settings', label: 'Structures', key: 'settings' },
+              { href: '/settings/rules', label: 'Rules', key: 'rules' },
+              { href: '/settings/profile', label: 'Profile', key: 'profile' },
+              { href: '/settings/alerts', label: 'Alerts', key: 'settingsAlerts' },
+            ], members: ['settings', 'rules', 'profile', 'settingsAlerts'] },
+        ];
+      %>
+
+      <div class="space-y-1 mb-3">
+        <% groups.forEach(function(g) { %>
+          <% if (g.key === 'operations') { %>
+            <!-- Operations: Till, Journal, Ledger links plus inline unit switcher -->
+            <% g.items.forEach(function(item) { %>
+              <a href="<%= item.href %>" class="block px-3 py-2 rounded-lg text-sm font-medium transition <%= active === item.key ? 'bg-till text-paper' : 'text-ink/70 hover:bg-paper' %>"><%= item.label %></a>
+            <% }) %>
+            <form method="POST" action="/switch-unit" class="px-3 py-2">
+              <label class="block font-mono text-[10px] uppercase tracking-widest text-ink/40 mb-1">Business Unit</label>
+              <select name="unit" onchange="this.form.submit()" class="w-full text-sm font-medium border border-ink/20 rounded-lg px-2 py-1.5 bg-paper">
+                <% (typeof allBusinessUnits !== 'undefined' ? allBusinessUnits : []).forEach(function(u) { %>
+                  <option value="<%= u.Structures_Name %>" <%= currentBusinessUnit === u.Structures_Name ? 'selected' : '' %>><%= u.Structures_Name %></option>
+                <% }) %>
+              </select>
+            </form>
+          <% } else { %>
+            <% const isOpen = g.members.includes(active); %>
+            <div class="nav-group">
+              <div class="flex items-center rounded-lg <%= isOpen ? 'bg-paper' : '' %>">
+                <a href="<%= g.dashboard || g.items[0].href %>" class="flex-1 px-3 py-2 text-sm font-medium transition <%= isOpen ? 'text-ink' : 'text-ink/70 hover:bg-paper rounded-lg' %>"><%= g.label %></a>
+                <button type="button" onclick="var el=this.closest('.nav-group').querySelector('.nav-submenu'); el.classList.toggle('hidden'); this.classList.toggle('rotate-90');" class="px-2 py-2 text-ink/30 hover:text-ink transition <%= isOpen ? 'rotate-90' : '' %>">
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 1l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+              </div>
+              <div class="nav-submenu <%= isOpen ? '' : 'hidden' %> pl-3 mt-0.5 space-y-0.5 border-l border-ink/10 ml-3">
+                <% g.items.forEach(function(item) { %>
+                  <a href="<%= item.href %>" class="block px-3 py-1.5 rounded-lg text-sm transition <%= active === item.key ? 'text-till font-medium' : 'text-ink/60 hover:text-ink' %>"><%= item.label %></a>
+                <% }) %>
+              </div>
+            </div>
+          <% } %>
+        <% }) %>
+      </div>
+
+    </aside>
+
+    <main class="flex-1 min-w-0 px-8 py-10">
+      <%- body %>
+    </main>
+  </div>
+
+</body>
+</html>

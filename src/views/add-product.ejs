@@ -1,0 +1,98 @@
+<header class="mb-8">
+  <p class="font-mono text-xs uppercase tracking-widest text-ink/40">Catalog</p>
+  <h1 class="font-display text-3xl mt-1">Add Product</h1>
+  <p class="text-ink/50 text-sm mt-1">Create a catalog entry directly — for setting up stock you already have on hand, without recording a purchase transaction.</p>
+</header>
+
+<div class="max-w-lg bg-white rounded-xl border border-ink/10 p-6">
+  <form id="product-form" class="space-y-5">
+    <div>
+      <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Product name</label>
+      <input name="name" type="text" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display" />
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Type</label>
+        <select name="type" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display">
+          <option value="Goods">Goods</option>
+          <option value="Services">Services</option>
+        </select>
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Category</label>
+        <input name="category" type="text" placeholder="e.g. Groceries" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display" />
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Selling price (KES)</label>
+        <input name="price" type="number" min="0" step="0.01" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Cost (KES)</label>
+        <input name="cost" type="number" min="0" step="0.01" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      </div>
+    </div>
+    <div class="grid grid-cols-3 gap-4">
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Unit</label>
+        <input name="unit" type="text" placeholder="e.g. kg, unit" value="unit" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Starting stock</label>
+        <input name="startingStock" type="number" min="0" step="0.001" value="0" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Reorder level</label>
+        <input name="reorderLevel" type="number" min="0" step="0.001" value="10" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      </div>
+    </div>
+
+    <button type="submit" id="submit-btn" class="w-full py-3 rounded-lg bg-till text-paper font-display text-lg hover:brightness-110 transition">
+      Add Product
+    </button>
+    <div id="feedback" class="hidden text-sm p-3 rounded-lg"></div>
+  </form>
+</div>
+
+<script>
+  const form = document.getElementById("product-form");
+  const feedback = document.getElementById("feedback");
+  const submitBtn = document.getElementById("submit-btn");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Saving...";
+    const data = Object.fromEntries(new FormData(form).entries());
+    try {
+      const res = await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: data.name,
+          type: data.type,
+          category: data.category,
+          price: Number(data.price),
+          cost: Number(data.cost),
+          unit: data.unit,
+          startingStock: Number(data.startingStock || 0),
+          reorderLevel: Number(data.reorderLevel || 0),
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to add product");
+      feedback.textContent = `Added ${data.name} to the catalog.`;
+      feedback.className = "text-sm p-3 rounded-lg bg-till/10 text-till";
+      feedback.classList.remove("hidden");
+      form.reset();
+    } catch (err) {
+      feedback.textContent = err.message;
+      feedback.className = "text-sm p-3 rounded-lg bg-clay/10 text-clay";
+      feedback.classList.remove("hidden");
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Add Product";
+    }
+  });
+</script>

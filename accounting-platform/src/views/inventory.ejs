@@ -1,0 +1,183 @@
+<header class="mb-8">
+  <a href="/resources" class="text-ink/40 hover:text-till text-sm">← Resources</a>
+  <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mt-2">Resources — <%= currentBusinessUnit %></p>
+  <h1 class="font-display text-3xl mt-1">Inventory</h1>
+  <p class="text-ink/50 text-sm mt-1">Goods available in stock, sold through the Till. Once a product has been used in a transaction, its price and cost become part of the historical record and can no longer be edited — discontinue it instead.</p>
+</header>
+
+<div class="bg-white rounded-xl border border-ink/10 overflow-hidden">
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="border-b border-ink/10 text-left text-ink/40 font-mono text-xs uppercase tracking-widest">
+        <th class="px-5 py-3">Product</th>
+        <th class="px-5 py-3 text-right">Stock</th>
+        <th class="px-5 py-3 text-right">Price</th>
+        <th class="px-5 py-3 text-right">Cost</th>
+        <th class="px-5 py-3 text-right">Margin</th>
+        <th class="px-5 py-3">Status</th>
+        <th class="px-5 py-3 text-right">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% items.forEach(function(p) { %>
+        <tr class="border-b border-ink/5 last:border-0 hover:bg-paper/50 <%= p.isDiscontinued ? 'opacity-50' : '' %>" id="row-<%= p.id %>">
+          <td class="px-5 py-3 font-display"><span class="editable-name"><%= p.name %></span></td>
+          <td class="px-5 py-3 text-right font-mono tabular-nums <%= p.stock <= 5 ? 'text-clay' : '' %>"><%= p.stock %></td>
+          <td class="px-5 py-3 text-right font-mono tabular-nums"><%= fmt(p.price) %></td>
+          <td class="px-5 py-3 text-right font-mono tabular-nums text-ink/50"><%= fmt(p.cost) %></td>
+          <td class="px-5 py-3 text-right font-mono tabular-nums text-till">
+            <%= p.price > 0 ? (((p.price - p.cost) / p.price) * 100).toFixed(0) + '%' : '—' %>
+          </td>
+          <td class="px-5 py-3">
+            <% if (p.isDiscontinued) { %>
+              <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-ink/10 text-ink/50">Discontinued</span>
+            <% } else if (p.hasHistory) { %>
+              <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-till/10 text-till">Active · Used</span>
+            <% } else { %>
+              <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-paper text-ink/40">Active · Unused</span>
+            <% } %>
+          </td>
+          <td class="px-5 py-3 text-right">
+            <div class="flex justify-end gap-2 text-xs">
+              <% if (!p.isDiscontinued) { %>
+                <button type="button" onclick="openEdit(<%= p.id %>, '<%= p.name.replace(/'/g, "\\'") %>', <%= p.price %>, <%= p.cost %>, '<%= p.unit %>', <%= p.hasHistory %>)" class="text-till hover:underline">Edit</button>
+              <% } %>
+              <% if (!p.hasHistory && !p.isDiscontinued) { %>
+                <button type="button" onclick="deleteProduct(<%= p.id %>, '<%= p.name.replace(/'/g, "\\'") %>')" class="text-clay hover:underline">Delete</button>
+              <% } %>
+              <% if (!p.isDiscontinued) { %>
+                <button type="button" onclick="discontinueProduct(<%= p.id %>)" class="text-ink/50 hover:underline">Discontinue</button>
+              <% } else { %>
+                <button type="button" onclick="reactivateProduct(<%= p.id %>)" class="text-till hover:underline">Reactivate</button>
+              <% } %>
+            </div>
+          </td>
+        </tr>
+      <% }) %>
+      <% if (items.length === 0) { %>
+        <tr><td colspan="7" class="px-5 py-8 text-center text-ink/40">No inventory for <%= currentBusinessUnit %> yet. Add goods from Products.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<!-- Edit modal -->
+<div id="edit-modal" class="hidden fixed inset-0 bg-ink/40 flex items-center justify-center z-50 p-4" onclick="if(event.target === this) closeEdit()">
+  <div class="bg-white rounded-xl p-6 max-w-sm w-full">
+    <h3 class="font-display text-lg mb-1">Edit Product</h3>
+    <p id="edit-modal-note" class="text-ink/50 text-sm mb-4">Correct a wrong entry before it's ever been used in a transaction.</p>
+    <form id="edit-form" class="space-y-4">
+      <input type="hidden" id="edit-product-id" />
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Name</label>
+        <input id="edit-name" type="text" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display" />
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Price</label>
+          <input id="edit-price" type="number" min="0" step="0.01" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-paper" />
+        </div>
+        <div>
+          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Cost</label>
+          <input id="edit-cost" type="number" min="0" step="0.01" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-paper" />
+        </div>
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Unit</label>
+        <input id="edit-unit" type="text" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      </div>
+      <div class="flex gap-2">
+        <button type="button" onclick="closeEdit()" class="flex-1 py-2.5 rounded-lg border border-ink/20 font-display hover:bg-paper transition">Cancel</button>
+        <button type="submit" id="edit-submit" class="flex-1 py-2.5 rounded-lg bg-till text-paper font-display hover:brightness-110 transition">Save</button>
+      </div>
+      <div id="edit-feedback" class="hidden text-sm p-3 rounded-lg"></div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openEdit(id, name, price, cost, unit, hasHistory) {
+    document.getElementById("edit-product-id").value = id;
+    document.getElementById("edit-name").value = name;
+    document.getElementById("edit-price").value = price;
+    document.getElementById("edit-cost").value = cost;
+    document.getElementById("edit-unit").value = unit;
+    document.getElementById("edit-price").disabled = hasHistory;
+    document.getElementById("edit-cost").disabled = hasHistory;
+    document.getElementById("edit-modal-note").textContent = hasHistory
+      ? "This product has already been used — price and cost are locked in as part of the historical record, but you can still correct the name, unit, or category."
+      : "Correct a wrong entry before it's ever been used in a transaction.";
+    document.getElementById("edit-modal").classList.remove("hidden");
+    document.getElementById("edit-feedback").classList.add("hidden");
+  }
+  function closeEdit() {
+    document.getElementById("edit-modal").classList.add("hidden");
+  }
+
+  document.getElementById("edit-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const submitBtn = document.getElementById("edit-submit");
+    const feedback = document.getElementById("edit-feedback");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Saving...";
+    const id = document.getElementById("edit-product-id").value;
+    const priceInput = document.getElementById("edit-price");
+    const costInput = document.getElementById("edit-cost");
+    try {
+      const res = await fetch(`/api/products/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: document.getElementById("edit-name").value,
+          ...(priceInput.disabled ? {} : { price: Number(priceInput.value) }),
+          ...(costInput.disabled ? {} : { cost: Number(costInput.value) }),
+          unit: document.getElementById("edit-unit").value,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to update product");
+      location.reload();
+    } catch (err) {
+      feedback.textContent = err.message;
+      feedback.className = "text-sm p-3 rounded-lg bg-clay/10 text-clay";
+      feedback.classList.remove("hidden");
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Save";
+    }
+  });
+
+  async function discontinueProduct(id) {
+    if (!confirm("Discontinue this product? It will be hidden from the Till but all history is kept.")) return;
+    try {
+      const res = await fetch(`/api/products/${id}/discontinue`, { method: "POST" });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to discontinue");
+      location.reload();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  async function reactivateProduct(id) {
+    try {
+      const res = await fetch(`/api/products/${id}/reactivate`, { method: "POST" });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to reactivate");
+      location.reload();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  async function deleteProduct(id, name) {
+    if (!confirm(`Permanently delete "${name}"? This only works because it has never been used in a transaction.`)) return;
+    try {
+      const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to delete");
+      document.getElementById(`row-${id}`).remove();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+</script>

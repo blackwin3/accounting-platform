@@ -1,0 +1,354 @@
+<header class="mb-8">
+  <a href="/money" class="text-ink/40 hover:text-till text-sm">← Money</a>
+  <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mt-2">Money Movement — <%= currentBusinessUnit %></p>
+  <h1 class="font-display text-3xl mt-1">Funds</h1>
+  <p class="text-ink/50 text-sm mt-1">How money enters the business — capital, loans, and business-unit income.</p>
+</header>
+
+<% if (typeof cashBalances !== 'undefined') { %>
+<section class="mb-8">
+  <h2 class="font-display text-xl mb-1">Accounts</h2>
+  <p class="text-ink/50 text-sm mb-4">Top up a low account by pulling from one of the others — e.g. move money from Bank into Mobile Money to cover an upcoming bill.</p>
+  <div class="grid grid-cols-3 gap-4">
+    <% [{key:'CASH', label:'Cash / Till'}, {key:'MOBILE', label:'Mobile Money'}, {key:'BANK', label:'Bank'}].forEach(function(acc) { %>
+      <div class="bg-white rounded-xl border border-ink/10 p-5">
+        <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-1"><%= acc.label %></p>
+        <p class="font-mono text-2xl tabular-nums mb-3"><%= fmt(cashBalances[acc.key]) %></p>
+        <div class="flex gap-1.5">
+          <% [{key:'CASH', label:'Cash'}, {key:'MOBILE', label:'Mobile'}, {key:'BANK', label:'Bank'}].filter(function(o) { return o.key !== acc.key; }).forEach(function(other) { %>
+            <button type="button" onclick="openTopUp('<%= other.key %>', '<%= acc.key %>', '<%= other.label %>', '<%= acc.label %>')" class="flex-1 text-xs font-mono px-2 py-1.5 rounded-lg border border-ink/20 hover:bg-till hover:text-paper hover:border-till transition">
+              ← <%= other.label %>
+            </button>
+          <% }) %>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+
+  <!-- Top Up modal -->
+  <div id="topup-modal" class="hidden fixed inset-0 bg-ink/40 flex items-center justify-center z-50 p-4" onclick="if(event.target === this) closeTopUp()">
+    <div class="bg-white rounded-xl p-6 max-w-sm w-full">
+      <h3 class="font-display text-lg mb-1">Top Up</h3>
+      <p id="topup-description" class="text-ink/50 text-sm mb-4"></p>
+      <form id="topup-form" class="space-y-4">
+        <div>
+          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Amount (KES)</label>
+          <input name="amount" type="number" min="0.01" step="0.01" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" autofocus />
+        </div>
+        <div>
+          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Notes (optional)</label>
+          <input name="notes" type="text" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display" />
+        </div>
+        <div class="flex gap-2">
+          <button type="button" onclick="closeTopUp()" class="flex-1 py-2.5 rounded-lg border border-ink/20 font-display hover:bg-paper transition">Cancel</button>
+          <button type="submit" id="topup-submit" class="flex-1 py-2.5 rounded-lg bg-till text-paper font-display hover:brightness-110 transition">Transfer</button>
+        </div>
+        <div id="topup-feedback" class="hidden text-sm p-3 rounded-lg"></div>
+      </form>
+    </div>
+  </div>
+</section>
+<% } %>
+
+<div class="grid md:grid-cols-2 gap-6">
+
+  <!-- Capital / Loan -->
+  <section class="bg-white rounded-xl border border-ink/10 p-6">
+    <h2 class="font-display text-xl mb-1">Capital or Loan</h2>
+    <p class="text-ink/50 text-sm mb-5">Owner capital injection or a loan drawdown.</p>
+
+    <form id="funding-form" class="space-y-4">
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Source</label>
+        <div class="flex gap-2">
+          <label class="flex-1">
+            <input type="radio" name="source" value="CAPITAL" checked class="peer sr-only" />
+            <div class="peer-checked:bg-till peer-checked:text-paper border border-ink/20 rounded-lg px-4 py-3 text-center cursor-pointer transition">
+              <span class="font-display block">Owner Capital</span>
+              <span class="text-xs opacity-70">Equity — no repayment</span>
+            </div>
+          </label>
+          <label class="flex-1">
+            <input type="radio" name="source" value="LOAN" class="peer sr-only" />
+            <div class="peer-checked:bg-till peer-checked:text-paper border border-ink/20 rounded-lg px-4 py-3 text-center cursor-pointer transition">
+              <span class="font-display block">Loan</span>
+              <span class="text-xs opacity-70">Liability — must repay</span>
+            </div>
+          </label>
+        </div>
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Amount (KES)</label>
+        <input name="amount" type="number" min="0.01" step="0.01" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Received Via</label>
+        <div class="grid grid-cols-3 gap-1.5">
+          <label><input type="radio" name="paymentMethod" value="CASH" checked class="peer sr-only" /><div class="peer-checked:bg-till peer-checked:text-paper border border-ink/20 rounded-lg py-2 text-center text-xs font-medium cursor-pointer transition">Cash</div></label>
+          <label><input type="radio" name="paymentMethod" value="MOBILE" class="peer sr-only" /><div class="peer-checked:bg-till peer-checked:text-paper border border-ink/20 rounded-lg py-2 text-center text-xs font-medium cursor-pointer transition">Mobile</div></label>
+          <label><input type="radio" name="paymentMethod" value="BANK" class="peer sr-only" /><div class="peer-checked:bg-till peer-checked:text-paper border border-ink/20 rounded-lg py-2 text-center text-xs font-medium cursor-pointer transition">Bank</div></label>
+        </div>
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Notes (optional)</label>
+        <textarea name="notes" rows="2" placeholder="e.g. KCB business loan, ref 00234" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display"></textarea>
+      </div>
+      <button type="submit" id="funding-submit" class="w-full py-3 rounded-lg bg-till text-paper font-display text-lg hover:brightness-110 transition">
+        Add Funds
+      </button>
+      <div id="funding-feedback" class="hidden text-sm p-3 rounded-lg"></div>
+    </form>
+  </section>
+
+  <!-- Unit Income -->
+  <section class="bg-white rounded-xl border border-ink/10 p-6">
+    <h2 class="font-display text-xl mb-1">Unit Income</h2>
+    <p class="text-ink/50 text-sm mb-5">
+      <% if (currentBusinessUnit === 'RENTAL') { %>Rent received from a tenant.
+      <% } else if (currentBusinessUnit === 'INVESTMENTS') { %>Bond coupon interest or share dividends received.
+      <% } else { %>Rent, interest, and dividends apply to the RENTAL and INVESTMENTS units. The Till handles income for <%= currentBusinessUnit %>.
+      <% } %>
+    </p>
+
+    <% if (!['RENTAL', 'INVESTMENTS'].includes(currentBusinessUnit)) { %>
+      <p class="text-ink/40 text-sm">Switch to the <span class="font-mono">RENTAL</span> or <span class="font-mono">INVESTMENTS</span> unit (top right) to record this kind of income.</p>
+    <% } else { %>
+      <form id="income-form" class="space-y-4">
+        <% if (currentBusinessUnit === 'RENTAL') { %>
+          <div>
+            <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Tenant / House</label>
+            <select name="stakeholderId" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display">
+              <% tenants.forEach(function(t) { %>
+                <option value="<%= t.id %>"><%= t.name %></option>
+              <% }) %>
+            </select>
+          </div>
+          <input type="hidden" name="incomeType" value="RENT" />
+        <% } else { %>
+          <div>
+            <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Source</label>
+            <div class="flex gap-2">
+              <label class="flex-1">
+                <input type="radio" name="incomeType" value="INTEREST" checked class="peer sr-only" />
+                <div class="peer-checked:bg-till peer-checked:text-paper border border-ink/20 rounded-lg px-4 py-3 text-center cursor-pointer transition">
+                  <span class="font-display block">Bond Interest</span>
+                </div>
+              </label>
+              <label class="flex-1">
+                <input type="radio" name="incomeType" value="DIVIDEND" class="peer sr-only" />
+                <div class="peer-checked:bg-till peer-checked:text-paper border border-ink/20 rounded-lg px-4 py-3 text-center cursor-pointer transition">
+                  <span class="font-display block">Dividend</span>
+                </div>
+              </label>
+            </div>
+          </div>
+          <div>
+            <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Instrument</label>
+            <select name="moneyId" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display">
+              <option value="">— not linked to a specific instrument —</option>
+              <% instruments.forEach(function(m) { %>
+                <option value="<%= m.id %>"><%= m.name %></option>
+              <% }) %>
+            </select>
+          </div>
+        <% } %>
+        <div>
+          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Amount (KES)</label>
+          <input name="amount" type="number" min="0.01" step="0.01" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+        </div>
+        <div>
+          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Received Via</label>
+          <div class="grid grid-cols-4 gap-1.5">
+            <label><input type="radio" name="paymentMethod" value="CASH" checked class="peer sr-only" /><div class="peer-checked:bg-till peer-checked:text-paper border border-ink/20 rounded-lg py-2 text-center text-xs font-medium cursor-pointer transition">Cash</div></label>
+            <label><input type="radio" name="paymentMethod" value="MOBILE" class="peer sr-only" /><div class="peer-checked:bg-till peer-checked:text-paper border border-ink/20 rounded-lg py-2 text-center text-xs font-medium cursor-pointer transition">Mobile</div></label>
+            <label><input type="radio" name="paymentMethod" value="BANK" class="peer sr-only" /><div class="peer-checked:bg-till peer-checked:text-paper border border-ink/20 rounded-lg py-2 text-center text-xs font-medium cursor-pointer transition">Bank</div></label>
+            <label><input type="radio" name="paymentMethod" value="CREDIT" class="peer sr-only" /><div class="peer-checked:bg-till peer-checked:text-paper border border-ink/20 rounded-lg py-2 text-center text-xs font-medium cursor-pointer transition">Owed</div></label>
+          </div>
+          <p class="text-xs text-ink/40 mt-1">"Owed" records this as still outstanding — e.g. rent arrears not yet collected.</p>
+        </div>
+        <div>
+          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Notes (optional)</label>
+          <textarea name="notes" rows="2" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display"></textarea>
+        </div>
+        <button type="submit" id="income-submit" class="w-full py-3 rounded-lg bg-till text-paper font-display text-lg hover:brightness-110 transition">
+          Record Income
+        </button>
+        <div id="income-feedback" class="hidden text-sm p-3 rounded-lg"></div>
+      </form>
+    <% } %>
+  </section>
+
+</div>
+
+<% if (['RENTAL', 'INVESTMENTS'].includes(currentBusinessUnit)) { %>
+<div class="mt-6 bg-white rounded-xl border border-ink/10 p-6">
+  <h2 class="font-display text-xl mb-1"><%= currentBusinessUnit === 'RENTAL' ? 'Tenants' : 'Instruments' %></h2>
+  <p class="text-ink/50 text-sm mb-5">
+    <% if (currentBusinessUnit === 'RENTAL') { %>Fifteen one-bedroom rental houses.<% } else { %>Bonds and shares held.<% } %>
+  </p>
+  <% if (currentBusinessUnit === 'RENTAL') { %>
+    <div class="grid grid-cols-3 gap-2 text-sm">
+      <% tenants.forEach(function(t) { %>
+        <div class="px-3 py-2 rounded-lg bg-paper text-center font-mono text-xs"><%= t.name %></div>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <div class="space-y-3">
+      <% instruments.forEach(function(m) { %>
+        <div class="flex justify-between items-center py-2 border-b border-ink/5 last:border-0">
+          <div>
+            <p class="font-display text-sm"><%= m.name %></p>
+            <p class="text-xs text-ink/40"><%= m.type %><%= m.rate ? ' · ' + m.rate + '%' : '' %></p>
+          </div>
+          <span class="font-mono tabular-nums text-sm"><%= fmt(m.principal) %></span>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+</div>
+<% } %>
+
+<!-- Take money out — stub -->
+<section class="mt-6 bg-white rounded-xl border border-ink/10 p-6 opacity-60">
+  <div class="flex items-center justify-between mb-1">
+    <h2 class="font-display text-xl">Take Money Out</h2>
+    <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-ink/10 text-ink/50">Coming soon</span>
+  </div>
+  <p class="text-ink/50 text-sm mb-5">Owner drawings, or loan repayments (principal + interest).</p>
+  <div class="border border-dashed border-ink/20 rounded-lg p-6 text-center text-ink/40 text-sm">
+    Withdrawal tracking will post <span class="font-mono">DR Owner Drawings / CR Cash</span> or
+    <span class="font-mono">DR Loan Payable / CR Cash</span> here.
+  </div>
+</section>
+
+<script>
+  function fmtNum(n) {
+    const num = Number(n || 0);
+    const sign = num < 0 ? "-" : "";
+    const abs = Math.abs(num);
+    const [whole, decimals] = abs.toFixed(2).split(".");
+    const withCommas = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return `${sign}${withCommas}.${decimals}`;
+  }
+
+  // --- Capital / Loan form ---
+  const fundingForm = document.getElementById("funding-form");
+  const fundingFeedback = document.getElementById("funding-feedback");
+  const fundingSubmit = document.getElementById("funding-submit");
+
+  fundingForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    fundingSubmit.disabled = true;
+    fundingSubmit.textContent = "Posting...";
+    const data = Object.fromEntries(new FormData(fundingForm).entries());
+    try {
+      const res = await fetch("/api/funding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source: data.source, amount: Number(data.amount), paymentMethod: data.paymentMethod, notes: data.notes }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to record funds");
+      fundingFeedback.textContent = `Recorded KES ${fmtNum(data.amount)} as ${data.source === 'CAPITAL' ? 'owner capital' : 'a loan'}.`;
+      fundingFeedback.className = "text-sm p-3 rounded-lg bg-till/10 text-till";
+      fundingFeedback.classList.remove("hidden");
+      fundingForm.reset();
+    } catch (err) {
+      fundingFeedback.textContent = err.message;
+      fundingFeedback.className = "text-sm p-3 rounded-lg bg-clay/10 text-clay";
+      fundingFeedback.classList.remove("hidden");
+    } finally {
+      fundingSubmit.disabled = false;
+      fundingSubmit.textContent = "Add Funds";
+    }
+  });
+
+  // --- Unit Income form ---
+  const incomeForm = document.getElementById("income-form");
+  if (incomeForm) {
+    const incomeFeedback = document.getElementById("income-feedback");
+    const incomeSubmit = document.getElementById("income-submit");
+
+    incomeForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      incomeSubmit.disabled = true;
+      incomeSubmit.textContent = "Posting...";
+      const data = Object.fromEntries(new FormData(incomeForm).entries());
+      try {
+        const res = await fetch("/api/unit-income", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            incomeType: data.incomeType,
+            amount: Number(data.amount),
+            paymentMethod: data.paymentMethod,
+            notes: data.notes,
+            stakeholderId: data.stakeholderId ? Number(data.stakeholderId) : null,
+            moneyId: data.moneyId ? Number(data.moneyId) : null,
+          }),
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || "Failed to record income");
+        incomeFeedback.textContent = `Recorded KES ${fmtNum(data.amount)}.`;
+        incomeFeedback.className = "text-sm p-3 rounded-lg bg-till/10 text-till";
+        incomeFeedback.classList.remove("hidden");
+        incomeForm.reset();
+      } catch (err) {
+        incomeFeedback.textContent = err.message;
+        incomeFeedback.className = "text-sm p-3 rounded-lg bg-clay/10 text-clay";
+        incomeFeedback.classList.remove("hidden");
+      } finally {
+        incomeSubmit.disabled = false;
+        incomeSubmit.textContent = "Record Income";
+      }
+    });
+  }
+
+  // --- Top Up modal ---
+  let topupFrom = null, topupTo = null;
+
+  function openTopUp(fromKey, toKey, fromLabel, toLabel) {
+    topupFrom = fromKey;
+    topupTo = toKey;
+    document.getElementById("topup-description").textContent = `Move money from ${fromLabel} into ${toLabel}.`;
+    document.getElementById("topup-modal").classList.remove("hidden");
+    document.getElementById("topup-form").reset();
+    document.getElementById("topup-feedback").classList.add("hidden");
+  }
+
+  function closeTopUp() {
+    document.getElementById("topup-modal").classList.add("hidden");
+  }
+
+  const topupForm = document.getElementById("topup-form");
+  if (topupForm) {
+    const topupFeedback = document.getElementById("topup-feedback");
+    const topupSubmit = document.getElementById("topup-submit");
+
+    topupForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      topupSubmit.disabled = true;
+      topupSubmit.textContent = "Transferring...";
+      const data = Object.fromEntries(new FormData(topupForm).entries());
+      try {
+        const res = await fetch("/api/fund-transfer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ from: topupFrom, to: topupTo, amount: Number(data.amount), notes: data.notes }),
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || "Failed to transfer funds");
+        topupFeedback.textContent = "Transfer complete.";
+        topupFeedback.className = "text-sm p-3 rounded-lg bg-till/10 text-till";
+        topupFeedback.classList.remove("hidden");
+        setTimeout(() => location.reload(), 700);
+      } catch (err) {
+        topupFeedback.textContent = err.message;
+        topupFeedback.className = "text-sm p-3 rounded-lg bg-clay/10 text-clay";
+        topupFeedback.classList.remove("hidden");
+        topupSubmit.disabled = false;
+        topupSubmit.textContent = "Transfer";
+      }
+    });
+  }
+</script>
