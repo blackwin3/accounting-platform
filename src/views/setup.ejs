@@ -197,17 +197,32 @@
       el.classList.remove("hidden");
     }
 
+    // Safe fetch helper — handles session expiry (401 redirect) and
+    // non-JSON error responses without crashing JSON.parse.
+    async function apiFetch(url, options) {
+      const res = await fetch(url, options);
+      if (res.status === 401) {
+        window.location.href = "/login";
+        throw new Error("Session expired — redirecting to login.");
+      }
+      const text = await res.text();
+      let result;
+      try { result = JSON.parse(text); } catch (e) {
+        throw new Error("Server error — please try again. If this persists, reload the page.");
+      }
+      if (!res.ok) throw new Error(result.error || "Request failed");
+      return result;
+    }
+
     document.getElementById("signup-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const data = Object.fromEntries(new FormData(e.target).entries());
       try {
-        const res = await fetch("/api/setup/signup", {
+        await apiFetch("/api/setup/signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         });
-        const result = await res.json();
-        if (!res.ok) throw new Error(result.error || "Failed to create your account");
         goToStep(2);
       } catch (err) {
         showFeedback(1, err.message, false);
@@ -218,13 +233,11 @@
       e.preventDefault();
       const data = Object.fromEntries(new FormData(e.target).entries());
       try {
-        const res = await fetch("/api/organisation", {
+        await apiFetch("/api/organisation", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         });
-        const result = await res.json();
-        if (!res.ok) throw new Error(result.error || "Failed to save business");
         goToStep(3);
       } catch (err) {
         showFeedback(2, err.message, false);
@@ -247,13 +260,11 @@
       const form = e.target;
       const data = Object.fromEntries(new FormData(form).entries());
       try {
-        const res = await fetch("/api/setup/business-unit", {
+        await apiFetch("/api/setup/business-unit", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         });
-        const result = await res.json();
-        if (!res.ok) throw new Error(result.error || "Failed to add unit");
         createdUnits.push({ code: data.code.toUpperCase(), description: data.description });
         renderUnitList();
         form.reset();

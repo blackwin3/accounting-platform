@@ -67,9 +67,19 @@ function roleLabel(accessLevel) {
 
 /**
  * requireAuth — Express middleware: redirects to /login if no session.
+ * For API requests (Accept: application/json, or path starting with /api/),
+ * returns a JSON 401 instead of an HTML redirect — otherwise every fetch()
+ * call in the app receives HTML and JSON.parse crashes with "unexpected
+ * character at line 1 column 1."
  */
 function requireAuth(req, res, next) {
   if (!req.session || !req.session.userId) {
+    const isApiRequest = req.path.startsWith("/api/") ||
+      (req.headers.accept && req.headers.accept.includes("application/json")) ||
+      (req.headers["content-type"] && req.headers["content-type"].includes("application/json"));
+    if (isApiRequest) {
+      return res.status(401).json({ error: "Session expired — please sign in again." });
+    }
     return res.redirect("/login");
   }
   next();
