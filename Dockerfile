@@ -10,8 +10,9 @@ RUN npm install
 
 COPY . .
 
-RUN npx prisma generate
-
 EXPOSE 3000
 
-CMD ["npm", "start"]
+# At startup: pull the schema from the live database, generate the Prisma
+# client, then start the app. DATABASE_URL is available at runtime (set in
+# Render's environment variables), not at build time.
+CMD sh -c "npx prisma db pull && npx prisma generate && npm start"
