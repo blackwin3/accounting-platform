@@ -60,6 +60,12 @@ router.post("/api/setup/signup", async (req, res) => {
       },
     });
 
+    // Backfill Entreprise_id on the placeholder rows now that it exists,
+    // so lookups filtered by Entreprise_id in the next wizard step
+    // (POST /api/organisation) can actually find them.
+    await prisma.Catalogue.update({ where: { Catalogue_id: placeholderCatalogue.Catalogue_id }, data: { Entreprise_id: org.Entreprise_id } });
+    await prisma.Account.update({ where: { Account_id: placeholderAccount.Account_id }, data: { Entreprise_id: org.Entreprise_id } });
+
     const nameParts = name.trim().split(" ");
     const stakeholder = await prisma.Stakeholder.create({
       data: {
@@ -92,6 +98,53 @@ router.post("/api/setup/signup", async (req, res) => {
     // Business Units, Team) runs as an authenticated session, same as every
     // other page in the app expects.
     req.session.userId = owner.Administration_id;
+
+    // Seed all Catalogue events AND the core accounts synchronously before
+    // responding — so when the user reaches Step 2 (Business details) or
+    // later tries Money → Capital Injection, accounts 1000/1010/1020/3100
+    // already exist rather than requiring a posting function to create them
+    // on first use.
+    try {
+      const { seedCatalogueEvents, seedAccountingRules } = require("../services/seed");
+      await seedCatalogueEvents(org.Entreprise_id);
+      await seedAccountingRules(org.Entreprise_id);
+
+      // Provision the core accounts that every business needs from day one.
+      // These are the accounts the interpreter resolves by code — if they
+      // don't exist, resolveAccountByCode throws "account not set up."
+      const coreAccounts = [
+        ["1000", "Cash / Till", "ASSET", "DEBIT", "CURRENT_ASSET"],
+        ["1010", "Mobile Money", "ASSET", "DEBIT", "CURRENT_ASSET"],
+        ["1020", "Bank", "ASSET", "DEBIT", "CURRENT_ASSET"],
+        ["1100", "Inventory", "ASSET", "DEBIT", "CURRENT_ASSET"],
+        ["1200", "Trade Receivables", "ASSET", "DEBIT", "CURRENT_ASSET"],
+        ["1400", "Property Plant and Equipment", "ASSET", "DEBIT", "NON_CURRENT_ASSET"],
+        ["1410", "Accumulated Depreciation", "ASSET", "CREDIT", "NON_CURRENT_ASSET"],
+        ["2000", "Trade Payables", "LIABILITY", "CREDIT", "CURRENT_LIABILITY"],
+        ["2100", "Loan Payable", "LIABILITY", "CREDIT", "NON_CURRENT_LIABILITY"],
+        ["3100", "Owner Capital", "EQUITY", "CREDIT", "EQUITY"],
+        ["4000", "Sales", "INCOME", "CREDIT", "OPERATING_REVENUE"],
+        ["5000", "Cost of Goods Sold", "EXPENDITURE", "DEBIT", "OPERATING_EXPENSE"],
+      ];
+      await prisma.$transaction(async (tx) => {
+        for (const [code, name, type, normalBal, section] of coreAccounts) {
+          const existing = await tx.Account_codes.findFirst({ where: { Code: code, Entreprise_id: org.Entreprise_id } });
+          if (!existing) {
+            const codeRow = await tx.Account_codes.create({
+              data: { Code: code, Code_name: name, Code_categories: type, Statement_Section: section, Is_Active: 1, Entreprise_id: org.Entreprise_id },
+            });
+            await tx.Account.create({
+              data: { Account_Name: name, Account_Type: type, Account_Code_id: codeRow.Account_codes_id, Account_subType: section, Normal_Balance: normalBal, Current_Balance: 0, Authoritative_Source: "JOURNAL", Is_Active: 1, Entreprise_id: org.Entreprise_id },
+            });
+          }
+        }
+      });
+    } catch (seedErr) {
+      console.error("Account/catalogue seed at signup failed:", seedErr.message);
+      // Non-fatal — the user can still proceed; accounts will be created on
+      // first use by mustFindOrCreateAccount in the posting functions.
+    }
+
     res.json({ ok: true });
   } catch (err) {
     if (err.code === "P2002") {

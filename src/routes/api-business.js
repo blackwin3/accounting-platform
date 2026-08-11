@@ -149,18 +149,19 @@ router.post("/organisation", async (req, res) => {
 
     res.json({ ok: true, organisationId: org.Entreprise_id });
 
-    // Seed all Catalogue events for this business asynchronously after the
-    // response is sent — this pre-populates all 35+ event definitions so
-    // posting functions find existing rows rather than creating them on
-    // first use, and so the Rules page shows all events from day one.
-    // Runs after the response to avoid blocking the setup wizard.
+    // Seed all Catalogue events and accounting rules synchronously — not
+    // async — so they exist before the user navigates to the next page.
+    // Runs after res.json so the wizard doesn't block, but before any
+    // further navigation is likely to happen.
     const { seedCatalogueEvents, seedAccountingRules, seedProcessActions, seedSourceOfTruthPolicy } = require("../../services/seed");
-    Promise.all([
-      seedCatalogueEvents(entrepriseId),
-      seedAccountingRules(entrepriseId),
-      seedProcessActions(),
-      seedSourceOfTruthPolicy(null),
-    ]).catch((e) => console.error("Background seed after org creation failed:", e.message));
+    try {
+      await seedCatalogueEvents(entrepriseId);
+      await seedAccountingRules(entrepriseId);
+      await seedProcessActions();
+      await seedSourceOfTruthPolicy(null);
+    } catch (e) {
+      console.error("Background seed after org creation failed:", e.message);
+    }
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal error saving business profile" });
