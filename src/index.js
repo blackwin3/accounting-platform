@@ -8,6 +8,12 @@ const { requireAuth, requireSection, requireSetup, loadCurrentUser, loadBusiness
 const app = express();
 const prisma = new PrismaClient();
 
+// Trust Render's reverse proxy — required for secure cookies (HTTPS
+// termination happens at Render's load balancer, not in this container)
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
 // GET /version — registered first, before any other middleware, and
 // deliberately dependency-free (no session, no DB query, no multer/pdfkit
 // require). This is the definitive way to check whether a deployment
@@ -70,12 +76,23 @@ app.use((req, res, next) => {
   next();
 });
 
+const sessionSecret = process.env.SESSION_SECRET;
+if (process.env.NODE_ENV === "production" && !sessionSecret) {
+  throw new Error(
+    "SESSION_SECRET environment variable is required in production. " +
+    "Generate one with: openssl rand -base64 32"
+  );
+}
+
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "nzovu-dev-secret-change-in-production",
+    secret: sessionSecret || "nzovu-dev-secret-change-in-production",
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 8 * 60 * 60 * 1000 }, // 8-hour session, a working shift
+    cookie: {
+      maxAge: 8 * 60 * 60 * 1000, // 8-hour session, a working shift
+      secure: process.env.NODE_ENV === "production", // HTTPS only in production
+    },
   })
 );
 

@@ -1,0 +1,16 @@
+.env:2:DB_PASSWORD=usiu
+accounting-platform/.env:2:DB_PASSWORD=usiu
+accounting-platform/db-init/02-comments.sql:90:COMMENT ON COLUMN "Expenditure"."Expenditure_subtype" IS 'TOKEN_PURCHASE/RECURRING_BILL/ONE_TIME/PAYROLL/LOAN_REPAYMENT';
+accounting-platform/db-init/05-product-utility-migration.sql:15:COMMENT ON COLUMN "Product"."Billing_Cycle" IS 'ONE_TIME / PREPAID_TOKEN / MONTHLY / PREPAID_REDUCING — governs how the expense wizard treats this item: ONE_TIME expenses immediately, PREPAID_TOKEN and PREPAID_REDUCING create a prepaid asset consumed over time, MONTHLY is a straightforward recurring bill';
+accounting-platform/docker-compose.yml:8:      POSTGRES_PASSWORD: ${DB_PASSWORD}
+accounting-platform/docker-compose.yml:31:      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}?schema=public
+accounting-platform/prisma/schema.prisma:7:  url      = env("DATABASE_URL")
+accounting-platform/src/index.js:75:    secret: process.env.SESSION_SECRET || "nzovu-dev-secret-change-in-production",
+accounting-platform/src/views/products.ejs:55:        <option value="PREPAID_TOKEN">Prepaid tokens (e.g. electricity)</option>
+db-init/02-comments.sql:90:COMMENT ON COLUMN "Expenditure"."Expenditure_subtype" IS 'TOKEN_PURCHASE/RECURRING_BILL/ONE_TIME/PAYROLL/LOAN_REPAYMENT';
+db-init/05-product-utility-migration.sql:15:COMMENT ON COLUMN "Product"."Billing_Cycle" IS 'ONE_TIME / PREPAID_TOKEN / MONTHLY / PREPAID_REDUCING — governs how the expense wizard treats this item: ONE_TIME expenses immediately, PREPAID_TOKEN and PREPAID_REDUCING create a prepaid asset consumed over time, MONTHLY is a straightforward recurring bill';
+docker-compose.yml:8:      POSTGRES_PASSWORD: ${DB_PASSWORD}
+docker-compose.yml:31:      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}?schema=public
+prisma/schema.prisma:7:  url      = env("DATABASE_URL")
+src/index.js:75:    secret: process.env.SESSION_SECRET || "nzovu-dev-secret-change-in-production",
+src/views/products.ejs:55:        <option value="PREPAID_TOKEN">Prepaid tokens (e.g. electricity)</option>

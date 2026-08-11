@@ -89,7 +89,7 @@ router.get("/verify/account-balances", async (req, res) => {
 // working through the checklist.
 router.get("/periods/:id/checklist", async (req, res) => {
   try {
-    const { seedPeriodEndChecks } = require("../../services/seed");
+    const { seedPeriodEndChecks } = require("../services/seed");
     await seedPeriodEndChecks(req.currentUser.Entreprise_id);
     const result = await getPeriodEndChecklist(req.params.id, req.currentUser.Entreprise_id);
     res.json({ ok: true, ...result });

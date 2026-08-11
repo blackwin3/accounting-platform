@@ -149,18 +149,16 @@ router.post("/organisation", async (req, res) => {
 
     res.json({ ok: true, organisationId: org.Entreprise_id });
 
-    // Seed all Catalogue events and accounting rules synchronously — not
-    // async — so they exist before the user navigates to the next page.
-    // Runs after res.json so the wizard doesn't block, but before any
-    // further navigation is likely to happen.
-    const { seedCatalogueEvents, seedAccountingRules, seedProcessActions, seedSourceOfTruthPolicy } = require("../../services/seed");
+    // Seed Catalogue events and rules after the response — errors here
+    // must never fall through to the outer catch (response already sent).
     try {
-      await seedCatalogueEvents(entrepriseId);
-      await seedAccountingRules(entrepriseId);
-      await seedProcessActions();
-      await seedSourceOfTruthPolicy(null);
-    } catch (e) {
-      console.error("Background seed after org creation failed:", e.message);
+      const seed = require("../services/seed");
+      await seed.seedCatalogueEvents(entrepriseId);
+      await seed.seedAccountingRules(entrepriseId);
+      await seed.seedProcessActions();
+      await seed.seedSourceOfTruthPolicy(null);
+    } catch (seedErr) {
+      console.error("Background seed after org creation failed:", seedErr.message);
     }
   } catch (err) {
     console.error(err);
