@@ -125,6 +125,14 @@ router.post("/api/setup/signup", async (req, res) => {
         ["3100", "Owner Capital", "EQUITY", "CREDIT", "EQUITY"],
         ["4000", "Sales", "INCOME", "CREDIT", "OPERATING_REVENUE"],
         ["5000", "Cost of Goods Sold", "EXPENDITURE", "DEBIT", "OPERATING_EXPENSE"],
+        ["5100", "Rent Expense", "EXPENDITURE", "DEBIT", "OPERATING_EXPENSE"],
+        ["5200", "Salaries Expense", "EXPENDITURE", "DEBIT", "OPERATING_EXPENSE"],
+        ["5300", "Transport Expense", "EXPENDITURE", "DEBIT", "OPERATING_EXPENSE"],
+        ["5400", "Utilities Expense", "EXPENDITURE", "DEBIT", "OPERATING_EXPENSE"],
+        ["5600", "Insurance Expense", "EXPENDITURE", "DEBIT", "OPERATING_EXPENSE"],
+        ["5700", "Depreciation Expense", "EXPENDITURE", "DEBIT", "OPERATING_EXPENSE"],
+        ["5800", "Tax Expense", "EXPENDITURE", "DEBIT", "OPERATING_EXPENSE"],
+        ["5900", "Other Operating Expense", "EXPENDITURE", "DEBIT", "OPERATING_EXPENSE"],
       ];
       await prisma.$transaction(async (tx) => {
         for (const [code, name, type, normalBal, section] of coreAccounts) {

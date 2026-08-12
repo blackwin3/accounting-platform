@@ -294,7 +294,10 @@ router.get("/claims/risks-insurance", async (req, res) => {
       // Kept flat for backward compatibility with the EJS template's
       // existing loops — the template still iterates `policies` and
       // `provisions` directly; riskPosition supplies the management panel.
-      provisions: riskPosition.provisionsByType["Warranty Provision"]?.rows || [],
+      provisions: (riskPosition.provisionsByType["Warranty Provision"]?.rows || []).map((r) => ({
+        id: r.id,
+        amount: r.outstanding,
+      })),
       totalProvisions: riskPosition.totalProvisions,
       policies: riskPosition.activePolicies.map((p) => ({
         id: p.id,

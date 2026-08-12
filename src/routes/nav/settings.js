@@ -69,6 +69,7 @@ router.get("/settings", async (req, res) => {
         prevMonth, prevYear, nextMonth, nextYear,
         todayStr,
       },
+      canReset: req.currentUser.Access_Level === "OWNER_FULL",
     });
   } catch (err) {
     console.error(err);
@@ -316,6 +317,95 @@ router.get("/settings/rules", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send("Error loading rules: " + err.message);
+  }
+});
+
+// POST /settings/reset-account — Owner-only. Clears all transactional
+// data (Journal, Transactions, Records, Ledger, Income, Expenditure,
+// Assets, Liability, Equity, Money, Evidence, Narrative, Knowledge,
+// Documents, Reports) while keeping: Organisation, Management,
+// Stakeholders, Products, Account_codes, Account, Catalogue, Structures,
+// LogicConditions, ProcessActions. The user keeps their business setup,
+// chart of accounts, products, and team — they just lose all posted
+// transactions and start with a clean ledger.
+router.post("/settings/reset-account", async (req, res) => {
+  try {
+    if (req.currentUser.Access_Level !== "OWNER_FULL") {
+      return res.status(403).json({ error: "Only the Owner can reset the account." });
+    }
+    const entrepriseId = req.currentUser.Entreprise_id;
+    const confirm = req.body.confirm;
+    if (confirm !== "RESET") {
+      return res.status(400).json({ error: 'Type "RESET" to confirm. This cannot be undone.' });
+    }
+
+    const { prisma } = require("../../services/postingEngine");
+
+    // Delete in FK-safe order: children before parents.
+    // Each deleteMany is scoped to this business's Entreprise_id.
+    await prisma.$transaction(async (tx) => {
+      // Knowledge and Narrative (no FK children)
+      await tx.Knowledge.deleteMany({ where: { Entreprise_id: entrepriseId } });
+      await tx.Narrative.deleteMany({ where: { Entreprise_id: entrepriseId } });
+      // Evidence → Documents
+      await tx.Evidence.deleteMany({ where: { Entreprise_id: entrepriseId } });
+      await tx.Documents.deleteMany({ where: { Entreprise_id: entrepriseId } });
+      // Reports
+      await tx.Reports.deleteMany({ where: { Entreprise_id: entrepriseId } });
+      // Ledger (references Journal, Transactions, Income, Expenditure, etc.)
+      await tx.Ledger.deleteMany({ where: { Entreprise_id: entrepriseId } });
+      // Money (financial instruments — loans, policies, debts)
+      await tx.Money.deleteMany({ where: { Entreprise_id: entrepriseId } });
+      // Income, Expenditure, Assets, Liability, Equity
+      await tx.Income.deleteMany({ where: { Entreprise_id: entrepriseId } });
+      await tx.Expenditure.deleteMany({ where: { Entreprise_id: entrepriseId } });
+      await tx.Assets.deleteMany({ where: { Entreprise_id: entrepriseId } });
+      await tx.Liability.deleteMany({ where: { Entreprise_id: entrepriseId } });
+      await tx.Equity.deleteMany({ where: { Entreprise_id: entrepriseId } });
+      // Journal (references Transactions)
+      await tx.Journal.deleteMany({ where: { Entreprise_id: entrepriseId } });
+      // Resources (inventory/biological assets)
+      await tx.Resources.deleteMany({});
+      // Records → Transactions
+      await tx.Records.deleteMany({ where: { Entreprise_id: entrepriseId } });
+      await tx.Transactions.deleteMany({ where: { Entreprise_id: entrepriseId } });
+      // Payment
+      await tx.Payment.deleteMany({});
+      // Account_History
+      await tx.Account_History.deleteMany({ where: { Entreprise_id: entrepriseId } });
+      // Reset account balances to zero
+      await tx.Account.updateMany({
+        where: { Entreprise_id: entrepriseId },
+        data: { Current_Balance: 0 },
+      });
+      // Clear period statuses (re-open today)
+      await tx.Structures.deleteMany({
+        where: { Structures_Type: "ACCOUNTING_PERIOD", Entreprise_id: entrepriseId },
+      });
+      const todayStr = new Date().toISOString().slice(0, 10);
+      await tx.Structures.create({
+        data: {
+          Structures_Type: "ACCOUNTING_PERIOD",
+          Framework_Name: "INTERNAL",
+          Framework_Priority: 4,
+          Structures_Name: todayStr,
+          Structures_Description: `Trading day ${todayStr}`,
+          Period_name: todayStr,
+          Period_Status: "OPEN",
+          Structures_Period: new Date(),
+          Effective_From: new Date(),
+          Effective_To: new Date(),
+          Mandatory: 1,
+          Rule_Severity: "BLOCK",
+          Entreprise_id: entrepriseId,
+        },
+      });
+    });
+
+    res.json({ ok: true, message: "Account reset. All transactions cleared. Today's period is open." });
+  } catch (err) {
+    console.error("Reset failed:", err);
+    res.status(500).json({ error: "Reset failed: " + err.message });
   }
 });
 
