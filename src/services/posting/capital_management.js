@@ -46,13 +46,13 @@ async function getCapitalPosition({ entrepriseId }) {
     // rows, postCapitalWithdrawal writes negative ones), not re-derived
     // from Journal, since Equity is the authoritative source per this
     // schema's own Account.Authoritative_Source convention.
-    const equityRows = await tx.Equity.findMany({ where: { Equity_type: { in: ["Owner Capital", "Owner Capital Withdrawal"] } } });
+    const equityRows = await tx.Equity.findMany({ where: { Equity_type: { in: ["Owner Capital", "Owner Capital Withdrawal"] }, Entreprise_id: entrepriseId } });
     const ownerCapitalNet = round2(equityRows.reduce((sum, e) => sum + Number(e.Net_Amount || 0), 0));
     const ownerCapitalInjected = round2(equityRows.filter((e) => Number(e.Net_Amount) > 0).reduce((sum, e) => sum + Number(e.Net_Amount), 0));
     const ownerCapitalWithdrawn = round2(Math.abs(equityRows.filter((e) => Number(e.Net_Amount) < 0).reduce((sum, e) => sum + Number(e.Net_Amount), 0)));
 
     // Outstanding loans — live Liability rows, Loan type, still owed.
-    const loanRows = await tx.Liability.findMany({ where: { Liability_Type: "Loan", Net_Amount: { gt: 0 } } });
+    const loanRows = await tx.Liability.findMany({ where: { Liability_Type: "Loan", Net_Amount: { gt: 0 }, Entreprise_id: entrepriseId } });
     const loansOutstanding = round2(loanRows.reduce((sum, l) => sum + Number(l.Net_Amount || 0), 0));
 
     // Money-market investments — active MONEY_MARKET Money rows.

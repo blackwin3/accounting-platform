@@ -119,7 +119,7 @@ router.get("/money/cash-flow", async (req, res) => {
     // once here and shown once on the page, exactly as real cash flow
     // statements present them.
     let assetPurchasesOut = 0, assetDisposalsIn = 0, investmentPurchasesOut = 0, investmentSalesIn = 0;
-    let capitalIn = 0, loansIn = 0;
+    let capitalIn = 0, loansIn = 0, loansRepaidOut = 0, capitalWithdrawnOut = 0;
 
     // Classification now genuinely comes from Journal.Catalogue_id ->
     // Catalogue.Event_Name, not from re-parsing Journal.Description —
@@ -193,7 +193,17 @@ router.get("/money/cash-flow", async (req, res) => {
       else if (eventName === "DISPOSE_FIXED_ASSET") assetDisposalsIn += debit;
       else if (eventName === "PURCHASE_INVESTMENT") investmentPurchasesOut += credit;
       else if (eventName === "SELL_INVESTMENT") investmentSalesIn += debit;
-      // Financing — identical under both methods.
+      // Operating — Tier 2/3 events that touch cash.
+      else if (eventName === "UTILISE_PROVISION") otherOperatingOut += credit;
+      else if (eventName === "PAY_SEASONAL_LABOUR") employeesOut += credit;
+      else if (eventName === "INSURANCE_CLAIM_RECEIPT") unitIncomeIn += debit;
+      else if (eventName === "LEASE_OUT_INVENTORY") unitIncomeIn += debit;
+      else if (eventName === "EQUIPMENT_HIRE") unitIncomeIn += debit;
+      else if (eventName === "SERVICE_BILLED") customersIn += debit;
+      // Financing — loan and lease repayments, capital withdrawal.
+      else if (eventName === "LOAN_REPAYMENT") loansRepaidOut += credit;
+      else if (eventName === "CAPITAL_WITHDRAWAL") capitalWithdrawnOut += credit;
+      else if (eventName === "LEASE_PAYMENT") loansRepaidOut += credit;
       else if (eventName === "OWNER_CAPITAL_INJECTION") capitalIn += debit;
       else if (eventName === "LOAN_DRAWDOWN") loansIn += debit;
       // A pure internal transfer between the business's own cash-
@@ -238,8 +248,10 @@ router.get("/money/cash-flow", async (req, res) => {
     };
     const financingDetail = {
       capital: capitalIn,
+      capitalWithdrawn: capitalWithdrawnOut,
       loans: loansIn,
-      net: round2(capitalIn + loansIn),
+      loansRepaid: loansRepaidOut,
+      net: round2(capitalIn + loansIn - capitalWithdrawnOut - loansRepaidOut),
     };
 
     // Indirect method: a genuinely separate replay of the same Journal
@@ -441,6 +453,74 @@ router.get("/money/investments", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send("Error loading investments page: " + err.message);
+  }
+});
+
+// GET /money/interest-rates — all financial instruments carrying interest,
+// growth, or depreciation rates across the business.
+router.get("/money/interest-rates", async (req, res) => {
+  try {
+    const entrepriseId = req.currentUser.Entreprise_id;
+
+    // Loans — Money rows with type LOAN, or Liability rows with type Loan
+    const loanRows = await prisma.Money.findMany({
+      where: { Instrument_type: "LOAN", Entreprise_id: entrepriseId },
+      orderBy: { Money_id: "desc" },
+    });
+    const loans = loanRows.map((l) => ({
+      name: l.Money_Name,
+      principal: Number(l.Principal_amount || 0),
+      outstanding: Number(l.Outstanding_Amount || 0),
+      rate: l.Interest_rate != null ? Number(l.Interest_rate) : null,
+      frequency: l.Repayment_Frequency,
+      status: l.Money_Status,
+    }));
+
+    // Investments — Money rows (MONEY_MARKET, INSURANCE with returns, etc.)
+    const investmentRows = await prisma.Money.findMany({
+      where: { Instrument_type: { in: ["MONEY_MARKET", "BOND", "SHARES"] }, Entreprise_id: entrepriseId },
+      orderBy: { Money_id: "desc" },
+    });
+    const investments = investmentRows.map((m) => ({
+      name: m.Money_Name,
+      principal: Number(m.Principal_amount || 0),
+      rate: m.Interest_rate != null ? Number(m.Interest_rate) : null,
+      maturity: m.Maturity_date ? new Date(m.Maturity_date).toLocaleDateString("en-GB") : null,
+      status: m.Money_Status,
+    }));
+
+    // Assets with depreciation — active Assets with useful life
+    const assetRows = await prisma.Assets.findMany({
+      where: { Entreprise_id: entrepriseId, Period_end: null },
+      orderBy: { Assets_id: "asc" },
+    });
+    const assets = assetRows.filter((a) => a.Useful_Life_Years).map((a) => {
+      const cost = Number(a.Cost_Amount || 0);
+      const carrying = Number(a.Carrying_Amount || cost - Number(a.Accumulated_Depreciation || 0));
+      const life = Number(a.Useful_Life_Years);
+      const annualRate = life > 0 ? round2(100 / life) : null;
+      return {
+        name: a.Assets_Type,
+        cost,
+        carrying,
+        method: a.Depreciation_Method || "STRAIGHT_LINE",
+        usefulLife: life,
+        annualRate,
+      };
+    });
+
+    res.render("interest-rates", {
+      title: "Interest Rates",
+      active: "interest-rates",
+      currentBusinessUnit: req.currentBusinessUnit,
+      loans,
+      investments,
+      assets,
+      fmt: (n) => Number(n || 0).toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error loading interest rates: " + err.message);
   }
 });
 

@@ -103,18 +103,20 @@
           { key: 'money', dashboard: '/money', label: 'Money', items: [
               { href: '/money/funds', label: 'Funds', key: 'money-funds' },
               { href: '/money/investments', label: 'Investments', key: 'money-investments' },
+              { href: '/money/interest-rates', label: 'Interest Rates', key: 'interest-rates' },
               { href: '/money/cash-flow', label: 'Cash Flow', key: 'money-cash-flow' },
               { href: '/transactions', label: 'Transactions', key: 'transactions' },
               { href: '/accounts', label: 'Accounts', key: 'accounts' },
-            ], members: ['money', 'money-funds', 'money-investments', 'money-cash-flow', 'transactions', 'accounts'] },
+            ], members: ['money', 'money-funds', 'money-investments', 'interest-rates', 'money-cash-flow', 'transactions', 'accounts'] },
           { key: 'organisation', dashboard: null, label: 'Organisation', items: [
               { href: '/organisation/business', label: 'Business', key: 'business' },
               { href: '/organisation/stakeholders', label: 'Stakeholders', key: 'stakeholders' },
               { href: '/organisation/management', label: 'Management', key: 'management' },
+              { href: '/organisation/government', label: 'Government', key: 'government' },
               { href: '/organisation/processing', label: 'Processing', key: 'processing' },
               { href: '/organisation/livestock', label: 'Agriculture & Livestock', key: 'livestock' },
               { href: '/organisation/services-wip', label: 'Services', key: 'services-wip' },
-            ], members: ['business', 'stakeholders', 'management', 'processing', 'livestock', 'services-wip'] },
+            ], members: ['business', 'stakeholders', 'management', 'government', 'processing', 'livestock', 'services-wip'] },
           { key: 'insights', dashboard: null, label: 'Insights', items: [
               { href: '/reports', label: 'Reports', key: 'reports' },
               { href: '/knowledge', label: 'Knowledge', key: 'knowledge' },

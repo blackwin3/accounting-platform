@@ -1,0 +1,112 @@
+<header class="mb-8">
+  <a href="/money" class="text-ink/40 hover:text-till text-sm">← Money</a>
+  <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mt-2">Money</p>
+  <h1 class="font-display text-3xl mt-1">Interest Rates</h1>
+  <p class="text-ink/50 text-sm mt-1">Every financial instrument in this business that carries an interest rate, growth rate, or depreciation rate — loans, investments, and appreciating/depreciating assets — in one place.</p>
+</header>
+
+<% if (loans.length > 0) { %>
+<section class="bg-white rounded-xl border border-ink/10 overflow-hidden mb-6">
+  <div class="px-5 py-3 border-b border-ink/10">
+    <h2 class="font-display text-lg">Loans (you pay interest)</h2>
+  </div>
+  <div class="table-wrap">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-ink/10 text-left text-ink/40 font-mono text-xs uppercase tracking-widest">
+          <th class="px-5 py-2">Instrument</th>
+          <th class="px-5 py-2 text-right">Principal</th>
+          <th class="px-5 py-2 text-right">Outstanding</th>
+          <th class="px-5 py-2 text-right">Rate</th>
+          <th class="px-5 py-2">Frequency</th>
+          <th class="px-5 py-2">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% loans.forEach(function(l) { %>
+        <tr class="border-b border-ink/5 last:border-0">
+          <td class="px-5 py-3 font-display"><%= l.name %></td>
+          <td class="px-5 py-3 text-right font-mono tabular-nums"><%= fmt(l.principal) %></td>
+          <td class="px-5 py-3 text-right font-mono tabular-nums <%= l.outstanding > 0 ? 'text-clay' : 'text-till' %>"><%= fmt(l.outstanding) %></td>
+          <td class="px-5 py-3 text-right font-mono tabular-nums"><%= l.rate != null ? l.rate + '%' : '—' %></td>
+          <td class="px-5 py-3 text-xs text-ink/60"><%= l.frequency || '—' %></td>
+          <td class="px-5 py-3"><span class="font-mono text-xs px-2 py-0.5 rounded-full <%= l.status === 'ACTIVE' ? 'bg-till/10 text-till' : l.status === 'OVERDUE' ? 'bg-clay/10 text-clay' : 'bg-ink/10 text-ink/50' %>"><%= l.status %></span></td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+<% } %>
+
+<% if (investments.length > 0) { %>
+<section class="bg-white rounded-xl border border-ink/10 overflow-hidden mb-6">
+  <div class="px-5 py-3 border-b border-ink/10">
+    <h2 class="font-display text-lg">Investments (you earn interest/returns)</h2>
+  </div>
+  <div class="table-wrap">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-ink/10 text-left text-ink/40 font-mono text-xs uppercase tracking-widest">
+          <th class="px-5 py-2">Instrument</th>
+          <th class="px-5 py-2 text-right">Principal</th>
+          <th class="px-5 py-2 text-right">Rate</th>
+          <th class="px-5 py-2">Maturity</th>
+          <th class="px-5 py-2">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% investments.forEach(function(inv) { %>
+        <tr class="border-b border-ink/5 last:border-0">
+          <td class="px-5 py-3 font-display"><%= inv.name %></td>
+          <td class="px-5 py-3 text-right font-mono tabular-nums"><%= fmt(inv.principal) %></td>
+          <td class="px-5 py-3 text-right font-mono tabular-nums text-till"><%= inv.rate != null ? inv.rate + '%' : '—' %></td>
+          <td class="px-5 py-3 text-xs text-ink/60"><%= inv.maturity || '—' %></td>
+          <td class="px-5 py-3"><span class="font-mono text-xs px-2 py-0.5 rounded-full bg-till/10 text-till"><%= inv.status %></span></td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+<% } %>
+
+<% if (assets.length > 0) { %>
+<section class="bg-white rounded-xl border border-ink/10 overflow-hidden mb-6">
+  <div class="px-5 py-3 border-b border-ink/10">
+    <h2 class="font-display text-lg">Assets (depreciation and growth rates)</h2>
+  </div>
+  <div class="table-wrap">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-ink/10 text-left text-ink/40 font-mono text-xs uppercase tracking-widest">
+          <th class="px-5 py-2">Asset</th>
+          <th class="px-5 py-2 text-right">Cost</th>
+          <th class="px-5 py-2 text-right">Carrying</th>
+          <th class="px-5 py-2">Method</th>
+          <th class="px-5 py-2 text-right">Life (years)</th>
+          <th class="px-5 py-2 text-right">Annual Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% assets.forEach(function(a) { %>
+        <tr class="border-b border-ink/5 last:border-0">
+          <td class="px-5 py-3 font-display"><%= a.name %></td>
+          <td class="px-5 py-3 text-right font-mono tabular-nums"><%= fmt(a.cost) %></td>
+          <td class="px-5 py-3 text-right font-mono tabular-nums"><%= fmt(a.carrying) %></td>
+          <td class="px-5 py-3 text-xs text-ink/60"><%= a.method || '—' %></td>
+          <td class="px-5 py-3 text-right font-mono tabular-nums"><%= a.usefulLife || '—' %></td>
+          <td class="px-5 py-3 text-right font-mono tabular-nums"><%= a.annualRate != null ? a.annualRate + '%' : '—' %></td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+<% } %>
+
+<% if (loans.length === 0 && investments.length === 0 && assets.length === 0) { %>
+<section class="bg-paper border border-ink/10 rounded-xl p-6 text-center text-ink/40">
+  <p class="text-sm">No interest-bearing instruments yet. Loans, investments, and depreciating assets will appear here when created.</p>
+</section>
+<% } %>

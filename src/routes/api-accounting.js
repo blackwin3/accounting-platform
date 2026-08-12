@@ -252,6 +252,46 @@ router.post("/settle-payable", async (req, res) => {
   }
 });
 
+// POST /api/liability/:id/pay { amount, paymentMethod, notes }
+// Targeted payment against a specific Liability row — the user chooses
+// which debt to pay down, rather than FIFO choosing for them. This is
+// the real-world pattern: people pay large debts slowly and clear small
+// credits quickly, which is the opposite of FIFO.
+router.post("/liability/:id/pay", async (req, res) => {
+  try {
+    const { amount, paymentMethod, notes } = req.body;
+    const liabilityId = Number(req.params.id);
+    const entrepriseId = req.currentUser.Entreprise_id;
+
+    if (!amount || Number(amount) <= 0) return res.status(400).json({ error: "Amount must be positive" });
+    if (!["CASH", "MOBILE", "BANK"].includes(paymentMethod)) return res.status(400).json({ error: 'paymentMethod must be CASH, MOBILE, or BANK' });
+
+    const liability = await prisma.Liability.findUnique({ where: { Liability_id: liabilityId } });
+    if (!liability || liability.Entreprise_id !== entrepriseId) return res.status(404).json({ error: "Liability not found" });
+    const outstanding = Number(liability.Net_Amount || 0);
+    if (outstanding <= 0) return res.status(400).json({ error: "This liability has already been fully paid." });
+    if (Number(amount) > outstanding) return res.status(400).json({ error: `Payment (${amount}) exceeds outstanding amount (${outstanding}).` });
+
+    // Use the appropriate settlement function based on liability type
+    if (liability.Liability_Type === "Loan") {
+      const result = await postLoanRepayment({ amount: Number(amount), paymentMethod, notes, businessUnit: req.currentBusinessUnit, entrepriseId });
+      return res.json({ ok: true, transactionId: result.transaction.Transactions_id, remainingOutstanding: result.remainingOutstanding });
+    }
+    if (liability.Liability_Type === "Lease") {
+      const { postLeasePayment } = require("../services/postingEngine");
+      const result = await postLeasePayment({ liabilityId, amount: Number(amount), paymentMethod, entrepriseId });
+      return res.json({ ok: true, transactionId: result.transaction.Transactions_id, newOutstanding: result.newOutstanding });
+    }
+    // For trade payables and other types — use the generic payable settlement
+    const result = await postPayableSettlement({ amount: Number(amount), paymentMethod, notes, businessUnit: req.currentBusinessUnit, entrepriseId });
+    res.json({ ok: true, transactionId: result.transaction.Transactions_id, remainingPayable: result.remainingPayable });
+  } catch (err) {
+    if (err instanceof PostingError) return res.status(400).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: "Internal error paying liability" });
+  }
+});
+
 // POST /api/funding { source: "CAPITAL"|"LOAN", amount, paymentMethod, notes }
 router.post("/funding", async (req, res) => {
   try {
