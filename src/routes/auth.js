@@ -105,9 +105,10 @@ router.post("/api/setup/signup", async (req, res) => {
     // already exist rather than requiring a posting function to create them
     // on first use.
     try {
-      const { seedCatalogueEvents, seedAccountingRules } = require("../services/seed");
+      const { seedCatalogueEvents, seedAccountingRules, seedDefaultSettings } = require("../services/seed");
       await seedCatalogueEvents(org.Entreprise_id);
       await seedAccountingRules(org.Entreprise_id);
+      await seedDefaultSettings(org.Entreprise_id);
 
       // Provision the core accounts that every business needs from day one.
       // These are the accounts the interpreter resolves by code — if they

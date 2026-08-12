@@ -1,0 +1,84 @@
+<header class="mb-8">
+  <a href="/settings" class="text-ink/40 hover:text-till text-sm">← Settings</a>
+  <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mt-2">Settings</p>
+  <h1 class="font-display text-3xl mt-1">Succession Planning</h1>
+  <p class="text-ink/50 text-sm mt-1">Who runs this business today, who takes over next, and what has been decided and documented.</p>
+</header>
+
+<section class="bg-white rounded-xl border border-ink/10 overflow-hidden mb-8">
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="border-b border-ink/10 text-left text-ink/40 font-mono text-xs uppercase tracking-widest">
+        <th class="px-5 py-3">Person</th>
+        <th class="px-5 py-3">Role</th>
+        <th class="px-5 py-3">Succession Role</th>
+        <th class="px-5 py-3">Status</th>
+        <th class="px-5 py-3">Legal</th>
+        <th class="px-5 py-3">Relationship</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% members.forEach(function(m) { %>
+        <tr class="border-b border-ink/5 last:border-0 hover:bg-paper/50">
+          <td class="px-5 py-3 font-display"><%= m.name %></td>
+          <td class="px-5 py-3">
+            <span class="font-mono text-xs px-2 py-0.5 rounded-full <%= m.accessLevel === 'OWNER_FULL' ? 'bg-till/10 text-till' : 'bg-paper text-ink/60' %>"><%= m.role || m.accessLevel %></span>
+          </td>
+          <td class="px-5 py-3">
+            <% if (m.inheritanceStatus === 'CURRENT_OWNER') { %>
+              <span class="font-mono text-xs px-2 py-0.5 rounded-full bg-till/10 text-till">Current Owner</span>
+            <% } else if (m.inheritanceStatus === 'SUCCESSOR' || m.successionRole === 'SUCCESSOR') { %>
+              <span class="font-mono text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Successor</span>
+            <% } else if (m.inheritanceStatus === 'RETIRED') { %>
+              <span class="font-mono text-xs px-2 py-0.5 rounded-full bg-ink/10 text-ink/50">Retired</span>
+            <% } else if (m.inheritanceStatus === 'EXCLUDED') { %>
+              <span class="font-mono text-xs px-2 py-0.5 rounded-full bg-clay/10 text-clay">Excluded</span>
+            <% } else if (m.inheritanceStatus === 'ADVISOR') { %>
+              <span class="font-mono text-xs px-2 py-0.5 rounded-full bg-paper text-ink/60">Advisor</span>
+            <% } else { %>
+              <span class="text-ink/30 text-xs">—</span>
+            <% } %>
+          </td>
+          <td class="px-5 py-3 text-xs text-ink/60"><%= m.lifecycleStatus %></td>
+          <td class="px-5 py-3">
+            <% if (m.legalVerification === 'VERIFIED') { %>
+              <span class="text-till text-xs font-medium">Verified</span>
+            <% } else if (m.legalVerification === 'PENDING') { %>
+              <span class="text-amber-600 text-xs">Pending</span>
+            <% } else { %>
+              <span class="text-ink/30 text-xs">Not verified</span>
+            <% } %>
+          </td>
+          <td class="px-5 py-3 text-xs text-ink/50"><%= m.relationship || '—' %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</section>
+
+<% if (knowledgeEntries.length > 0) { %>
+<section class="bg-white rounded-xl border border-ink/10 p-6 mb-8">
+  <h2 class="font-display text-xl mb-4">Succession Decisions</h2>
+  <p class="text-ink/50 text-sm mb-4">Recorded via the Knowledge page or when a succession event was posted. These entries explain <em>why</em> decisions were made — not just that they happened.</p>
+  <div class="space-y-4">
+    <% knowledgeEntries.forEach(function(k) { %>
+      <div class="border-l-2 border-till/30 pl-4">
+        <p class="text-xs font-mono text-ink/40 mb-1"><%= k.type %> · <%= k.date %></p>
+        <% if (k.explanation) { %><p class="text-sm"><%= k.explanation %></p><% } %>
+        <% if (k.reason) { %><p class="text-sm text-ink/60 mt-1"><em>Reason:</em> <%= k.reason %></p><% } %>
+      </div>
+    <% }) %>
+  </div>
+</section>
+<% } else { %>
+<section class="bg-paper border border-ink/10 rounded-xl p-6 mb-8 text-center text-ink/40">
+  <p class="text-sm">No succession decisions recorded yet. Use the Knowledge page to document intentions, or post a succession event from Money → Funds when the time comes.</p>
+</section>
+<% } %>
+
+<% if (canEdit) { %>
+<section class="bg-white rounded-xl border border-ink/10 p-6">
+  <h2 class="font-display text-xl mb-2">Important</h2>
+  <p class="text-ink/50 text-sm">This page documents the family's succession <strong>intentions</strong>, not legal facts. A succession plan recorded here does not constitute a will, trust, or legal instrument. Before executing a formal handover (<code>POST /api/succession</code>), consult a lawyer to verify the legal standing of the intended transfer — especially where multiple family members, estranged relatives, or jointly-held assets are involved.</p>
+</section>
+<% } %>

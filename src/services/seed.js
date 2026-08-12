@@ -558,7 +558,7 @@ async function seedCatalogueEvents(entrepriseId) {
   });
   await def({
     Event_Name: "LOAN_DRAWDOWN",
-    Event_Description: "Borrow money. DR Cash/Mobile/Bank CR Loan Payable (2100). Financing inflow.",
+    Event_Description: "Borrow money. DR Cash/Mobile/Bank CR Loan Payable (2100). Financing inflow. IFRS 9 governs the financial liability. IAS 23 applies only if borrowing costs are directly attributable to a qualifying asset — ordinary working-capital loans use IFRS 9 alone.",
     Debit_Account_code: "1000", Credit_Account_code: "2100",
     Cash_Flow_Category: "FINANCING", Operational_Impact: "NONE",
     Risk_Level: "HIGH", Documentation_type: "NONE", Report_trigger: "CASH_FLOW",
@@ -569,7 +569,7 @@ async function seedCatalogueEvents(entrepriseId) {
   });
   await def({
     Event_Name: "LOAN_REPAYMENT",
-    Event_Description: "Repay a loan instalment. DR Loan Payable (2100) CR Cash/Mobile/Bank. Reduces the outstanding liability.",
+    Event_Description: "Repay a loan instalment. DR Loan Payable (2100) CR Cash/Mobile/Bank. Reduces the outstanding liability. IFRS 9. Note: this system currently treats the full payment as principal reduction — a future improvement should split principal and interest components.",
     Debit_Account_code: "2100", Credit_Account_code: "1000",
     Cash_Flow_Category: "FINANCING", Operational_Impact: "NONE",
     Risk_Level: "MEDIUM", Documentation_type: "NONE", Report_trigger: "CASH_FLOW",
@@ -834,7 +834,7 @@ async function seedCatalogueEvents(entrepriseId) {
   });
   await def({
     Event_Name: "HARVEST",
-    Event_Description: "A crop planting matures into inventory. DR Inventory (1100) CR Biological Assets (1450). IAS 41.",
+    Event_Description: "A crop planting matures into sellable inventory. DR Inventory (1100) CR Biological Assets (1450). IAS 41 governs the biological asset up to the point of harvest; after harvest the produce enters IAS 2 (Inventory) for measurement and sale.",
     Debit_Account_code: "1100", Credit_Account_code: "1450",
     Cash_Flow_Category: "NONE", Operational_Impact: "NONE",
     Risk_Level: "LOW", Documentation_type: "NONE", Report_trigger: "INCOME_STATEMENT",
@@ -1595,6 +1595,30 @@ async function seedAccountingRules(entrepriseId) {
       policyName: "Impairment recognised immediately, distinct from depreciation",
       policyDescription: "The Assets page's Impairment form posts the write-down directly against the asset, capped at its current carrying amount so it can never go negative. Accumulated impairment is tracked separately from accumulated depreciation, and both are netted against cost to compute carrying amount, matching the schema's own documented formula — depreciation running after an impairment correctly accounts for the reduced remaining value rather than depreciating as if the impairment never happened.",
     },
+    {
+      code: "IAS41",
+      name: "IAS 41 — Agriculture",
+      reference: "IAS 41.10-41.12",
+      ownerExplanation: "Your animals and crops are valued at what they would fetch at market today, not what you originally paid. When a calf is born or a crop grows, the increase in value is genuine income even though no cash changed hands. When an animal dies, the loss is genuine even though nothing was sold.",
+      description: "Biological assets are measured at fair value less costs to sell. A gain or loss arising from a change in fair value is recognised in profit or loss for the period. At the point of harvest, the produce is measured at fair value less costs to sell and thereafter enters IAS 2 (Inventory) — IAS 41 does not govern post-harvest produce.",
+      appliesTo: "RESOURCE",
+      recognitionMethod: "On Fair Value Change",
+      catalogueEvents: ["LIVESTOCK_BIRTH", "LIVESTOCK_LOSS", "LIVESTOCK_THEFT", "HARVEST"],
+      policyName: "Biological assets at fair value less costs to sell",
+      policyDescription: "Animals and crops are registered at estimated market fair value. Monthly reviews update the fair value without a journal posting — the gain or loss is recognised only at specific events: births (new asset, DR Biological Assets CR Gain on Biological Assets), deaths (DR Loss CR Biological Assets), and harvest (DR Inventory CR Biological Assets — the produce transitions from IAS 41 to IAS 2 at the point of harvest). Theft is tracked separately from natural loss for risk-pattern analysis.",
+    },
+    {
+      code: "IFRS17",
+      name: "IFRS 17 — Insurance Contracts",
+      reference: "IFRS 17.3",
+      ownerExplanation: "When you pay insurance premiums, that money is buying protection over a period of time. The cost is spread over the coverage period, not just recorded when you pay. When something goes wrong and the insurer pays you, that payout is income — separate from the premiums you paid.",
+      description: "Insurance premiums are expensed over the period of coverage. Prepaid portions are carried as prepaid insurance until the coverage period passes. Claims are recognised when the right to compensation is established — the claim receipt is income (Insurance Claim Income), not a reversal of the premium expense, because the premium bought coverage and the claim is the coverage paying out.",
+      appliesTo: "MONEY",
+      recognitionMethod: "Over Coverage Period",
+      catalogueEvents: ["PAY_EXPENSE_INSURANCE", "INSURANCE_CLAIM_RECEIPT"],
+      policyName: "Premiums expensed over coverage period, claims as income when right established",
+      policyDescription: "Insurance premiums are posted as Insurance Expense when paid, linked back to the specific policy via the Money row (postExpense with moneyId). The full premium is currently expensed immediately — a future improvement would spread it over the coverage months as a prepaid asset. Claims received from the insurer are posted as Insurance Claim Income (a separate income account, 4800), not a reversal of the expense. The Risk Position panel on the Risks & Insurance page computes the coverage ratio (total insured value ÷ total asset carrying value) to flag under-insurance.",
+    },
   ];
 
   for (const std of standards) {
@@ -2106,7 +2130,49 @@ if (require.main === module) {
     .finally(() => prisma.$disconnect());
 }
 
-module.exports = { seedAccountingRules, seedProcessActions, seedSourceOfTruthPolicy, seedCatalogueEvents, seedPeriodEndChecks };
+module.exports = { seedAccountingRules, seedProcessActions, seedSourceOfTruthPolicy, seedCatalogueEvents, seedPeriodEndChecks, seedDefaultSettings };
+
+/**
+ * seedDefaultSettings — seeds the typed, categorised Settings rows that
+ * every business needs. Unlike Preference_key/Preference_value on
+ * Structures (which stores everything as strings), each setting has
+ * an explicit Data_Type so consumers don't need to parse.
+ */
+async function seedDefaultSettings(entrepriseId) {
+  const settings = [
+    { category: "ACCOUNTING", name: "MATERIALITY_THRESHOLD", value: "5000", dataType: "DECIMAL", description: "Amounts below this threshold are expensed immediately rather than capitalised. IAS 16 materiality." },
+    { category: "ACCOUNTING", name: "DEPRECIATION_DEFAULT_METHOD", value: "STRAIGHT_LINE", dataType: "STRING", description: "Default depreciation method for new fixed assets." },
+    { category: "ACCOUNTING", name: "FISCAL_YEAR_START", value: "01", dataType: "INT", description: "Month number (1-12) when the fiscal year begins." },
+    { category: "ACCOUNTING", name: "DEFAULT_CURRENCY", value: "KES", dataType: "STRING", description: "Default currency for all transactions." },
+    { category: "INVENTORY", name: "COST_FORMULA", value: "FIFO", dataType: "STRING", description: "Inventory cost formula: FIFO, weighted average, or specific identification. IAS 2.25." },
+    { category: "INVENTORY", name: "REORDER_ALERT_ENABLED", value: "1", dataType: "BOOLEAN", description: "Alert when stock falls below reorder level." },
+    { category: "CASH_FLOW", name: "CASH_FLOW_METHOD", value: "INDIRECT", dataType: "STRING", description: "Cash flow statement method: DIRECT or INDIRECT. IAS 7." },
+    { category: "COMPLIANCE", name: "VAT_RATE", value: "16.00", dataType: "DECIMAL", description: "Standard VAT rate. Kenya: 16%." },
+    { category: "COMPLIANCE", name: "VAT_REGISTERED", value: "0", dataType: "BOOLEAN", description: "Whether this business is VAT registered." },
+    { category: "USER", name: "REQUIRE_EVIDENCE_ON_POST", value: "0", dataType: "BOOLEAN", description: "Require evidence attachment before a transaction can be posted." },
+    { category: "USER", name: "AUTO_OPEN_PERIOD", value: "1", dataType: "BOOLEAN", description: "Automatically open today's period when the first transaction is posted." },
+    { category: "SUCCESSION", name: "SUCCESSION_PLAN_ACTIVE", value: "0", dataType: "BOOLEAN", description: "Whether a formal succession plan exists for this business." },
+    { category: "SUCCESSION", name: "SUCCESSION_REVIEW_FREQUENCY", value: "ANNUAL", dataType: "STRING", description: "How often the succession plan should be reviewed." },
+  ];
+
+  for (const s of settings) {
+    const existing = await prisma.Settings.findFirst({
+      where: { Setting_Name: s.name, Entreprise_id: entrepriseId },
+    });
+    if (!existing) {
+      await prisma.Settings.create({
+        data: {
+          Setting_Category: s.category,
+          Setting_Name: s.name,
+          Setting_Value: s.value,
+          Data_Type: s.dataType,
+          Description: s.description,
+          Entreprise_id: entrepriseId,
+        },
+      });
+    }
+  }
+}
 
 /**
  * seedPeriodEndChecks — seeds the default period-end checklist as

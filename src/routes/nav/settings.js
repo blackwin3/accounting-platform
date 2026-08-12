@@ -207,6 +207,62 @@ router.get("/settings/profile", async (req, res) => {
   }
 });
 
+// GET /settings/succession — succession planning alongside the profile page
+router.get("/settings/succession", async (req, res) => {
+  try {
+    const entrepriseId = req.currentUser.Entreprise_id;
+
+    const team = await prisma.Management.findMany({
+      where: { Entreprise_id: entrepriseId },
+      orderBy: { Administration_id: "asc" },
+    });
+
+    const stakeholders = await prisma.Stakeholder.findMany({
+      where: { Entreprise_id: entrepriseId },
+    });
+    const stakeholderById = Object.fromEntries(stakeholders.map((s) => [s.Stakeholder_id, s]));
+
+    const knowledgeEntries = await prisma.Knowledge.findMany({
+      where: { Context: "SUCCESSION", Entreprise_id: entrepriseId },
+      orderBy: { Entry_date: "desc" },
+      take: 10,
+    });
+
+    const members = team.map((m) => {
+      const stk = m.Stakeholder_id ? stakeholderById[m.Stakeholder_id] : null;
+      return {
+        id: m.Administration_id,
+        name: m.Management_Name,
+        role: m.Management_Role,
+        accessLevel: m.Access_Level,
+        inheritanceStatus: m.Inheritance_Status,
+        successionRole: m.Succession_Role || null,
+        lifecycleStatus: m.Lifecycle_Status || "ACTIVE",
+        successionStatus: m.Succession_Status || null,
+        legalVerification: m.Legal_Verification || "NOT_VERIFIED",
+        arrangementType: m.Arrangement_Type,
+        relationship: stk ? stk.Relationship_to_owner : null,
+      };
+    });
+
+    res.render("succession", {
+      title: "Succession Planning",
+      active: "succession",
+      members,
+      knowledgeEntries: knowledgeEntries.map((k) => ({
+        type: k.Knowledge_type,
+        explanation: k.Explanation,
+        reason: k.Decision_Reason,
+        date: k.Entry_date ? new Date(k.Entry_date).toLocaleDateString("en-GB") : "—",
+      })),
+      canEdit: req.currentUser.Access_Level === "OWNER_FULL",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error loading succession page: " + err.message);
+  }
+});
+
 // GET /settings/rules — IAS/IFRS standards mapped to real Catalogue events,
 // plus the LogicConditions enforcement rules actually running in the engine
 router.get("/settings/rules", async (req, res) => {
