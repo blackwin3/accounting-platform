@@ -462,72 +462,98 @@ async function postCapitalWithdrawal(input) {
  * Refuses to repay more than is genuinely still outstanding.
  */
 async function postLoanRepayment(input) {
-  const { amount, paymentMethod = "CASH", notes = "", administrationId = null, businessUnit = "SHOP", entrepriseId } = input;
+  const { amount, interestAmount = 0, paymentMethod = "CASH", notes = "", administrationId = null, businessUnit = "SHOP", entrepriseId } = input;
 
   if (!entrepriseId) throw new PostingError("entrepriseId is required — every posting must belong to a specific business.");
   if (!amount || amount <= 0) throw new PostingError("Amount must be positive");
+  if (interestAmount < 0) throw new PostingError("Interest amount cannot be negative");
+  if (interestAmount >= amount) throw new PostingError("Interest amount must be less than the total payment — some portion must reduce the principal.");
   if (!["CASH", "MOBILE", "BANK"].includes(paymentMethod)) throw new PostingError('paymentMethod must be "CASH", "MOBILE", or "BANK" — a loan repayment is an actual cash-equivalent payment.');
 
+  const principalAmount = round2(amount - interestAmount);
+
   return prisma.$transaction(async (tx) => {
+    // Principal portion: DR Loan Payable CR Cash — reduces the liability
     const eventName = "LOAN_REPAYMENT";
-    let catalogue = await tx.Catalogue.findFirst({ where: { Event_Name: eventName, Entreprise_id: entrepriseId } });
-    if (!catalogue) {
-      catalogue = await tx.Catalogue.create({
-        data: {
-          Event_Name: eventName,
-          Event_Description: "The business pays down an outstanding loan. DR Loan Payable (2100) CR payment method account. Interest is not separated from principal — this system doesn't yet post loan interest as its own expense (an honestly-documented gap, see Settings → Rules).",
-          Debit_Account_code: "2100",
-          Credit_Account_code: "1000",
-          Posting_Complexity: "SIMPLE",
-          Cash_Flow_Category: "FINANCING",
-          Operational_Impact: "NONE",
-          Risk_Level: "MEDIUM",
-          Documentation_type: "NONE",
-          Report_trigger: "CASH_FLOW",
-          Escalation_Role: "OWNER",
-          Cycle_type: "LOAN",
-          Alert_Required: 1,
-          Narrative_template: "Repaid KES {Amount} against an outstanding loan. {Notes}",
-          Evidence_template: "NONE",
-          Report_sections: "CASH_FLOW:Financing|BALANCE_SHEET:LoanPayable",
-          Default_Business_Unit: "SHOP",
-          Is_Active: 1,
-          Version_No: 1,
-          Effective_From: new Date("2020-04-01"),
-          Entreprise_id: entrepriseId,
-        },
-      });
-    }
+    await mustFindOrCreateCatalogue(tx, {
+      eventName,
+      description: "Repay a loan instalment (principal portion). DR Loan Payable (2100) CR Cash/Mobile/Bank. Reduces the outstanding liability. IFRS 9.",
+      debitCode: "2100",
+      creditCode: "1000",
+      cashFlowCategory: "FINANCING",
+      riskLevel: "MEDIUM",
+      cycleType: "LOAN",
+      alertRequired: 1,
+      narrativeTemplate: "Loan repayment: KES {Amount} (principal: KES {Principal}, interest: KES {Interest}). {Notes}",
+      reportSections: "CASH_FLOW:Financing|BALANCE_SHEET:LoanPayable",
+      businessUnit,
+      entrepriseId,
+    });
 
     const loanAccount = await mustFindOrCreateAccount(tx, "2100", "Loan Payable", "LIABILITY", "CREDIT", "NON_CURRENT_LIABILITY", entrepriseId);
     const outstanding = await computeAccountBalance(tx, loanAccount.Account_id, "CREDIT");
-    if (round2(amount) > round2(outstanding)) {
-      throw new PostingError(`Cannot repay KES ${round2(amount)} — only KES ${round2(outstanding)} is genuinely still outstanding on this loan.`);
+    if (round2(principalAmount) > round2(outstanding)) {
+      throw new PostingError(`Cannot repay KES ${round2(principalAmount)} principal — only KES ${round2(outstanding)} is genuinely still outstanding.`);
     }
 
     const product = await findOrCreateExpensePlaceholder(tx, "Loan Payable", entrepriseId);
 
+    // Post the principal reduction
     const result = await runCatalogueEvent(tx, {
       eventName,
-      amount: round2(amount),
+      amount: round2(principalAmount),
       productId: product.Product_id,
       businessUnit,
       administrationId,
       paymentMethod,
       paymentDirection: "pay",
       paymentSide: "credit",
-      narrativeValues: { Notes: notes },
+      narrativeValues: { Principal: principalAmount, Interest: interestAmount, Notes: notes },
       entrepriseId,
     });
 
-    // Reduce individual Liability rows FIFO (oldest loan drawdown first)
-    // — the same pattern already proven correct for Trade Receivables/
-    // Payables settlements, so a repayment genuinely reduces what the
-    // Liability page shows as outstanding, not just the aggregate
-    // account balance.
-    let remaining = round2(amount);
+    // Post the interest portion as a separate expense if > 0
+    // DR Finance Costs (5210) CR Cash/Mobile/Bank — this is an expense,
+    // not a liability reduction. IAS 7 classifies it as Operating (the
+    // default) or Financing (policy choice) — we use Operating.
+    const interestJournal = [];
+    if (interestAmount > 0) {
+      await mustFindOrCreateCatalogue(tx, {
+        eventName: "LOAN_INTEREST_EXPENSE",
+        description: "Interest portion of a loan repayment. DR Finance Costs (5210) CR Cash/Mobile/Bank. An expense, not a liability reduction. IFRS 9.",
+        debitCode: "5210",
+        creditCode: "1000",
+        cashFlowCategory: "OPERATING",
+        riskLevel: "LOW",
+        cycleType: "LOAN",
+        alertRequired: 0,
+        narrativeTemplate: "Loan interest: KES {Amount}.",
+        reportSections: "INCOME_STATEMENT:FinanceCosts|CASH_FLOW:Operating",
+        businessUnit,
+        entrepriseId,
+      });
+
+      await mustFindOrCreateAccount(tx, "5210", "Finance Costs", "EXPENDITURE", "DEBIT", "OPERATING_EXPENSE", entrepriseId);
+
+      const interestResult = await runCatalogueEvent(tx, {
+        eventName: "LOAN_INTEREST_EXPENSE",
+        amount: round2(interestAmount),
+        productId: product.Product_id,
+        businessUnit,
+        administrationId,
+        paymentMethod,
+        paymentDirection: "pay",
+        paymentSide: "credit",
+        narrativeValues: {},
+        entrepriseId,
+      });
+      interestJournal.push(...interestResult.journal);
+    }
+
+    // Reduce individual Liability rows FIFO (principal only)
+    let remaining = round2(principalAmount);
     const openLoans = await tx.Liability.findMany({
-      where: { Liability_Type: "Loan", Net_Amount: { gt: 0 } },
+      where: { Liability_Type: "Loan", Net_Amount: { gt: 0 }, Entreprise_id: entrepriseId },
       orderBy: { Liability_id: "asc" },
     });
     for (const row of openLoans) {
@@ -541,7 +567,14 @@ async function postLoanRepayment(input) {
       remaining = round2(remaining - applied);
     }
 
-    return { transaction: result.transaction, journal: result.journal, narrative: result.narrative, remainingOutstanding: round2(outstanding - amount) };
+    return {
+      transaction: result.transaction,
+      journal: [...result.journal, ...interestJournal],
+      narrative: result.narrative,
+      principalPaid: principalAmount,
+      interestPaid: interestAmount,
+      remainingOutstanding: round2(outstanding - principalAmount),
+    };
   });
 }
 

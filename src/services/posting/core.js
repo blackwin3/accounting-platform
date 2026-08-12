@@ -477,6 +477,45 @@ async function computeAccountBalance(tx, accountId, normalSide) {
   return normalSide === "DEBIT" ? round2(debit - credit) : round2(credit - debit);
 }
 
+/**
+ * generateReceipt — creates a Documents row (type: RECEIPT) linked to
+ * the Records row and Transaction that triggered it. Returns the
+ * Document with a sequential receipt number (RCP-NNNN).
+ *
+ * This closes the gap where Catalogue events declared
+ * Documentation_type: "RECEIPT" but no code ever created the actual
+ * Document row. Now any posting function can call generateReceipt
+ * after posting to produce a traceable, numbered receipt.
+ */
+async function generateReceipt(tx, { recordsId, transactionId, stakeholderId = null, amount, description, administrationId = null, entrepriseId }) {
+  // Count existing receipts for this business to generate the next number
+  const count = await tx.Documents.count({ where: { Document_type: "RECEIPT", Entreprise_id: entrepriseId } });
+  const receiptNo = `RCP-${String(count + 1).padStart(4, "0")}`;
+
+  return tx.Documents.create({
+    data: {
+      Records_id: recordsId || null,
+      Transactions_id: transactionId || null,
+      Document_type: "RECEIPT",
+      Documents_no: receiptNo,
+      Documents_version: 1,
+      Stakeholder_id: stakeholderId,
+      Document_Title: "Receipt",
+      Action: "CREATE",
+      Document_date: new Date(),
+      Net_Amount: round2(amount),
+      Document_status: "GENERATED",
+      Document_Authenticity: "ORIGINAL",
+      Is_Original: 1,
+      Generated: 1,
+      Generated_By: administrationId,
+      Confidence_Level: 4,
+      Created_at: new Date(),
+      Entreprise_id: entrepriseId,
+    },
+  });
+}
+
 module.exports = {
   prisma,
   PostingError,
@@ -495,4 +534,5 @@ module.exports = {
   mustFindOrCreateAccount,
   findOrCreateExpensePlaceholder,
   computeAccountBalance,
+  generateReceipt,
 };

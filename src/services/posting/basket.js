@@ -28,6 +28,7 @@ const {
   buildCycleReference,
   round2,
   findOrCreateExpensePlaceholder,
+  generateReceipt,
 } = require("./core");
 
 /**
@@ -733,6 +734,16 @@ async function postBasket(input) {
       data: { Records_Totals: round2(runningTotal), Batch_Status: "TRADING" },
     });
 
+    // Generate a receipt for this basket
+    const receipt = await generateReceipt(tx, {
+      recordsId: recordsRow.Records_id,
+      transactionId: postedTransactions.length > 0 ? postedTransactions[0].Transactions_id : null,
+      amount: round2(runningTotal),
+      description: `Basket ${cycleReference}`,
+      administrationId: input.administrationId || null,
+      entrepriseId: input.entrepriseId,
+    });
+
     return {
       recordsId: recordsRow.Records_id,
       cycleReference,
@@ -742,6 +753,7 @@ async function postBasket(input) {
       creditSplit: discount < 0 ? round2(Math.abs(discount)) : 0,
       transactions: postedTransactions,
       journal: postedJournal,
+      receiptNo: receipt.Documents_no,
     };
   });
 }

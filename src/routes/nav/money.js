@@ -202,6 +202,7 @@ router.get("/money/cash-flow", async (req, res) => {
       else if (eventName === "SERVICE_BILLED") customersIn += debit;
       // Financing — loan and lease repayments, capital withdrawal.
       else if (eventName === "LOAN_REPAYMENT") loansRepaidOut += credit;
+      else if (eventName === "LOAN_INTEREST_EXPENSE") otherOperatingOut += credit;
       else if (eventName === "CAPITAL_WITHDRAWAL") capitalWithdrawnOut += credit;
       else if (eventName === "LEASE_PAYMENT") loansRepaidOut += credit;
       else if (eventName === "OWNER_CAPITAL_INJECTION") capitalIn += debit;

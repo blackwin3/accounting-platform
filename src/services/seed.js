@@ -569,13 +569,24 @@ async function seedCatalogueEvents(entrepriseId) {
   });
   await def({
     Event_Name: "LOAN_REPAYMENT",
-    Event_Description: "Repay a loan instalment. DR Loan Payable (2100) CR Cash/Mobile/Bank. Reduces the outstanding liability. IFRS 9. Note: this system currently treats the full payment as principal reduction — a future improvement should split principal and interest components.",
+    Event_Description: "Repay a loan instalment (principal portion). DR Loan Payable (2100) CR Cash/Mobile/Bank. Reduces the outstanding liability. IFRS 9. Interest is posted separately via LOAN_INTEREST_EXPENSE.",
     Debit_Account_code: "2100", Credit_Account_code: "1000",
     Cash_Flow_Category: "FINANCING", Operational_Impact: "NONE",
     Risk_Level: "MEDIUM", Documentation_type: "NONE", Report_trigger: "CASH_FLOW",
     Escalation_Role: "OWNER", Cycle_type: "LOAN", Alert_Required: 0,
-    Narrative_template: "Loan repayment: KES {Amount}. {Notes}",
+    Narrative_template: "Loan repayment: KES {Amount} (principal: KES {Principal}, interest: KES {Interest}). {Notes}",
     Evidence_template: "NONE", Report_sections: "CASH_FLOW:Financing|BALANCE_SHEET:LoanPayable",
+    Default_Business_Unit: "SHOP",
+  });
+  await def({
+    Event_Name: "LOAN_INTEREST_EXPENSE",
+    Event_Description: "Interest portion of a loan repayment. DR Finance Costs (5210) CR Cash/Mobile/Bank. An operating expense, not a liability reduction. IFRS 9.",
+    Debit_Account_code: "5210", Credit_Account_code: "1000",
+    Cash_Flow_Category: "OPERATING", Operational_Impact: "NONE",
+    Risk_Level: "LOW", Documentation_type: "NONE", Report_trigger: "INCOME_STATEMENT",
+    Escalation_Role: "NONE", Cycle_type: "LOAN", Alert_Required: 0,
+    Narrative_template: "Loan interest: KES {Amount}.",
+    Evidence_template: "NONE", Report_sections: "INCOME_STATEMENT:FinanceCosts|CASH_FLOW:Operating",
     Default_Business_Unit: "SHOP",
   });
   await def({

@@ -321,15 +321,28 @@ router.post("/capital-withdrawal", async (req, res) => {
   }
 });
 
-// POST /api/loan-repayment { amount, paymentMethod, notes } — pay down
-// an outstanding loan. Refused if it would exceed what's genuinely still
-// outstanding.
+// POST /api/loan-repayment { amount, interestAmount, paymentMethod, notes }
+// Repay a loan with optional principal/interest split. If interestAmount is
+// provided, the interest portion posts as Finance Costs expense while only
+// the principal portion reduces the loan liability.
 router.post("/loan-repayment", async (req, res) => {
   try {
     if (!requireCapitalApproval(req, res)) return;
-    const { amount, paymentMethod, notes } = req.body;
-    const result = await postLoanRepayment({ amount, paymentMethod, notes, businessUnit: req.currentBusinessUnit, entrepriseId: req.currentUser.Entreprise_id });
-    res.json({ ok: true, transactionId: result.transaction.Transactions_id, remainingOutstanding: result.remainingOutstanding });
+    const { amount, interestAmount, paymentMethod, notes } = req.body;
+    const result = await postLoanRepayment({
+      amount: Number(amount),
+      interestAmount: interestAmount ? Number(interestAmount) : 0,
+      paymentMethod, notes,
+      businessUnit: req.currentBusinessUnit,
+      entrepriseId: req.currentUser.Entreprise_id,
+    });
+    res.json({
+      ok: true,
+      transactionId: result.transaction.Transactions_id,
+      principalPaid: result.principalPaid,
+      interestPaid: result.interestPaid,
+      remainingOutstanding: result.remainingOutstanding,
+    });
   } catch (err) {
     if (err instanceof PostingError) return res.status(400).json({ error: err.message });
     console.error(err);
