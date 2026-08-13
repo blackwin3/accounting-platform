@@ -96,20 +96,26 @@ changes the economics entirely.
 - Depreciation: Straight-Line
 - Payment: Bank (or however it was financed)
 
-**If received as a gift or inheritance**: This is common — a brother gives
+**If received as a gift or inheritance**: 
+
+This is common — a brother gives
 a vehicle, or a parent leaves one. The legal and accounting handling:
+
 1. Register the vehicle at **KES 1** (the nominal legal transfer price —
    by law, a gift can be transferred at any amount including KES 1)
+   
 2. Have the vehicle **revalued to market price** immediately:
    Assets → Revalue Asset: new value KES 400,000 (whatever the market
    says today). This posts DR PPE CR Revaluation Surplus — the vehicle
    is now on the books at its real value.
+   
 3. The driver can then choose:
    - **Depreciate normally** over 5 years (correct accounting)
    - **Write off (impair) over the next few years** — post an impairment
      each year to gradually reduce the carrying amount. This is useful
      when the driver doesn't want a large depreciation charge hitting
      the P&L monthly. The accounting is: DR Impairment Loss CR PPE.
+     
    The choice depends on what the driver needs the P&L to show — a
    bank wants to see depreciation, the driver's own planning may prefer
    impairment over time.
@@ -126,6 +132,7 @@ Claims → Expenses → Other: KES 1,500/day, "Vehicle hire — [fleet owner]"
 
 **If the driver manages a second vehicle** (e.g. his son drives it):
 Register it as a second asset with a distinct name:
+
 - "Toyota Vitz — KCD 456B (son's car)"
 - The income from that vehicle can be tracked under the same RIDES unit
   — the product sales show which vehicle earned what if the receipts
@@ -160,6 +167,7 @@ Record every fuel stop — this is the single most important cost to track.
 Record as a **basket sale** with the component breakdown. Example ride:
 
 Till → Sell:
+
 - Ride — Distance: 1 × KES 150
 - Ride — Time: 1 × KES 250
 - Ride — Occupancy: 2 × KES 150 (two passengers)
@@ -174,9 +182,11 @@ most.
 
 ### During the day
 
-**Food**: Claims → Expenses → Other, KES 200, "Lunch — [location]"
-**Water**: Claims → Expenses → Other, KES 50
-**Bribe**: Claims → Expenses → Other, KES 100, "Traffic police — [location]"
+  **Food**: Claims → Expenses → Other, KES 200, "Lunch — [location]"
+  
+  **Water**: Claims → Expenses → Other, KES 50
+  
+  **Bribe**: Claims → Expenses → Other, KES 100, "Traffic police — [location]"
 
 Record bribes honestly. They're a real, recurring operating cost. The
 accountant and the driver both need to see how much is going to
@@ -190,13 +200,16 @@ the driver makes. It represents what the driver pays himself for the day's
 work — the money that leaves the business and goes to the driver as a person.
 
 Claims → Expenses → Other:
+
 - Amount: KES 4,000–6,000 (what the driver takes home)
 - Note: "My time — 8 hours at KES 750/hr = KES 6,000"
 
-OR create a utility product for this:
+OR 
+create a utility product for this:
+
 - Product: "Daily Earnings" (type: Utility, category: Other Utility)
-- Rate: KES 750–1,000/hour
-- Daily charge: 6–8 hours × rate = KES 4,500–8,000
+- Rate: KES 450–750/hour
+- Daily charge: 6–8 hours × rate = KES 3,500–6,000
 
 This is charged as an expense TO the business. What the P&L then shows
 is what remains IN the business after the driver has been paid. If the
@@ -214,10 +227,13 @@ to earn to justify choosing Uber over boda.
 
 ### Vehicle maintenance
 
-**Oil change**: Claims → Expenses → Other, KES 3,000, "Oil change — [garage]"
-**Tyre**: Assets → Buy Asset (if it's a full set with multi-year life)
-or Expenses → Other (if it's a single tyre replacement)
-**Repair**: Claims → Expenses → Other, amount, "Brake pads — [garage]"
+**Oil change**: 
+  Claims → Expenses → Other, KES 3,000, "Oil change — [garage]"
+**Tyre**: 
+  Assets → Buy Asset (if it's a full set with multi-year life)
+  or Expenses → Other (if it's a single tyre replacement)
+**Repair**: 
+  Claims → Expenses → Other, amount, "Brake pads — [garage]"
 
 ### Insurance and licence
 
@@ -263,11 +279,14 @@ the business consumed KES 119,300 in costs plus KES 10,000 in
 depreciation. The vehicle is an asset being consumed faster than the
 rides replace its value.
 
-**What the driver actually takes home**: KES 5,000/day × 26 = KES 130,000.
-That's real money in his pocket. But the vehicle lost KES 10,000 of value
-and KES 3,000 went to repairs. His real wealth gain for the month is
-closer to KES 117,000 — still decent, but not the KES 130,000 he feels
-he earned.
+**What the driver actually takes home**: 
+KES 5,000/day × 26 = KES 130,000.
+That's real money in his pocket. 
+But the vehicle lost KES 10,000 of value
+and KES 3,000 went to repairs. 
+
+His real wealth gain for the month is closer to KES 117,000 
+  — still decent, but not the KES 130,000 he feels he earned.
 
 ---
 
