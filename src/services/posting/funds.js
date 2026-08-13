@@ -637,4 +637,131 @@ async function postLoanClosure({ liabilityId, notes = "", administrationId = nul
   });
 }
 
-module.exports = { postFunding, postUnitIncome, postFundTransfer, postCapitalWithdrawal, postLoanRepayment, postLoanClosure, INCOME_TYPES };
+/**
+ * postRentArrears — records rent that is due but unpaid. DR Rent
+ * Receivable (1220) CR Rental Income (4100). Income is recognised on
+ * the accrual basis (the tenant owes it), cash comes later via
+ * postSettleRentArrears. Creates a Money instrument (RENT_ARREARS)
+ * to track the outstanding amount per tenant.
+ */
+async function postRentArrears(input) {
+  const { assetsId, stakeholderId, amount, period = "", notes = "", administrationId = null, businessUnit = "RENTAL", entrepriseId } = input;
+
+  if (!entrepriseId) throw new PostingError("entrepriseId is required.");
+  if (!assetsId) throw new PostingError("assetsId is required — which rental property.");
+  if (!stakeholderId) throw new PostingError("stakeholderId is required — which tenant.");
+  if (!amount || amount <= 0) throw new PostingError("Amount must be positive.");
+
+  return prisma.$transaction(async (tx) => {
+    const asset = await tx.Assets.findUnique({ where: { Assets_id: Number(assetsId) } });
+    if (!asset || asset.Entreprise_id !== entrepriseId) throw new PostingError("Rental property not found.");
+
+    const tenant = await tx.Stakeholder.findUnique({ where: { Stakeholder_id: Number(stakeholderId) } });
+    if (!tenant || tenant.Entreprise_id !== entrepriseId) throw new PostingError("Tenant not found.");
+
+    await mustFindOrCreateAccount(tx, "1220", "Rent Receivable", "ASSET", "DEBIT", "CURRENT_ASSET", entrepriseId);
+    await mustFindOrCreateAccount(tx, "4100", "Rental Income", "INCOME", "CREDIT", "OPERATING_REVENUE", entrepriseId);
+
+    await mustFindOrCreateCatalogue(tx, {
+      eventName: "RECORD_RENT_ARREARS",
+      description: "Rent due but unpaid. DR Rent Receivable (1220) CR Rental Income (4100). IFRS 15.",
+      debitCode: "1220", creditCode: "4100",
+      cashFlowCategory: "NONE", riskLevel: "MEDIUM", cycleType: "RENT",
+      alertRequired: 1, narrativeTemplate: "Rent arrears: KES {Amount} owed by {Tenant_Name} for {Period}.",
+      reportSections: "INCOME_STATEMENT:RentalIncome|BALANCE_SHEET:RentReceivable",
+      businessUnit, entrepriseId,
+    });
+
+    const product = await findOrCreateExpensePlaceholder(tx, "Rent Arrears", entrepriseId);
+    const tenantName = `${tenant.First_name || ""} ${tenant.Last_name || ""}`.trim() || tenant.Business_name || "Tenant";
+
+    const result = await runCatalogueEvent(tx, {
+      eventName: "RECORD_RENT_ARREARS",
+      amount: round2(amount),
+      productId: product.Product_id,
+      businessUnit, administrationId,
+      narrativeValues: { Tenant_Name: tenantName, Period: period },
+      entrepriseId,
+    });
+
+    // Create a Money instrument tracking this specific arrears
+    const arrears = await tx.Money.create({
+      data: {
+        Account_id: (await tx.Account.findFirst({ where: { Account_Name: "Rent Receivable", Entreprise_id: entrepriseId } })).Account_id,
+        Stakeholder_id: Number(stakeholderId),
+        Asset_id: Number(assetsId),
+        Transactions_id: result.transaction.Transactions_id,
+        Instrument_type: "RENT_ARREARS",
+        Money_Status: "ACTIVE",
+        Risk_Level: "MEDIUM",
+        Money_Name: `Rent arrears — ${tenantName} — ${period}`,
+        Principal_amount: round2(amount),
+        Outstanding_Amount: round2(amount),
+        Start_date: new Date(),
+        Entreprise_id: entrepriseId,
+      },
+    });
+
+    return { transaction: result.transaction, journal: result.journal, arrears, narrative: result.narrative };
+  });
+}
+
+/**
+ * postSettleRentArrears — tenant pays outstanding rent. DR Cash/Mobile/Bank
+ * CR Rent Receivable (1220). Settles the arrears — NOT income recognition
+ * (that happened at postRentArrears). Updates the Money instrument.
+ */
+async function postSettleRentArrears(input) {
+  const { moneyId, amount, paymentMethod = "CASH", administrationId = null, businessUnit = "RENTAL", entrepriseId } = input;
+
+  if (!entrepriseId) throw new PostingError("entrepriseId is required.");
+  if (!moneyId) throw new PostingError("moneyId is required — which arrears record.");
+  if (!amount || amount <= 0) throw new PostingError("Amount must be positive.");
+
+  return prisma.$transaction(async (tx) => {
+    const arrears = await tx.Money.findUnique({ where: { Money_id: Number(moneyId) } });
+    if (!arrears || arrears.Entreprise_id !== entrepriseId || arrears.Instrument_type !== "RENT_ARREARS") {
+      throw new PostingError("Rent arrears record not found.");
+    }
+    const outstanding = Number(arrears.Outstanding_Amount || 0);
+    if (amount > outstanding) throw new PostingError(`Payment (${amount}) exceeds outstanding arrears (${outstanding}).`);
+
+    await mustFindOrCreateAccount(tx, "1220", "Rent Receivable", "ASSET", "DEBIT", "CURRENT_ASSET", entrepriseId);
+
+    await mustFindOrCreateCatalogue(tx, {
+      eventName: "SETTLE_RENT_ARREARS",
+      description: "Tenant pays outstanding rent. DR Cash/Mobile/Bank CR Rent Receivable (1220). IFRS 9.",
+      debitCode: "1000", creditCode: "1220",
+      cashFlowCategory: "OPERATING", riskLevel: "LOW", cycleType: "RENT",
+      alertRequired: 0, narrativeTemplate: "Rent arrears settled: KES {Amount}.",
+      reportSections: "CASH_FLOW:Operating|BALANCE_SHEET:RentReceivable",
+      businessUnit, entrepriseId,
+    });
+
+    const product = await findOrCreateExpensePlaceholder(tx, "Rent Settlement", entrepriseId);
+
+    const result = await runCatalogueEvent(tx, {
+      eventName: "SETTLE_RENT_ARREARS",
+      amount: round2(amount),
+      productId: product.Product_id,
+      businessUnit, administrationId,
+      paymentMethod, paymentDirection: "receive", paymentSide: "debit",
+      narrativeValues: {},
+      entrepriseId,
+    });
+
+    const newOutstanding = round2(outstanding - amount);
+    await tx.Money.update({
+      where: { Money_id: arrears.Money_id },
+      data: {
+        Outstanding_Amount: newOutstanding,
+        Money_Status: newOutstanding <= 0 ? "PAID" : "ACTIVE",
+        Settlement_transaction_id: result.transaction.Transactions_id,
+      },
+    });
+
+    return { transaction: result.transaction, journal: result.journal, newOutstanding };
+  });
+}
+
+module.exports = { postFunding, postUnitIncome, postFundTransfer, postCapitalWithdrawal, postLoanRepayment, postLoanClosure, postRentArrears, postSettleRentArrears, INCOME_TYPES };

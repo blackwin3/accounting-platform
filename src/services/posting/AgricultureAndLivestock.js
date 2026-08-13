@@ -69,7 +69,7 @@ async function registerAnimal(input) {
   }
 
   return prisma.Resources.create({
-    data: { Product_id: Number(productId), Resource_type: "BIOLOGICAL_ASSET", Resource_Class: "BIOLOGICAL_ASSET", Resource_Category: category, Resources_Quantity: 1, Animal_Tag: tag.trim(), Animal_Sex: category === "LIVESTOCK" ? sex || null : null, Growth_Stage: growthStage, Parent_Resources_id: parentResourcesId ? Number(parentResourcesId) : null, Resources_Manufacture_Date: birthDate ? new Date(birthDate) : null, Fair_Value: fairValue != null ? round2(Number(fairValue)) : null, Fair_Value_Date: fairValue != null ? new Date() : null, Fair_Value_Basis: fairValue != null ? "MARKET_PRICE" : null, Resources_Quality: condition, Resources_Status: "AVAILABLE", Resources_Source: "PRODUCTION", Last_updated: new Date() },
+    data: { Product_id: Number(productId), Resource_type: "BIOLOGICAL_ASSET", Resource_Class: "BIOLOGICAL_ASSET", Resource_Category: category, Resource_Mode: category === "LIVESTOCK" ? "BIOLOGICAL" : "LOT", Resources_Quantity: 1, Animal_Tag: tag.trim(), Animal_Sex: category === "LIVESTOCK" ? sex || null : null, Growth_Stage: growthStage, Parent_Resources_id: parentResourcesId ? Number(parentResourcesId) : null, Resources_Manufacture_Date: birthDate ? new Date(birthDate) : null, Fair_Value: fairValue != null ? round2(Number(fairValue)) : null, Fair_Value_Date: fairValue != null ? new Date() : null, Fair_Value_Basis: fairValue != null ? "MARKET_PRICE" : null, Resources_Quality: condition, Resources_Status: "AVAILABLE", Resources_Source: "PRODUCTION", Last_updated: new Date() },
   });
 }
 
@@ -105,6 +105,7 @@ async function bulkPlanting(input) {
         Product_id: Number(productId),
         Resource_type: "BIOLOGICAL_ASSET",
         Resource_Class: "BIOLOGICAL_ASSET",
+        Resource_Mode: "LOT",
         Resource_Category: "CROP",
         Resources_Quantity: 1,
         Animal_Tag: tag,
@@ -524,4 +525,92 @@ async function assignTenant(input) {
   });
 }
 
-module.exports = { registerAnimal, bulkPlanting, recordMonthlyReview, recordAnimalLoss, recordBirth, recordHarvest, postSeasonalLabour, postRentalPropertyPurchase, assignTenant };
+/**
+ * postBiologicalAssetRevaluation — IAS 41 fair value revaluation. When
+ * an animal or crop's market value changes materially (growth, market
+ * shift, disease), this posts the gain or loss to the P&L rather than
+ * just updating the Resources row silently.
+ *
+ * recordMonthlyReview updates the Resources.Fair_Value without posting.
+ * This function is for when the change is material enough to recognise
+ * as income or expense — a calf that was KES 20,000 last month is now
+ * KES 35,000 as a yearling, a gain of KES 15,000 that should appear
+ * on the income statement.
+ *
+ * The branch selects REVALUE_BIOLOGICAL_ASSET_UP (gain) or DOWN (loss),
+ * the same pattern as postAssetRevaluation.
+ */
+async function postBiologicalAssetRevaluation(input) {
+  const { resourcesId, newFairValue, reason = "", businessUnit = "FARM", administrationId = null, entrepriseId } = input;
+
+  if (!entrepriseId) throw new PostingError("entrepriseId is required.");
+  if (!resourcesId) throw new PostingError("resourcesId is required.");
+  if (newFairValue == null || Number(newFairValue) < 0) throw new PostingError("New fair value must be zero or positive.");
+
+  return prisma.$transaction(async (tx) => {
+    const record = await tx.Resources.findUnique({ where: { Resources_id: Number(resourcesId) } });
+    if (!record) throw new PostingError("Record not found.");
+    if (record.Resource_Class !== "BIOLOGICAL_ASSET") throw new PostingError("This isn't a biological asset.");
+
+    const oldValue = round2(Number(record.Fair_Value || 0));
+    const newValue = round2(Number(newFairValue));
+    const change = round2(newValue - oldValue);
+
+    if (change === 0) throw new PostingError("No change in fair value — nothing to post.");
+
+    const isGain = change > 0;
+    const eventName = isGain ? "REVALUE_BIOLOGICAL_ASSET_UP" : "REVALUE_BIOLOGICAL_ASSET_DOWN";
+
+    if (isGain) {
+      await mustFindOrCreateAccount(tx, "1450", "Biological Assets", "ASSET", "DEBIT", "NON_CURRENT_ASSET", entrepriseId);
+      await mustFindOrCreateAccount(tx, "4550", "Gain on Biological Assets", "INCOME", "CREDIT", "OTHER_INCOME", entrepriseId);
+    } else {
+      await mustFindOrCreateAccount(tx, "5950", "Loss on Biological Assets", "EXPENDITURE", "DEBIT", "OPERATING_EXPENSE", entrepriseId);
+      await mustFindOrCreateAccount(tx, "1450", "Biological Assets", "ASSET", "DEBIT", "NON_CURRENT_ASSET", entrepriseId);
+    }
+
+    await mustFindOrCreateCatalogue(tx, {
+      eventName,
+      description: isGain
+        ? "Fair value increase on a biological asset. DR Biological Assets (1450) CR Gain on Biological Assets (4550). IAS 41."
+        : "Fair value decrease on a biological asset. DR Loss on Biological Assets (5950) CR Biological Assets (1450). IAS 41.",
+      debitCode: isGain ? "1450" : "5950",
+      creditCode: isGain ? "4550" : "1450",
+      cashFlowCategory: "NONE",
+      riskLevel: "MEDIUM",
+      cycleType: "FARMING",
+      alertRequired: 0,
+      narrativeTemplate: isGain
+        ? "{Animal_Tag} revalued upward by KES {Amount} to KES {NewValue}."
+        : "{Animal_Tag} revalued downward by KES {Amount} to KES {NewValue}.",
+      reportSections: isGain
+        ? "INCOME_STATEMENT:GainOnBiologicalAssets|BALANCE_SHEET:BiologicalAssets"
+        : "INCOME_STATEMENT:LossOnBiologicalAssets|BALANCE_SHEET:BiologicalAssets",
+      businessUnit,
+      entrepriseId,
+    });
+
+    const product = record.Product_id
+      ? await tx.Product.findUnique({ where: { Product_id: record.Product_id } })
+      : await findOrCreateExpensePlaceholder(tx, "Biological Asset Revaluation", entrepriseId);
+
+    const result = await runCatalogueEvent(tx, {
+      eventName,
+      amount: round2(Math.abs(change)),
+      productId: product.Product_id,
+      businessUnit,
+      administrationId,
+      narrativeValues: { Animal_Tag: record.Animal_Tag, NewValue: newValue },
+      entrepriseId,
+    });
+
+    await tx.Resources.update({
+      where: { Resources_id: record.Resources_id },
+      data: { Fair_Value: newValue, Fair_Value_Date: new Date(), Last_updated: new Date() },
+    });
+
+    return { transaction: result.transaction, journal: result.journal, oldValue, newValue, change };
+  });
+}
+
+module.exports = { registerAnimal, bulkPlanting, recordMonthlyReview, recordAnimalLoss, recordBirth, recordHarvest, postSeasonalLabour, postBiologicalAssetRevaluation, postRentalPropertyPurchase, assignTenant };

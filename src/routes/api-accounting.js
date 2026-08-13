@@ -10,7 +10,7 @@
 
 const express = require("express");
 const router = express.Router();
-const { postAssetPurchase, postAssetDisposal, postDepreciationRun, postAssetImpairment, postAssetRevaluation, postLeaseCommencement, postLeasePayment, postLeaseTermination, postProvision, postProvisionUtilisation, postExpense, postReceivableSettlement, postPayableSettlement, postFunding, postFundTransfer, postUnitIncome, postCapitalWithdrawal, postLoanRepayment, postLoanClosure, postInvestmentPurchase, postInvestmentSale, postInsurancePolicy, closeInsurancePolicy, postInsuranceClaim, postRentalPropertyPurchase, assignTenant, postCorrection, postSuccession, PostingError, prisma } = require("../services/postingEngine");
+const { postAssetPurchase, postAssetDisposal, postDepreciationRun, postAssetImpairment, postAssetRevaluation, postLeaseCommencement, postLeasePayment, postLeaseTermination, postProvision, postProvisionUtilisation, postExpense, postReceivableSettlement, postPayableSettlement, postFunding, postFundTransfer, postUnitIncome, postCapitalWithdrawal, postLoanRepayment, postLoanClosure, postInvestmentPurchase, postInvestmentSale, postInterestAccrual, postCouponReceipt, postInsurancePolicy, closeInsurancePolicy, postInsuranceClaim, postRentalPropertyPurchase, assignTenant, postCorrection, postSuccession, postRentArrears, postSettleRentArrears, postBiologicalAssetRevaluation, PostingError, prisma } = require("../services/postingEngine");
 
 // requireCapitalApproval — genuinely restricts capital-moving actions
 // (withdrawing capital, repaying a loan, buying/selling an investment,
@@ -606,6 +606,112 @@ router.post("/succession", async (req, res) => {
     if (err instanceof PostingError) return res.status(400).json({ error: err.message });
     console.error(err);
     res.status(500).json({ error: "Internal error recording succession" });
+  }
+});
+
+// ── BOND INTEREST CYCLE ──────────────────────────────────────────────
+
+// POST /api/investment/:id/accrue-interest { amount }
+router.post("/investment/:id/accrue-interest", async (req, res) => {
+  try {
+    const { amount } = req.body;
+    const result = await postInterestAccrual({
+      moneyId: req.params.id,
+      amount: Number(amount),
+      businessUnit: req.currentBusinessUnit,
+      administrationId: req.currentUser.Administration_id,
+      entrepriseId: req.currentUser.Entreprise_id,
+    });
+    res.json({ ok: true, transactionId: result.transaction.Transactions_id });
+  } catch (err) {
+    if (err instanceof PostingError) return res.status(400).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: "Internal error accruing interest" });
+  }
+});
+
+// POST /api/investment/:id/receive-coupon { amount, paymentMethod }
+router.post("/investment/:id/receive-coupon", async (req, res) => {
+  try {
+    const { amount, paymentMethod } = req.body;
+    const result = await postCouponReceipt({
+      moneyId: req.params.id,
+      amount: Number(amount),
+      paymentMethod,
+      businessUnit: req.currentBusinessUnit,
+      administrationId: req.currentUser.Administration_id,
+      entrepriseId: req.currentUser.Entreprise_id,
+    });
+    res.json({ ok: true, transactionId: result.transaction.Transactions_id });
+  } catch (err) {
+    if (err instanceof PostingError) return res.status(400).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: "Internal error receiving coupon" });
+  }
+});
+
+// ── RENTAL ARREARS CYCLE ─────────────────────────────────────────────
+
+// POST /api/rent-arrears { assetsId, stakeholderId, amount, period }
+router.post("/rent-arrears", async (req, res) => {
+  try {
+    const { assetsId, stakeholderId, amount, period, notes } = req.body;
+    const result = await postRentArrears({
+      assetsId: Number(assetsId),
+      stakeholderId: Number(stakeholderId),
+      amount: Number(amount),
+      period, notes,
+      businessUnit: req.currentBusinessUnit,
+      administrationId: req.currentUser.Administration_id,
+      entrepriseId: req.currentUser.Entreprise_id,
+    });
+    res.json({ ok: true, transactionId: result.transaction.Transactions_id, arrearsId: result.arrears.Money_id });
+  } catch (err) {
+    if (err instanceof PostingError) return res.status(400).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: "Internal error recording rent arrears" });
+  }
+});
+
+// POST /api/rent-arrears/:id/settle { amount, paymentMethod }
+router.post("/rent-arrears/:id/settle", async (req, res) => {
+  try {
+    const { amount, paymentMethod } = req.body;
+    const result = await postSettleRentArrears({
+      moneyId: req.params.id,
+      amount: Number(amount),
+      paymentMethod,
+      businessUnit: req.currentBusinessUnit,
+      administrationId: req.currentUser.Administration_id,
+      entrepriseId: req.currentUser.Entreprise_id,
+    });
+    res.json({ ok: true, transactionId: result.transaction.Transactions_id, newOutstanding: result.newOutstanding });
+  } catch (err) {
+    if (err instanceof PostingError) return res.status(400).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: "Internal error settling rent arrears" });
+  }
+});
+
+// ── BIOLOGICAL ASSET REVALUATION (IAS 41) ────────────────────────────
+
+// POST /api/livestock/:id/revalue { newFairValue, reason }
+router.post("/livestock/:id/revalue", async (req, res) => {
+  try {
+    const { newFairValue, reason } = req.body;
+    const result = await postBiologicalAssetRevaluation({
+      resourcesId: req.params.id,
+      newFairValue: Number(newFairValue),
+      reason,
+      businessUnit: req.currentBusinessUnit,
+      administrationId: req.currentUser.Administration_id,
+      entrepriseId: req.currentUser.Entreprise_id,
+    });
+    res.json({ ok: true, transactionId: result.transaction.Transactions_id, oldValue: result.oldValue, newValue: result.newValue, change: result.change });
+  } catch (err) {
+    if (err instanceof PostingError) return res.status(400).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: "Internal error revaluing biological asset" });
   }
 });
 

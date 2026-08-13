@@ -892,6 +892,78 @@ async function seedCatalogueEvents(entrepriseId) {
     Default_Business_Unit: "FARM",
   });
 
+  // ── BOND / INVESTMENT INTEREST CYCLE ───────────────────────────────
+  await def({
+    Event_Name: "ACCRUE_INVESTMENT_INTEREST",
+    Event_Description: "Interest earned on a bond or investment but not yet received in cash. DR Interest Receivable (1210) CR Interest Income (4200). Accrual basis — cash comes later when the coupon is paid. IFRS 9.",
+    Debit_Account_code: "1210", Credit_Account_code: "4200",
+    Cash_Flow_Category: "NONE", Operational_Impact: "NONE",
+    Risk_Level: "LOW", Documentation_type: "NONE", Report_trigger: "INCOME_STATEMENT",
+    Escalation_Role: "NONE", Cycle_type: "INVESTMENT", Alert_Required: 0,
+    Narrative_template: "Interest accrued on {Investment_Name}: KES {Amount}.",
+    Evidence_template: "NONE", Report_sections: "INCOME_STATEMENT:InterestIncome|BALANCE_SHEET:InterestReceivable",
+    Default_Business_Unit: "INVESTMENTS",
+  });
+  await def({
+    Event_Name: "RECEIVE_COUPON",
+    Event_Description: "Cash receipt of previously accrued investment interest. DR Cash/Mobile/Bank CR Interest Receivable (1210). Settles the accrual — NOT income recognition (that happened at accrual). IFRS 9.",
+    Debit_Account_code: "1000", Credit_Account_code: "1210",
+    Cash_Flow_Category: "OPERATING", Operational_Impact: "NONE",
+    Risk_Level: "LOW", Documentation_type: "BANK_STATEMENT", Report_trigger: "CASH_FLOW",
+    Escalation_Role: "NONE", Cycle_type: "INVESTMENT", Alert_Required: 0,
+    Narrative_template: "Coupon received on {Investment_Name}: KES {Amount}.",
+    Evidence_template: "BANK_STATEMENT", Report_sections: "CASH_FLOW:Operating|BALANCE_SHEET:InterestReceivable",
+    Default_Business_Unit: "INVESTMENTS",
+  });
+
+  // ── RENTAL ARREARS CYCLE ───────────────────────────────────────────
+  await def({
+    Event_Name: "RECORD_RENT_ARREARS",
+    Event_Description: "Rent is due but the tenant has not paid. DR Rent Receivable (1220) CR Rental Income (4100). Income is recognised (the tenant owes it), cash comes later. IFRS 15.",
+    Debit_Account_code: "1220", Credit_Account_code: "4100",
+    Cash_Flow_Category: "NONE", Operational_Impact: "NONE",
+    Risk_Level: "MEDIUM", Documentation_type: "NONE", Report_trigger: "INCOME_STATEMENT",
+    Escalation_Role: "OWNER", Cycle_type: "RENT", Alert_Required: 1,
+    Narrative_template: "Rent arrears: KES {Amount} owed by {Tenant_Name} for {Period}.",
+    Evidence_template: "NONE", Report_sections: "INCOME_STATEMENT:RentalIncome|BALANCE_SHEET:RentReceivable",
+    Default_Business_Unit: "RENTAL",
+  });
+  await def({
+    Event_Name: "SETTLE_RENT_ARREARS",
+    Event_Description: "Tenant pays outstanding rent. DR Cash/Mobile/Bank CR Rent Receivable (1220). Settles the arrears — NOT income recognition (that happened when arrears were recorded). IFRS 9.",
+    Debit_Account_code: "1000", Credit_Account_code: "1220",
+    Cash_Flow_Category: "OPERATING", Operational_Impact: "NONE",
+    Risk_Level: "LOW", Documentation_type: "RECEIPT", Report_trigger: "CASH_FLOW",
+    Escalation_Role: "NONE", Cycle_type: "RENT", Alert_Required: 0,
+    Narrative_template: "Rent arrears settled: KES {Amount} received from {Tenant_Name}.",
+    Evidence_template: "RECEIPT", Report_sections: "CASH_FLOW:Operating|BALANCE_SHEET:RentReceivable",
+    Default_Business_Unit: "RENTAL",
+  });
+
+  // ── BIOLOGICAL ASSET REVALUATION (IAS 41) ──────────────────────────
+  await def({
+    Event_Name: "REVALUE_BIOLOGICAL_ASSET_UP",
+    Event_Description: "Fair value increase on a biological asset (animal grows, crop matures). DR Biological Assets (1450) CR Gain on Biological Assets (4550). IAS 41 — fair value change recognised in profit or loss.",
+    Debit_Account_code: "1450", Credit_Account_code: "4550",
+    Cash_Flow_Category: "NONE", Operational_Impact: "NONE",
+    Risk_Level: "LOW", Documentation_type: "NONE", Report_trigger: "INCOME_STATEMENT",
+    Escalation_Role: "NONE", Cycle_type: "FARMING", Alert_Required: 0,
+    Narrative_template: "{Animal_Tag} revalued upward by KES {Amount} to KES {NewValue}.",
+    Evidence_template: "NONE", Report_sections: "INCOME_STATEMENT:GainOnBiologicalAssets|BALANCE_SHEET:BiologicalAssets",
+    Default_Business_Unit: "FARM",
+  });
+  await def({
+    Event_Name: "REVALUE_BIOLOGICAL_ASSET_DOWN",
+    Event_Description: "Fair value decrease on a biological asset (disease, drought, market price drop). DR Loss on Biological Assets (5950) CR Biological Assets (1450). IAS 41.",
+    Debit_Account_code: "5950", Credit_Account_code: "1450",
+    Cash_Flow_Category: "NONE", Operational_Impact: "NONE",
+    Risk_Level: "MEDIUM", Documentation_type: "NONE", Report_trigger: "INCOME_STATEMENT",
+    Escalation_Role: "NONE", Cycle_type: "FARMING", Alert_Required: 0,
+    Narrative_template: "{Animal_Tag} revalued downward by KES {Amount} to KES {NewValue}.",
+    Evidence_template: "NONE", Report_sections: "INCOME_STATEMENT:LossOnBiologicalAssets|BALANCE_SHEET:BiologicalAssets",
+    Default_Business_Unit: "FARM",
+  });
+
   // ── SUCCESSION / INHERITANCE ───────────────────────────────────────
   await def({
     Event_Name: "SUCCESSION_TRANSFER",
@@ -1467,7 +1539,23 @@ async function seedAccountingRules(entrepriseId) {
     Framework_Name: "IFRS_SME",
     Framework_Priority: 2,
     Structures_Name: "IFRS for SMEs",
-    Structures_Description: "The primary accounting framework this system is built toward.",
+    Structures_Description: "The primary accounting framework this system is built toward. Individual IAS/IFRS standard references below are used as educational and supporting references — this system does not prepare full IFRS financial statements. Where IFRS for SMEs and full IFRS differ, the SME standard applies.",
+    Mandatory: 1,
+    Rule_Severity: "INFO",
+    Entreprise_id: entrepriseId,
+  });
+
+  // Declare the framework policy explicitly so auditors and accountants
+  // know the system's stance on which standards are authoritative
+  await upsertStructure({
+    Structures_Type: "ACCOUNTING_POLICY",
+    Structure_Level: "RULE",
+    Parent_Structure_id: ifrsFramework.Structures_id,
+    Framework_Name: "IFRS_SME",
+    Framework_Priority: 2,
+    Structures_Name: "FRAMEWORK_DECLARATION",
+    Structures_Description: "Primary framework: IFRS for SMEs. Individual IAS/IFRS references (IAS 2, IAS 16, IAS 41, IFRS 9, IFRS 15, IFRS 16, IFRS 17) are used as educational references to explain the accounting principles being applied. They are not a claim that this business prepares full IFRS financial statements.",
+    Rule_Code: "FW_DECLARATION",
     Mandatory: 1,
     Rule_Severity: "INFO",
     Entreprise_id: entrepriseId,
@@ -2151,17 +2239,42 @@ module.exports = { seedAccountingRules, seedProcessActions, seedSourceOfTruthPol
  */
 async function seedDefaultSettings(entrepriseId) {
   const settings = [
-    { category: "ACCOUNTING", name: "MATERIALITY_THRESHOLD", value: "5000", dataType: "DECIMAL", description: "Amounts below this threshold are expensed immediately rather than capitalised. IAS 16 materiality." },
+    // ── ACCOUNTING ───────────────────────────────────────────────────
+    { category: "ACCOUNTING", name: "MATERIALITY_THRESHOLD", value: "5000", dataType: "DECIMAL", description: "Amounts below this are expensed immediately rather than capitalised. IAS 16 materiality." },
     { category: "ACCOUNTING", name: "DEPRECIATION_DEFAULT_METHOD", value: "STRAIGHT_LINE", dataType: "STRING", description: "Default depreciation method for new fixed assets." },
     { category: "ACCOUNTING", name: "FISCAL_YEAR_START", value: "01", dataType: "INT", description: "Month number (1-12) when the fiscal year begins." },
     { category: "ACCOUNTING", name: "DEFAULT_CURRENCY", value: "KES", dataType: "STRING", description: "Default currency for all transactions." },
-    { category: "INVENTORY", name: "COST_FORMULA", value: "FIFO", dataType: "STRING", description: "Inventory cost formula: FIFO, weighted average, or specific identification. IAS 2.25." },
+    { category: "ACCOUNTING", name: "RECOGNITION_BASIS", value: "CASH", dataType: "STRING", description: "Default recognition basis: CASH or ACCRUAL. Cash is simpler for novice users; accrual is required for full IFRS compliance." },
+    { category: "ACCOUNTING", name: "PRIMARY_FRAMEWORK", value: "IFRS_FOR_SMES", dataType: "STRING", description: "Primary accounting framework. Individual standard references are educational — not a claim of full IFRS compliance." },
+    { category: "ACCOUNTING", name: "RESIDUAL_VALUE_DEFAULT", value: "0", dataType: "DECIMAL", description: "Default residual value for new assets when the owner doesn't know. KES 0 is conservative." },
+
+    // ── INVENTORY ────────────────────────────────────────────────────
+    { category: "INVENTORY", name: "COST_FORMULA", value: "FIFO", dataType: "STRING", description: "Inventory cost formula: FIFO, WEIGHTED_AVERAGE, or SPECIFIC. IAS 2.25." },
     { category: "INVENTORY", name: "REORDER_ALERT_ENABLED", value: "1", dataType: "BOOLEAN", description: "Alert when stock falls below reorder level." },
+    { category: "INVENTORY", name: "EXPIRY_TRACKING_ENABLED", value: "0", dataType: "BOOLEAN", description: "Track expiry dates on perishable inventory." },
+    { category: "INVENTORY", name: "SPOILAGE_WRITE_OFF_AUTO", value: "0", dataType: "BOOLEAN", description: "Automatically write off expired inventory at period close." },
+    { category: "INVENTORY", name: "NRV_CHECK_ENABLED", value: "0", dataType: "BOOLEAN", description: "Check Net Realisable Value at period end (IAS 2.28 — lower of cost and NRV)." },
+
+    // ── CASH_FLOW ────────────────────────────────────────────────────
     { category: "CASH_FLOW", name: "CASH_FLOW_METHOD", value: "INDIRECT", dataType: "STRING", description: "Cash flow statement method: DIRECT or INDIRECT. IAS 7." },
+    { category: "CASH_FLOW", name: "INTEREST_CLASSIFICATION", value: "OPERATING", dataType: "STRING", description: "Where interest paid appears on the cash flow: OPERATING or FINANCING. IAS 7 policy choice." },
+    { category: "CASH_FLOW", name: "DIVIDEND_CLASSIFICATION", value: "OPERATING", dataType: "STRING", description: "Where dividends received appear: OPERATING or INVESTING. IAS 7 policy choice." },
+
+    // ── COMPLIANCE ───────────────────────────────────────────────────
     { category: "COMPLIANCE", name: "VAT_RATE", value: "16.00", dataType: "DECIMAL", description: "Standard VAT rate. Kenya: 16%." },
-    { category: "COMPLIANCE", name: "VAT_REGISTERED", value: "0", dataType: "BOOLEAN", description: "Whether this business is VAT registered." },
+    { category: "COMPLIANCE", name: "VAT_REGISTERED", value: "0", dataType: "BOOLEAN", description: "Whether this business is VAT registered with KRA." },
+    { category: "COMPLIANCE", name: "WITHHOLDING_TAX_RATE", value: "5.00", dataType: "DECIMAL", description: "Withholding tax rate on payments to suppliers (if applicable)." },
+    { category: "COMPLIANCE", name: "TAX_FILING_FREQUENCY", value: "ANNUAL", dataType: "STRING", description: "How often the business files tax returns: MONTHLY, QUARTERLY, ANNUAL." },
+    { category: "COMPLIANCE", name: "COUNTY_RATES_ANNUAL", value: "0", dataType: "DECIMAL", description: "Annual county land rates — set to actual amount so the system can warn when it's due. KES 0 = not applicable." },
+    { category: "COMPLIANCE", name: "BUSINESS_PERMIT_ANNUAL", value: "0", dataType: "DECIMAL", description: "Annual single business permit cost. KES 0 = not applicable." },
+
+    // ── USER ─────────────────────────────────────────────────────────
     { category: "USER", name: "REQUIRE_EVIDENCE_ON_POST", value: "0", dataType: "BOOLEAN", description: "Require evidence attachment before a transaction can be posted." },
     { category: "USER", name: "AUTO_OPEN_PERIOD", value: "1", dataType: "BOOLEAN", description: "Automatically open today's period when the first transaction is posted." },
+    { category: "USER", name: "RECEIPT_AUTO_GENERATE", value: "1", dataType: "BOOLEAN", description: "Automatically generate a receipt Document for every basket sale." },
+    { category: "USER", name: "SHOW_ACCOUNTING_JARGON", value: "0", dataType: "BOOLEAN", description: "Show technical accounting terms (DR/CR, accrual) in the interface. Off = plain language for novice owners." },
+
+    // ── SUCCESSION ───────────────────────────────────────────────────
     { category: "SUCCESSION", name: "SUCCESSION_PLAN_ACTIVE", value: "0", dataType: "BOOLEAN", description: "Whether a formal succession plan exists for this business." },
     { category: "SUCCESSION", name: "SUCCESSION_REVIEW_FREQUENCY", value: "ANNUAL", dataType: "STRING", description: "How often the succession plan should be reviewed." },
   ];

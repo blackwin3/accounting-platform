@@ -567,7 +567,8 @@ async function postLeaseTermination(input) {
     });
 
     const journal = [];
-    const commonLeg = { catalogueId: catalogue.Catalogue_id, transactionId: transaction.Transactions_id, productId: product.Product_id, periodId: openPeriod.Structures_id, administrationId, entrepriseId };
+    const entryGroup = `JE-LEASE-TERM-${transaction.Transactions_id}`;
+    const commonLeg = { catalogueId: catalogue.Catalogue_id, transactionId: transaction.Transactions_id, productId: product.Product_id, periodId: openPeriod.Structures_id, administrationId, entrepriseId, entryGroup };
 
     // Leg 1: DR Lease Liability — clear what remains of the financial obligation
     if (liabilityRemaining > 0) {

@@ -78,6 +78,8 @@ module.exports = {
   postCapitalWithdrawal: funds.postCapitalWithdrawal,
   postLoanRepayment: funds.postLoanRepayment,
   postLoanClosure: funds.postLoanClosure,
+  postRentArrears: funds.postRentArrears,
+  postSettleRentArrears: funds.postSettleRentArrears,
   INCOME_TYPES: funds.INCOME_TYPES,
 
   // core.js
@@ -103,6 +105,8 @@ module.exports = {
   // investments.js
   postInvestmentPurchase: investments.postInvestmentPurchase,
   postInvestmentSale: investments.postInvestmentSale,
+  postInterestAccrual: investments.postInterestAccrual,
+  postCouponReceipt: investments.postCouponReceipt,
 
   // interpreter.js — Catalogue-driven posting engine.
   executeCatalogueEvent: interpreter.executeCatalogueEvent,
@@ -124,6 +128,7 @@ module.exports = {
   recordBirth: AgricultureAndLivestock.recordBirth,
   recordHarvest: AgricultureAndLivestock.recordHarvest,
   postSeasonalLabour: AgricultureAndLivestock.postSeasonalLabour,
+  postBiologicalAssetRevaluation: AgricultureAndLivestock.postBiologicalAssetRevaluation,
   postRentalPropertyPurchase: AgricultureAndLivestock.postRentalPropertyPurchase,
   assignTenant: AgricultureAndLivestock.assignTenant,
 

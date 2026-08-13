@@ -199,4 +199,115 @@ async function postInvestmentSale(input) {
   });
 }
 
-module.exports = { postInvestmentPurchase, postInvestmentSale };
+/**
+ * postInterestAccrual — accrues interest earned on a bond or investment
+ * but not yet received in cash. DR Interest Receivable (1210) CR Interest
+ * Income (4200). The cash receipt (coupon) is a separate event.
+ *
+ * This is the genuine accrual basis: income is recognised when earned,
+ * not when cash arrives. For a government bond paying semi-annual coupons,
+ * interest accrues monthly but cash comes every 6 months.
+ */
+async function postInterestAccrual(input) {
+  const { moneyId, amount, notes = "", administrationId = null, businessUnit = "INVESTMENTS", entrepriseId } = input;
+
+  if (!entrepriseId) throw new PostingError("entrepriseId is required.");
+  if (!moneyId) throw new PostingError("moneyId is required — the investment earning this interest.");
+  if (!amount || amount <= 0) throw new PostingError("Amount must be positive.");
+
+  return prisma.$transaction(async (tx) => {
+    const money = await tx.Money.findUnique({ where: { Money_id: Number(moneyId) } });
+    if (!money || money.Entreprise_id !== entrepriseId) throw new PostingError("Investment not found.");
+    if (money.Money_Status !== "ACTIVE") throw new PostingError("This investment is not active.");
+
+    await mustFindOrCreateAccount(tx, "1210", "Interest Receivable", "ASSET", "DEBIT", "CURRENT_ASSET", entrepriseId);
+    await mustFindOrCreateAccount(tx, "4200", "Interest Income", "INCOME", "CREDIT", "OTHER_INCOME", entrepriseId);
+
+    await mustFindOrCreateCatalogue(tx, {
+      eventName: "ACCRUE_INVESTMENT_INTEREST",
+      description: "Interest earned but not yet received. DR Interest Receivable (1210) CR Interest Income (4200). IFRS 9.",
+      debitCode: "1210", creditCode: "4200",
+      cashFlowCategory: "NONE", riskLevel: "LOW", cycleType: "INVESTMENT",
+      alertRequired: 0, narrativeTemplate: "Interest accrued on {Investment_Name}: KES {Amount}.",
+      reportSections: "INCOME_STATEMENT:InterestIncome|BALANCE_SHEET:InterestReceivable",
+      businessUnit, entrepriseId,
+    });
+
+    const product = await findOrCreateExpensePlaceholder(tx, money.Money_Name || "Investment Interest", entrepriseId);
+
+    const result = await runCatalogueEvent(tx, {
+      eventName: "ACCRUE_INVESTMENT_INTEREST",
+      amount: round2(amount),
+      productId: product.Product_id,
+      businessUnit, administrationId,
+      narrativeValues: { Investment_Name: money.Money_Name },
+      entrepriseId,
+    });
+
+    await tx.Money.update({
+      where: { Money_id: money.Money_id },
+      data: { Interest_Accrued: round2(Number(money.Interest_Accrued || 0) + amount) },
+    });
+
+    return { transaction: result.transaction, journal: result.journal, narrative: result.narrative };
+  });
+}
+
+/**
+ * postCouponReceipt — cash receipt of previously accrued investment
+ * interest. DR Cash/Mobile/Bank CR Interest Receivable (1210). This
+ * settles the accrual — it is NOT income recognition (that happened
+ * at accrual time). The distinction matters for the cash flow statement:
+ * the accrual is non-cash, the coupon is operating cash inflow.
+ */
+async function postCouponReceipt(input) {
+  const { moneyId, amount, paymentMethod = "BANK", administrationId = null, businessUnit = "INVESTMENTS", entrepriseId } = input;
+
+  if (!entrepriseId) throw new PostingError("entrepriseId is required.");
+  if (!moneyId) throw new PostingError("moneyId is required.");
+  if (!amount || amount <= 0) throw new PostingError("Amount must be positive.");
+
+  return prisma.$transaction(async (tx) => {
+    const money = await tx.Money.findUnique({ where: { Money_id: Number(moneyId) } });
+    if (!money || money.Entreprise_id !== entrepriseId) throw new PostingError("Investment not found.");
+
+    const accrued = Number(money.Interest_Accrued || 0);
+    if (amount > accrued) throw new PostingError(`Coupon amount (${amount}) exceeds accrued interest (${accrued}). Accrue the interest first.`);
+
+    await mustFindOrCreateAccount(tx, "1210", "Interest Receivable", "ASSET", "DEBIT", "CURRENT_ASSET", entrepriseId);
+
+    await mustFindOrCreateCatalogue(tx, {
+      eventName: "RECEIVE_COUPON",
+      description: "Cash receipt of accrued investment interest. DR Cash/Mobile/Bank CR Interest Receivable (1210). IFRS 9.",
+      debitCode: "1000", creditCode: "1210",
+      cashFlowCategory: "OPERATING", riskLevel: "LOW", cycleType: "INVESTMENT",
+      alertRequired: 0, narrativeTemplate: "Coupon received on {Investment_Name}: KES {Amount}.",
+      reportSections: "CASH_FLOW:Operating|BALANCE_SHEET:InterestReceivable",
+      businessUnit, entrepriseId,
+    });
+
+    const product = await findOrCreateExpensePlaceholder(tx, money.Money_Name || "Investment Coupon", entrepriseId);
+
+    const result = await runCatalogueEvent(tx, {
+      eventName: "RECEIVE_COUPON",
+      amount: round2(amount),
+      productId: product.Product_id,
+      businessUnit, administrationId,
+      paymentMethod, paymentDirection: "receive", paymentSide: "debit",
+      narrativeValues: { Investment_Name: money.Money_Name },
+      entrepriseId,
+    });
+
+    await tx.Money.update({
+      where: { Money_id: money.Money_id },
+      data: {
+        Interest_Accrued: round2(accrued - amount),
+        Total_Interest_Paid: round2(Number(money.Total_Interest_Paid || 0) + amount),
+      },
+    });
+
+    return { transaction: result.transaction, journal: result.journal, narrative: result.narrative };
+  });
+}
+
+module.exports = { postInvestmentPurchase, postInvestmentSale, postInterestAccrual, postCouponReceipt };

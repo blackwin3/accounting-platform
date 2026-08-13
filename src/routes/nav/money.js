@@ -197,6 +197,15 @@ router.get("/money/cash-flow", async (req, res) => {
       else if (eventName === "UTILISE_PROVISION") otherOperatingOut += credit;
       else if (eventName === "PAY_SEASONAL_LABOUR") employeesOut += credit;
       else if (eventName === "INSURANCE_CLAIM_RECEIPT") unitIncomeIn += debit;
+      // Bond interest: accrual is non-cash, coupon receipt is operating
+      else if (eventName === "ACCRUE_INVESTMENT_INTEREST") { /* NONE — non-cash accrual */ }
+      else if (eventName === "RECEIVE_COUPON") unitIncomeIn += debit;
+      // Rental arrears: recording is non-cash (accrual), settlement is operating
+      else if (eventName === "RECORD_RENT_ARREARS") { /* NONE — non-cash accrual */ }
+      else if (eventName === "SETTLE_RENT_ARREARS") unitIncomeIn += debit;
+      // Bio-asset revaluation: non-cash IAS 41 fair value adjustment
+      else if (eventName === "REVALUE_BIOLOGICAL_ASSET_UP") { /* NONE — non-cash */ }
+      else if (eventName === "REVALUE_BIOLOGICAL_ASSET_DOWN") { /* NONE — non-cash */ }
       else if (eventName === "LEASE_OUT_INVENTORY") unitIncomeIn += debit;
       else if (eventName === "EQUIPMENT_HIRE") unitIncomeIn += debit;
       else if (eventName === "SERVICE_BILLED") customersIn += debit;

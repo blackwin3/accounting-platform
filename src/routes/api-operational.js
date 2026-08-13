@@ -243,10 +243,21 @@ router.post("/products", async (req, res) => {
       }
     }
 
+    // Derive Product_Nature from the existing type/flags — the single
+    // authoritative classification that replaces the ambiguous boolean
+    // combination of Is_Asset/Is_Service/Is_Utility.
+    let productNature = "GOOD";
+    if (type === "Services") productNature = "SERVICE";
+    else if (type === "Investment") productNature = "FINANCIAL_INSTRUMENT";
+    else if (type === "Asset") productNature = "FIXED_ASSET";
+    else if (isUtility) productNature = "UTILITY";
+    else if (type === "Goods") productNature = "GOOD";
+
     const product = await prisma.Product.create({
       data: {
         Product_Name: name.trim(),
         Product_type: type || "Goods",
+        Product_Nature: productNature,
         Product_Category: category || null,
         Product_Price: price,
         Product_Rate: type === "Investment" && interestRate != null ? interestRate : null,

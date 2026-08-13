@@ -280,7 +280,14 @@ async function openTransactionCycle(tx, { accountId, productId, quantity, amount
   return txn;
 }
 
-async function postJournalPair(tx, { debitAccount, creditAccount, amount, catalogueId, transactionId, productId, periodId, administrationId, description, entrepriseId, correctionOf = null, correctionReason = null }) {
+async function postJournalPair(tx, { debitAccount, creditAccount, amount, catalogueId, transactionId, productId, periodId, administrationId, description, entrepriseId, correctionOf = null, correctionReason = null, entryGroup = null }) {
+  // Generate a Journal_Entry_Group that groups all DR/CR lines from
+  // the same posting event. If the caller provides an explicit group
+  // (for multi-pair events like asset disposal or lease termination),
+  // use that; otherwise generate one from the transaction ID + a
+  // timestamp suffix to ensure uniqueness within the same transaction.
+  const group = entryGroup || `JE-${transactionId}-${Date.now().toString(36)}`;
+
   const rows = [];
   if (debitAccount) {
     rows.push(
@@ -297,6 +304,7 @@ async function postJournalPair(tx, { debitAccount, creditAccount, amount, catalo
           Net_Amount: amount,
           Description: description,
           Recognition_Basis: "CASH",
+          Journal_Entry_Group: group,
           Correction_Status: correctionOf ? "REVERSING" : "ORIGINAL",
           Correction_of: correctionOf,
           Correction_Reason: correctionReason,
@@ -320,6 +328,7 @@ async function postJournalPair(tx, { debitAccount, creditAccount, amount, catalo
           Net_Amount: amount,
           Description: description,
           Recognition_Basis: "CASH",
+          Journal_Entry_Group: group,
           Correction_Status: correctionOf ? "REVERSING" : "ORIGINAL",
           Correction_of: correctionOf,
           Correction_Reason: correctionReason,
