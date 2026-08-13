@@ -17,15 +17,73 @@
 </section>
 
 <h2 class="font-display text-2xl mb-4">Money Market</h2>
+
+<!-- Step 1: Calculator — see how the investment performs before committing -->
+<section class="bg-white rounded-xl border border-ink/10 p-6 mb-6">
+  <h2 class="font-display text-xl mb-1">Step 1 — Try it first</h2>
+  <p class="text-ink/50 text-sm mb-5">Before you buy anything, enter the numbers the bank or broker gave you and see how your money grows over time. When you're satisfied, click "I want this" to fill in the purchase form automatically.</p>
+
+  <div class="grid md:grid-cols-2 gap-6">
+    <div class="space-y-4">
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">How much money are you putting in? (KES)</label>
+        <input id="calc-amount" type="number" min="1" step="1" value="100000" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">What rate did they tell you? (%)</label>
+        <input id="calc-rate" type="number" min="0.01" max="100" step="0.01" value="12" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+        <p class="text-xs text-ink/40 mt-1">The bank may call this "coupon rate", "yield to maturity (YTM)", "annual return", or just "interest rate" — they all mean roughly the same thing: how much you earn per year. Treasury bills: ~10–16%. Government bonds: ~12–14%. Fixed deposit: ~7–10%.</p>
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">For how many years?</label>
+        <input id="calc-years" type="number" min="1" max="30" step="1" value="5" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">How does the interest work?</label>
+        <select id="calc-type" class="w-full border border-ink/20 rounded-lg px-3 py-2">
+          <option value="simple">Simple — you earn the same amount each year (like a T-bill)</option>
+          <option value="compound" selected>Compound — your earnings also earn next year (grows faster)</option>
+        </select>
+      </div>
+      <button id="calc-btn" class="bg-till text-paper rounded-lg px-4 py-2 text-sm font-medium w-full">See how it grows</button>
+
+      <div id="calc-summary" class="hidden bg-paper rounded-lg p-4 space-y-1">
+        <p class="font-mono text-xs uppercase tracking-widest text-ink/40">After <span id="calc-sum-years"></span> years</p>
+        <p class="font-display text-xl">You get back: KES <span id="calc-sum-total" class="text-till font-mono"></span></p>
+        <p class="text-sm text-ink/50">Total interest earned: KES <span id="calc-sum-interest" class="font-mono"></span></p>
+        <p class="text-sm text-ink/50">That's <span id="calc-sum-pct" class="font-mono"></span>% return on your KES <span id="calc-sum-principal" class="font-mono"></span></p>
+        <button id="calc-proceed" class="mt-3 w-full bg-till text-paper rounded-lg px-4 py-2 text-sm font-medium">✓ I want this — fill in the purchase form</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="table-wrap">
+        <table id="calc-table" class="w-full text-sm hidden">
+          <thead>
+            <tr class="border-b border-ink/10 text-left text-ink/40 font-mono text-xs uppercase tracking-widest">
+              <th class="px-3 py-2">Year</th>
+              <th class="px-3 py-2 text-right">Start of Year</th>
+              <th class="px-3 py-2 text-right">You Earn</th>
+              <th class="px-3 py-2 text-right">End of Year</th>
+            </tr>
+          </thead>
+          <tbody id="calc-rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Step 2: Acquire — auto-filled from calculator or entered manually -->
 <div class="grid md:grid-cols-2 gap-6 mb-10">
-  <!-- Buy -->
   <section class="bg-white rounded-xl border border-ink/10 p-6">
-    <h2 class="font-display text-xl mb-1">Acquire an Investment</h2>
-    <p class="text-ink/50 text-sm mb-5">Buy a bond, shares, or similar instrument.</p>
+    <h2 class="font-display text-xl mb-1">Step 2 — Buy it</h2>
+    <p class="text-ink/50 text-sm mb-5">Record the actual purchase. If you used the calculator above, the fields are already filled in.</p>
+    <div id="calc-agreed" class="hidden bg-till/10 border border-till/30 rounded-lg px-4 py-2 text-sm text-till mb-3">✓ Filled from your calculator result.</div>
     <form id="buy-form" class="space-y-4">
       <div>
-        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Name</label>
-        <input name="name" type="text" required placeholder="e.g. KE Infrastructure Bond — 10yr" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display" />
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">What are you buying?</label>
+        <input name="name" id="buy-name" type="text" required placeholder="e.g. Government Infrastructure Bond" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display" />
       </div>
       <% if (investmentProducts.length > 0) { %>
       <div>
@@ -40,16 +98,16 @@
       <% } %>
       <div>
         <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Amount (KES)</label>
-        <input name="amount" type="number" min="0.01" step="0.01" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+        <input name="amount" id="buy-amount" type="number" min="0.01" step="0.01" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
       </div>
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Interest Rate % (optional)</label>
-          <input name="interestRate" type="number" min="0" step="0.01" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Annual Rate (%)</label>
+          <input name="interestRate" id="buy-rate" type="number" min="0" step="0.01" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
         </div>
         <div>
-          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Maturity Date (optional)</label>
-          <input name="maturityDate" type="date" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Maturity Date</label>
+          <input name="maturityDate" id="buy-maturity" type="date" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
         </div>
       </div>
       <div>
@@ -65,26 +123,26 @@
     </form>
   </section>
 
-  <!-- Sell -->
+  <!-- Step 3: Sell / Redeem — the register of what you own -->
   <section class="bg-white rounded-xl border border-ink/10 p-6">
-    <h2 class="font-display text-xl mb-1">Sell or Redeem</h2>
-    <p class="text-ink/50 text-sm mb-5">Realises a gain or loss against the original amount invested.</p>
+    <h2 class="font-display text-xl mb-1">Your Investments</h2>
+    <p class="text-ink/50 text-sm mb-5">What you currently hold. Sell or redeem when the time is right.</p>
     <% if (activeHoldings.length === 0) { %>
-      <p class="text-ink/40 text-sm">No active investments to sell.</p>
+      <p class="text-ink/40 text-sm">No active investments yet.</p>
     <% } else { %>
       <form id="sell-form" class="space-y-4">
         <div>
-          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Investment</label>
+          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Which investment?</label>
           <select name="moneyId" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display">
             <% activeHoldings.forEach(function(h) { %>
-              <option value="<%= h.id %>"><%= h.name %> — carrying amount <%= fmt(h.principal) %></option>
+              <option value="<%= h.id %>"><%= h.name %> — KES <%= fmt(h.principal) %></option>
             <% }) %>
           </select>
         </div>
         <div>
-          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Proceeds Received (KES)</label>
+          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">How much did you get back? (KES)</label>
           <input name="proceeds" type="number" min="0" step="0.01" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
-          <p class="text-xs text-ink/40 mt-1">Above or below the carrying amount is recorded as a gain or loss.</p>
+          <p class="text-xs text-ink/40 mt-1">More than what you paid = profit. Less = loss. The system calculates this for you.</p>
         </div>
         <div>
           <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Received Via</label>
@@ -101,102 +159,49 @@
   </section>
 </div>
 
-<!-- Investment Calculator -->
-<section class="bg-white rounded-xl border border-ink/10 p-6 mb-10">
-  <h2 class="font-display text-xl mb-1">Investment Calculator</h2>
-  <p class="text-ink/50 text-sm mb-5">See how your money grows before you commit. Enter the amount, the annual return rate (the bank or broker will tell you this), and how long you plan to keep it.</p>
-
-  <div class="grid md:grid-cols-2 gap-6">
-    <!-- Left: Input board -->
-    <div class="space-y-4">
-      <div>
-        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Amount to Invest (KES)</label>
-        <input id="calc-amount" type="number" min="1" step="1" value="100000" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
-      </div>
-      <div>
-        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Annual Return Rate (%)</label>
-        <input id="calc-rate" type="number" min="0.01" max="100" step="0.01" value="12" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
-        <p class="text-xs text-ink/40 mt-1">The bank calls this "coupon rate" or "yield". Treasury bills: ~10–16%. Bonds: ~12–14%. Fixed deposit: ~7–10%.</p>
-      </div>
-      <div>
-        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Duration (years)</label>
-        <input id="calc-years" type="number" min="1" max="30" step="1" value="5" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
-      </div>
-      <div>
-        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Interest Type</label>
-        <select id="calc-type" class="w-full border border-ink/20 rounded-lg px-3 py-2">
-          <option value="simple">Simple Interest (you earn the same amount each year)</option>
-          <option value="compound" selected>Compound Interest (your earnings also earn — grows faster)</option>
-        </select>
-      </div>
-      <button id="calc-btn" class="bg-till text-paper rounded-lg px-4 py-2 text-sm font-medium w-full">Calculate</button>
-
-      <div id="calc-summary" class="hidden bg-paper rounded-lg p-4 space-y-1">
-        <p class="font-mono text-xs uppercase tracking-widest text-ink/40">After <span id="calc-sum-years"></span> years</p>
-        <p class="font-display text-xl">You get back: KES <span id="calc-sum-total" class="text-till font-mono"></span></p>
-        <p class="text-sm text-ink/50">Total interest earned: KES <span id="calc-sum-interest" class="font-mono"></span></p>
-        <p class="text-sm text-ink/50">That's <span id="calc-sum-pct" class="font-mono"></span>% return on your KES <span id="calc-sum-principal" class="font-mono"></span></p>
-      </div>
-    </div>
-
-    <!-- Right: Year-by-year growth table -->
-    <div>
-      <div class="table-wrap">
-        <table id="calc-table" class="w-full text-sm hidden">
-          <thead>
-            <tr class="border-b border-ink/10 text-left text-ink/40 font-mono text-xs uppercase tracking-widest">
-              <th class="px-3 py-2">Year</th>
-              <th class="px-3 py-2 text-right">Opening</th>
-              <th class="px-3 py-2 text-right">Interest</th>
-              <th class="px-3 py-2 text-right">Closing</th>
-            </tr>
-          </thead>
-          <tbody id="calc-rows"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</section>
-
 <script>
+// Calculator
 document.getElementById('calc-btn').addEventListener('click', function() {
   const principal = Number(document.getElementById('calc-amount').value) || 0;
   const rate = Number(document.getElementById('calc-rate').value) || 0;
   const years = Number(document.getElementById('calc-years').value) || 1;
   const type = document.getElementById('calc-type').value;
   if (principal <= 0 || rate <= 0) return;
-
   const fmt = (n) => n.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const rows = [];
   let balance = principal;
-
   for (let y = 1; y <= years; y++) {
-    const interest = type === 'compound'
-      ? balance * (rate / 100)
-      : principal * (rate / 100);
+    const interest = type === 'compound' ? balance * (rate / 100) : principal * (rate / 100);
     const closing = balance + interest;
     rows.push({ year: y, opening: balance, interest, closing });
     balance = closing;
   }
-
   const totalInterest = balance - principal;
-  const tbody = document.getElementById('calc-rows');
-  tbody.innerHTML = rows.map(r =>
-    '<tr class="border-b border-ink/5">' +
-    '<td class="px-3 py-2 font-mono">' + r.year + '</td>' +
-    '<td class="px-3 py-2 text-right font-mono tabular-nums">' + fmt(r.opening) + '</td>' +
-    '<td class="px-3 py-2 text-right font-mono tabular-nums text-till">' + fmt(r.interest) + '</td>' +
-    '<td class="px-3 py-2 text-right font-mono tabular-nums font-medium">' + fmt(r.closing) + '</td>' +
-    '</tr>'
+  document.getElementById('calc-rows').innerHTML = rows.map(r =>
+    '<tr class="border-b border-ink/5"><td class="px-3 py-2 font-mono">' + r.year + '</td><td class="px-3 py-2 text-right font-mono tabular-nums">' + fmt(r.opening) + '</td><td class="px-3 py-2 text-right font-mono tabular-nums text-till">' + fmt(r.interest) + '</td><td class="px-3 py-2 text-right font-mono tabular-nums font-medium">' + fmt(r.closing) + '</td></tr>'
   ).join('');
   document.getElementById('calc-table').classList.remove('hidden');
-
   document.getElementById('calc-sum-years').textContent = years;
   document.getElementById('calc-sum-total').textContent = fmt(balance);
   document.getElementById('calc-sum-interest').textContent = fmt(totalInterest);
   document.getElementById('calc-sum-principal').textContent = fmt(principal);
   document.getElementById('calc-sum-pct').textContent = ((totalInterest / principal) * 100).toFixed(1);
   document.getElementById('calc-summary').classList.remove('hidden');
+});
+
+// Auto-fill the purchase form from calculator
+document.getElementById('calc-proceed').addEventListener('click', function() {
+  const amount = document.getElementById('calc-amount').value;
+  const rate = document.getElementById('calc-rate').value;
+  const years = Number(document.getElementById('calc-years').value) || 1;
+  document.getElementById('buy-amount').value = amount;
+  document.getElementById('buy-rate').value = rate;
+  // Set maturity date to today + years
+  const maturity = new Date();
+  maturity.setFullYear(maturity.getFullYear() + years);
+  document.getElementById('buy-maturity').value = maturity.toISOString().slice(0, 10);
+  document.getElementById('calc-agreed').classList.remove('hidden');
+  document.getElementById('buy-name').focus();
 });
 </script>
 

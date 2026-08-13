@@ -66,7 +66,7 @@
 <div class="grid md:grid-cols-2 gap-6">
   <section class="bg-white rounded-xl border border-ink/10 p-6">
     <h2 class="font-display text-xl mb-1">Record a Provision</h2>
-    <p class="text-ink/50 text-sm mb-5">An estimated obligation — e.g. a warranty offered on goods sold. Recognised now, not when a claim eventually arrives.</p>
+    <p class="text-ink/50 text-sm mb-5">Set money aside for something you expect to pay later — vet costs, warranty claims, annual government charges. The cost appears now, the payment happens when it's due.</p>
     <form id="provision-form" class="space-y-4">
       <div>
         <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Amount (KES)</label>
@@ -74,7 +74,20 @@
       </div>
       <div>
         <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Description</label>
-        <textarea name="description" rows="2" placeholder="e.g. Estimated warranty cost on electronics sold this quarter" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display"></textarea>
+        <textarea name="description" rows="2" placeholder="e.g. Provision for vet costs, county land rates, warranty on goods sold" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display"></textarea>
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Date (leave blank for today)</label>
+        <input name="provisionDate" type="date" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" onchange="
+          if (this.value && new Date(this.value) < new Date(new Date().toISOString().slice(0,10))) {
+            document.getElementById('backdate-warn').classList.remove('hidden');
+          } else {
+            document.getElementById('backdate-warn').classList.add('hidden');
+          }
+        " />
+        <div id="backdate-warn" class="hidden bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-700 mt-1">
+          ⚠ You are backdating this provision. The accountant will need to verify why this obligation wasn't recorded when it first arose. Add a clear note below explaining the reason.
+        </div>
       </div>
       <button type="submit" id="provision-submit" class="w-full py-3 rounded-lg bg-clay text-paper font-display text-lg hover:brightness-110 transition">Record Provision</button>
       <div id="provision-feedback" class="hidden text-sm p-3 rounded-lg"></div>

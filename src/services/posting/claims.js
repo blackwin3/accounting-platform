@@ -26,8 +26,8 @@ const EXPENSE_CATEGORIES = {
   SALARIES: { label: "Salaries and Wages", code: "5100", behaviour: "FIXED" },
   UTILITIES: { label: "Utilities", code: "5400", behaviour: "VARIABLE" },
   TRANSPORT: { label: "Transport and Maintenance", code: "5500", behaviour: "VARIABLE" },
-  INSURANCE: { label: "Insurance Premium", code: "5800", behaviour: "FIXED" },
-  TAX: { label: "Tax Expense", code: "5600", behaviour: "VARIABLE" },
+  INSURANCE: { label: "Insurance Premium", code: "5600", behaviour: "FIXED" },
+  TAX: { label: "Tax Expense", code: "5800", behaviour: "VARIABLE" },
   OTHER: { label: "Other Operating Expense", code: "5999", behaviour: "MIXED" },
 };
 
