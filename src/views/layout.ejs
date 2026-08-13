@@ -174,6 +174,18 @@
   </div>
 
   <script>
+    // Global safe fetch helper — handles session expiry (401) and
+    // non-JSON server errors without hanging. Available to all pages.
+    async function safeFetch(url, options) {
+      const res = await fetch(url, options);
+      if (res.status === 401) { window.location.href = "/login"; throw new Error("Session expired — please sign in again."); }
+      const text = await res.text();
+      let result;
+      try { result = JSON.parse(text); } catch { throw new Error("Server error — please reload the page and try again."); }
+      if (!res.ok) throw new Error(result.error || "Request failed");
+      return result;
+    }
+
     // Sidebar toggle for mobile
     (function() {
       const sidebar = document.getElementById('sidebar');
@@ -192,7 +204,6 @@
       hamburger.addEventListener('click', toggle);
       overlay.addEventListener('click', close);
 
-      // Close sidebar when a link is clicked (mobile UX: navigating should dismiss the menu)
       sidebar.querySelectorAll('a.sidebar-link').forEach(function(link) {
         link.addEventListener('click', close);
       });

@@ -161,7 +161,7 @@
         const data = Object.fromEntries(new FormData(withdrawForm).entries());
         const endpoint = data.direction === "WITHDRAW" ? "/api/capital-withdrawal" : "/api/loan-repayment";
         try {
-          const res = await fetch(endpoint, {
+          const result = await safeFetch(endpoint, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -170,8 +170,6 @@
               notes: data.withdrawNotes,
             }),
           });
-          const result = await res.json();
-          if (!res.ok) throw new Error(result.error || "Failed to record");
           withdrawFeedback.textContent = data.direction === "WITHDRAW"
             ? `Withdrew KES ${Number(data.amount).toFixed(2)}.`
             : `Repaid KES ${Number(data.amount).toFixed(2)} — KES ${result.remainingOutstanding} still outstanding.`;
@@ -369,13 +367,11 @@
     fundingSubmit.textContent = "Posting...";
     const data = Object.fromEntries(new FormData(fundingForm).entries());
     try {
-      const res = await fetch("/api/funding", {
+      const result = await safeFetch("/api/funding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ source: data.source, amount: Number(data.amount), paymentMethod: data.paymentMethod, notes: data.notes }),
       });
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.error || "Failed to record funds");
       fundingFeedback.textContent = `Recorded KES ${fmtNum(data.amount)} as ${data.source === 'CAPITAL' ? 'owner capital' : 'a loan'}.`;
       fundingFeedback.className = "text-sm p-3 rounded-lg bg-till/10 text-till";
       fundingFeedback.classList.remove("hidden");
@@ -402,7 +398,7 @@
       incomeSubmit.textContent = "Posting...";
       const data = Object.fromEntries(new FormData(incomeForm).entries());
       try {
-        const res = await fetch("/api/unit-income", {
+        const result = await safeFetch("/api/unit-income", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -414,8 +410,6 @@
             moneyId: data.moneyId ? Number(data.moneyId) : null,
           }),
         });
-        const result = await res.json();
-        if (!res.ok) throw new Error(result.error || "Failed to record income");
         incomeFeedback.textContent = `Recorded KES ${fmtNum(data.amount)}.`;
         incomeFeedback.className = "text-sm p-3 rounded-lg bg-till/10 text-till";
         incomeFeedback.classList.remove("hidden");
@@ -458,13 +452,11 @@
       topupSubmit.textContent = "Transferring...";
       const data = Object.fromEntries(new FormData(topupForm).entries());
       try {
-        const res = await fetch("/api/fund-transfer", {
+        const result = await safeFetch("/api/fund-transfer", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ from: topupFrom, to: topupTo, amount: Number(data.amount), notes: data.notes }),
         });
-        const result = await res.json();
-        if (!res.ok) throw new Error(result.error || "Failed to transfer funds");
         topupFeedback.textContent = "Transfer complete.";
         topupFeedback.className = "text-sm p-3 rounded-lg bg-till/10 text-till";
         topupFeedback.classList.remove("hidden");

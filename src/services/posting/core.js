@@ -477,8 +477,7 @@ async function findOrCreateExpensePlaceholder(tx, label, entrepriseId) {
  */
 async function computeAccountBalance(tx, accountId, normalSide) {
   const rows = await tx.Journal.findMany({ where: { Account_id: accountId } });
-  let debit = 0;
-  let credit = 0;
+  let debit = 0, credit = 0;
   for (const r of rows) {
     debit += Number(r.Debit || 0);
     credit += Number(r.Credit || 0);
