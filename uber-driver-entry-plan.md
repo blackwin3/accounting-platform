@@ -96,26 +96,20 @@ changes the economics entirely.
 - Depreciation: Straight-Line
 - Payment: Bank (or however it was financed)
 
-**If received as a gift or inheritance**: 
-
-This is common — a brother gives
+**If received as a gift or inheritance**: This is common — a brother gives
 a vehicle, or a parent leaves one. The legal and accounting handling:
-
 1. Register the vehicle at **KES 1** (the nominal legal transfer price —
    by law, a gift can be transferred at any amount including KES 1)
-   
 2. Have the vehicle **revalued to market price** immediately:
    Assets → Revalue Asset: new value KES 400,000 (whatever the market
    says today). This posts DR PPE CR Revaluation Surplus — the vehicle
    is now on the books at its real value.
-   
 3. The driver can then choose:
    - **Depreciate normally** over 5 years (correct accounting)
    - **Write off (impair) over the next few years** — post an impairment
      each year to gradually reduce the carrying amount. This is useful
      when the driver doesn't want a large depreciation charge hitting
      the P&L monthly. The accounting is: DR Impairment Loss CR PPE.
-     
    The choice depends on what the driver needs the P&L to show — a
    bank wants to see depreciation, the driver's own planning may prefer
    impairment over time.
@@ -132,7 +126,6 @@ Claims → Expenses → Other: KES 1,500/day, "Vehicle hire — [fleet owner]"
 
 **If the driver manages a second vehicle** (e.g. his son drives it):
 Register it as a second asset with a distinct name:
-
 - "Toyota Vitz — KCD 456B (son's car)"
 - The income from that vehicle can be tracked under the same RIDES unit
   — the product sales show which vehicle earned what if the receipts
@@ -167,7 +160,6 @@ Record every fuel stop — this is the single most important cost to track.
 Record as a **basket sale** with the component breakdown. Example ride:
 
 Till → Sell:
-
 - Ride — Distance: 1 × KES 150
 - Ride — Time: 1 × KES 250
 - Ride — Occupancy: 2 × KES 150 (two passengers)
@@ -182,11 +174,9 @@ most.
 
 ### During the day
 
-  **Food**: Claims → Expenses → Other, KES 200, "Lunch — [location]"
-  
-  **Water**: Claims → Expenses → Other, KES 50
-  
-  **Bribe**: Claims → Expenses → Other, KES 100, "Traffic police — [location]"
+**Food**: Claims → Expenses → Other, KES 200, "Lunch — [location]"
+**Water**: Claims → Expenses → Other, KES 50
+**Bribe**: Claims → Expenses → Other, KES 100, "Traffic police — [location]"
 
 Record bribes honestly. They're a real, recurring operating cost. The
 accountant and the driver both need to see how much is going to
@@ -195,31 +185,27 @@ aggregates this data across drivers, the pattern becomes evidence.
 
 ### End of day
 
-**Record daily earnings (your time)**: This is the most important entry
-the driver makes. It represents what the driver pays himself for the day's
-work — the money that leaves the business and goes to the driver as a person.
+**Record daily earnings (what you take home)**: The driver takes out
+whatever is left after fuel, food, data, and bribes. This is recorded
+as a capital withdrawal — money leaving the business to the owner.
 
-Claims → Expenses → Other:
+Money → Funds → Capital Withdrawal:
+- Amount: KES 500–1,200 (whatever the day actually netted)
+- Note: "Daily take-home — 8 hours driving"
 
-- Amount: KES 4,000–6,000 (what the driver takes home)
-- Note: "My time — 8 hours at KES 750/hr = KES 6,000"
+The P&L then shows: revenue KES 4,000, costs KES 3,500, **net KES 500
+remaining in the business** (or zero if the driver took it all).
 
-OR 
-create a utility product for this:
+**Optional — track your hourly rate for comparison**: Create a utility
+product "My Time" at KES 750/hr. DON'T record it as an expense — use
+it as a **mental calculator**: if today's net was KES 600 over 8 hours,
+that's KES 75/hr. If a boda rider earns KES 150/hr, the driver can see
+the rides need to improve or the costs need to drop.
 
-- Product: "Daily Earnings" (type: Utility, category: Other Utility)
-- Rate: KES 450–750/hour
-- Daily charge: 6–8 hours × rate = KES 3,500–6,000
-
-This is charged as an expense TO the business. What the P&L then shows
-is what remains IN the business after the driver has been paid. If the
-business shows a loss after paying the driver, the rides aren't covering
-the driver's time — the driver is subsidising the business.
-
-The driver can adjust this rate based on what alternative work pays.
-If a boda-boda rider earns KES 1,500/day, and the driver's time costs
-KES 6,000/day, the driver knows exactly how much more the car needs
-to earn to justify choosing Uber over boda.
+The point is not to charge the business for the driver's time (that
+would double-count — the driver IS the business). The point is to know
+what the hourly rate works out to, so the driver can compare it to
+alternatives.
 
 ---
 
@@ -227,13 +213,10 @@ to earn to justify choosing Uber over boda.
 
 ### Vehicle maintenance
 
-**Oil change**: 
-  Claims → Expenses → Other, KES 3,000, "Oil change — [garage]"
-**Tyre**: 
-  Assets → Buy Asset (if it's a full set with multi-year life)
-  or Expenses → Other (if it's a single tyre replacement)
-**Repair**: 
-  Claims → Expenses → Other, amount, "Brake pads — [garage]"
+**Oil change**: Claims → Expenses → Other, KES 3,000, "Oil change — [garage]"
+**Tyre**: Assets → Buy Asset (if it's a full set with multi-year life)
+or Expenses → Other (if it's a single tyre replacement)
+**Repair**: Claims → Expenses → Other, amount, "Brake pads — [garage]"
 
 ### Insurance and licence
 
@@ -248,45 +231,48 @@ Annual inspection, licence fees via Claims → Expenses → Other.
 
 | Item | Amount |
 |---|---|
-| Rides (6–8 per day, avg KES 600) | +3,600–4,800 |
+| Rides (6–8 per day, avg KES 600–750) | +4,000–6,000 |
 | Fuel (15–20 litres @ 200) | −3,000–4,000 |
 | Food + water | −300 |
 | Data | −100 |
 | Bribes (0–2 per day) | 0–200 |
-| **Daily net before driver pay and vehicle** | **+0 to +1,200** |
-| Driver earnings (taken out as pay) | −4,000–6,000 |
-| **Daily net after driver pay** | **−3,000 to −5,000** |
+| **Total operating costs** | **−3,500–4,500** |
+| **Net available** | **+500–1,500** |
+| Driver takes home (capital withdrawal) | −500–1,500 |
+| **Remaining in business** | **~KES 0–1,500** |
 
 ### Monthly
 
 | Item | Amount |
 |---|---|
-| Rides (26 working days × ~KES 4,000) | +104,000 |
+| Rides (26 working days × ~KES 5,000) | +130,000 |
 | Fuel (26 × KES 3,500) | −91,000 |
 | Food + water (26 × KES 300) | −7,800 |
 | Data (30 × KES 100) | −3,000 |
 | Bribes (est. 15 × KES 100) | −1,500 |
 | Insurance | −3,000 |
 | Repairs (amortised) | −3,000 |
+| **Total operating costs** | **−110,300** |
+| **Net before depreciation** | **+19,700** |
 | Vehicle depreciation (600K ÷ 60 months) | −10,000 |
-| **Business net before driver pay** | **−15,300** |
-| Driver earnings (26 × KES 5,000) | −130,000 |
-| **Business net after driver pay** | **−145,300** |
+| **Business net before driver take-home** | **+9,700** |
+| Driver takes home (26 × ~KES 500–1,000) | −13,000–26,000 |
+| **Remaining in business** | **KES 0–1,500/month** |
 
-The business is deeply negative after the driver pays himself. This is
-the honest picture: the driver earned KES 130,000 in take-home pay, but
-the business consumed KES 119,300 in costs plus KES 10,000 in
-depreciation. The vehicle is an asset being consumed faster than the
-rides replace its value.
+The driver earns KES 130,000 gross from rides, spends KES 110,300 to
+operate, and keeps KES 500–1,500 per day as take-home pay. What stays
+in the business after the driver has been paid is roughly zero — the
+business neither grows nor shrinks in cash terms.
 
-**What the driver actually takes home**: 
-KES 5,000/day × 26 = KES 130,000.
-That's real money in his pocket. 
-But the vehicle lost KES 10,000 of value
-and KES 3,000 went to repairs. 
+But the vehicle depreciates KES 10,000/month regardless. This means the
+driver's real wealth (cash + vehicle value) drops by roughly KES 10,000
+per month unless the driver retains enough in the business to cover it.
 
-His real wealth gain for the month is closer to KES 117,000 
-  — still decent, but not the KES 130,000 he feels he earned.
+**What the driver actually feels**: "I make KES 500–1,500 a day." That's
+real money in his pocket. The platform shows him the full picture: after
+fuel, food, data, insurance, repairs, and bribes, the rides leave
+KES 0–1,500 per day. Over a month, the vehicle's value drops by
+KES 10,000 which the driver doesn't feel but the accountant can see.
 
 ---
 
