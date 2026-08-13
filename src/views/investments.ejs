@@ -101,6 +101,105 @@
   </section>
 </div>
 
+<!-- Investment Calculator -->
+<section class="bg-white rounded-xl border border-ink/10 p-6 mb-10">
+  <h2 class="font-display text-xl mb-1">Investment Calculator</h2>
+  <p class="text-ink/50 text-sm mb-5">See how your money grows before you commit. Enter the amount, the annual return rate (the bank or broker will tell you this), and how long you plan to keep it.</p>
+
+  <div class="grid md:grid-cols-2 gap-6">
+    <!-- Left: Input board -->
+    <div class="space-y-4">
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Amount to Invest (KES)</label>
+        <input id="calc-amount" type="number" min="1" step="1" value="100000" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Annual Return Rate (%)</label>
+        <input id="calc-rate" type="number" min="0.01" max="100" step="0.01" value="12" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+        <p class="text-xs text-ink/40 mt-1">The bank calls this "coupon rate" or "yield". Treasury bills: ~10–16%. Bonds: ~12–14%. Fixed deposit: ~7–10%.</p>
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Duration (years)</label>
+        <input id="calc-years" type="number" min="1" max="30" step="1" value="5" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Interest Type</label>
+        <select id="calc-type" class="w-full border border-ink/20 rounded-lg px-3 py-2">
+          <option value="simple">Simple Interest (you earn the same amount each year)</option>
+          <option value="compound" selected>Compound Interest (your earnings also earn — grows faster)</option>
+        </select>
+      </div>
+      <button id="calc-btn" class="bg-till text-paper rounded-lg px-4 py-2 text-sm font-medium w-full">Calculate</button>
+
+      <div id="calc-summary" class="hidden bg-paper rounded-lg p-4 space-y-1">
+        <p class="font-mono text-xs uppercase tracking-widest text-ink/40">After <span id="calc-sum-years"></span> years</p>
+        <p class="font-display text-xl">You get back: KES <span id="calc-sum-total" class="text-till font-mono"></span></p>
+        <p class="text-sm text-ink/50">Total interest earned: KES <span id="calc-sum-interest" class="font-mono"></span></p>
+        <p class="text-sm text-ink/50">That's <span id="calc-sum-pct" class="font-mono"></span>% return on your KES <span id="calc-sum-principal" class="font-mono"></span></p>
+      </div>
+    </div>
+
+    <!-- Right: Year-by-year growth table -->
+    <div>
+      <div class="table-wrap">
+        <table id="calc-table" class="w-full text-sm hidden">
+          <thead>
+            <tr class="border-b border-ink/10 text-left text-ink/40 font-mono text-xs uppercase tracking-widest">
+              <th class="px-3 py-2">Year</th>
+              <th class="px-3 py-2 text-right">Opening</th>
+              <th class="px-3 py-2 text-right">Interest</th>
+              <th class="px-3 py-2 text-right">Closing</th>
+            </tr>
+          </thead>
+          <tbody id="calc-rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+document.getElementById('calc-btn').addEventListener('click', function() {
+  const principal = Number(document.getElementById('calc-amount').value) || 0;
+  const rate = Number(document.getElementById('calc-rate').value) || 0;
+  const years = Number(document.getElementById('calc-years').value) || 1;
+  const type = document.getElementById('calc-type').value;
+  if (principal <= 0 || rate <= 0) return;
+
+  const fmt = (n) => n.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const rows = [];
+  let balance = principal;
+
+  for (let y = 1; y <= years; y++) {
+    const interest = type === 'compound'
+      ? balance * (rate / 100)
+      : principal * (rate / 100);
+    const closing = balance + interest;
+    rows.push({ year: y, opening: balance, interest, closing });
+    balance = closing;
+  }
+
+  const totalInterest = balance - principal;
+  const tbody = document.getElementById('calc-rows');
+  tbody.innerHTML = rows.map(r =>
+    '<tr class="border-b border-ink/5">' +
+    '<td class="px-3 py-2 font-mono">' + r.year + '</td>' +
+    '<td class="px-3 py-2 text-right font-mono tabular-nums">' + fmt(r.opening) + '</td>' +
+    '<td class="px-3 py-2 text-right font-mono tabular-nums text-till">' + fmt(r.interest) + '</td>' +
+    '<td class="px-3 py-2 text-right font-mono tabular-nums font-medium">' + fmt(r.closing) + '</td>' +
+    '</tr>'
+  ).join('');
+  document.getElementById('calc-table').classList.remove('hidden');
+
+  document.getElementById('calc-sum-years').textContent = years;
+  document.getElementById('calc-sum-total').textContent = fmt(balance);
+  document.getElementById('calc-sum-interest').textContent = fmt(totalInterest);
+  document.getElementById('calc-sum-principal').textContent = fmt(principal);
+  document.getElementById('calc-sum-pct').textContent = ((totalInterest / principal) * 100).toFixed(1);
+  document.getElementById('calc-summary').classList.remove('hidden');
+});
+</script>
+
 <h2 class="font-display text-2xl mb-4">Rental Property</h2>
 <div class="grid md:grid-cols-2 gap-6 mb-10">
   <!-- Buy Rental Property -->

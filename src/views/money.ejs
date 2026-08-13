@@ -33,9 +33,12 @@
   </div>
 
   <div class="bg-white rounded-xl border border-ink/10 p-5">
-    <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Net Worth (Assets + Equity − Liabilities)</p>
-    <p class="font-mono text-2xl tabular-nums"><%= fmt(totalAssets + totalEquity - totalLiabilities) %></p>
-    <p class="text-xs text-ink/40 mt-2 font-mono">Assets [Cash Balance + Fixed Assets] + Equity [Re-invested Funds + Owner Capital] + Liabilities [Debts + Loans Outstanding] = Net Worth</p>
+    <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Net Worth (Assets − Liabilities = Equity)</p>
+    <p class="font-mono text-2xl tabular-nums"><%= fmt(totalAssets - totalLiabilities) %></p>
+    <p class="text-xs text-ink/40 mt-2">What the business owns (KES <%= fmt(totalAssets) %>) minus what it owes (KES <%= fmt(totalLiabilities) %>) = what belongs to the owner.</p>
+    <% if (Math.abs((totalAssets - totalLiabilities) - totalEquity) > 0.01) { %>
+      <p class="text-xs text-clay mt-1">⚠ The accounting equation is out of balance: Assets − Liabilities (KES <%= fmt(totalAssets - totalLiabilities) %>) ≠ Equity (KES <%= fmt(totalEquity) %>). Run diagnostics.</p>
+    <% } %>
   </div>
 </section>
 
