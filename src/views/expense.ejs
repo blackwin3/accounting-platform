@@ -34,8 +34,13 @@
         <p class="text-xs text-ink/40 mt-1">Linking this payment lets Risks &amp; Insurance show a real payment history for the policy, not just the reference premium entered when it was created.</p>
       </div>
       <div>
-        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Amount (KES)</label>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Amount Paid (KES)</label>
         <input name="amount" type="number" min="0.01" step="0.01" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Amount Actually Due (KES) — leave blank if same as paid</label>
+        <input name="dueAmount" type="number" min="0" step="0.01" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+        <p class="text-xs text-ink/40 mt-1">If you paid more than what was due, the excess is recorded as a prepaid expense (an asset, not a cost). Common for insurance, rent paid in advance, or when you're not sure of the exact amount.</p>
       </div>
       <div>
         <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Payment Method</label>
@@ -47,9 +52,25 @@
         </div>
       </div>
       <div>
-        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Notes (optional)</label>
-        <textarea name="notes" rows="2" placeholder="e.g. July shop rent, paid to landlord" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display"></textarea>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Notes</label>
+        <textarea name="notes" id="expense-notes" rows="2" placeholder="e.g. July shop rent, paid to landlord" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display"></textarea>
+        <p id="narration-hint" class="text-xs text-ink/40 mt-1">Good notes help your accountant and future self understand what happened.</p>
       </div>
+
+      <script>
+      document.getElementById('expense-category').addEventListener('change', function() {
+        const hints = {
+          RENT: 'e.g. "July shop rent — paid to [landlord name]" or "3 months advance rent"',
+          SALARIES: 'e.g. "June salary — [employee name]" or "Casual labour — 3 days planting"',
+          UTILITIES: 'e.g. "KPLC token — KES 1000" or "Safaricom data — monthly plan"',
+          TRANSPORT: 'e.g. "Fuel — 20L at KES 200/L" or "Matatu fare — Naivasha to Nairobi"',
+          INSURANCE: 'e.g. "Motor insurance — comprehensive, policy #12345"',
+          TAX: 'e.g. "KRA iTax — Q2 2026 VAT return" or "County business permit"',
+          OTHER: 'e.g. "Lunch — KES 200" or "Office supplies" or "My time — 8hrs @ KES 750/hr"',
+        };
+        document.getElementById('expense-notes').placeholder = hints[this.value] || hints.OTHER;
+      });
+      </script>
 
       <button type="submit" id="submit-btn" class="w-full py-3 rounded-lg bg-clay text-paper font-display text-lg hover:brightness-110 transition">
         Record Expense

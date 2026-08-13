@@ -58,12 +58,14 @@ async function postAssetPurchase(input) {
     throw new PostingError('ownershipType must be "BUSINESS", "PERSONAL", "JOINT", or "FAMILY"');
   }
 
-  // Prevent duplicate asset creation — same name AND same cost in the same business
+  // Warn about potential duplicate — same name AND same cost in the same business.
+  // This is a warning, not a block: a driver may genuinely own two Toyota Vitz
+  // vehicles. The warning asks them to add a distinguishing label.
   const existing = await prisma.Assets.findFirst({
     where: { Assets_Type: name.trim(), Cost_Amount: round2(cost), Period_end: null, Entreprise_id: entrepriseId },
   });
-  if (existing) {
-    throw new PostingError(`An active asset named "${name.trim()}" with cost KES ${round2(cost)} already exists (Asset #${existing.Assets_id}). If this is genuinely a second identical asset, add a distinguishing label.`);
+  if (existing && !input.confirmDuplicate) {
+    throw new PostingError(`An active asset named "${name.trim()}" with cost KES ${round2(cost)} already exists (Asset #${existing.Assets_id}). If this is genuinely a second asset, add a distinguishing label (e.g. registration number) or set confirmDuplicate: true.`);
   }
 
   return prisma.$transaction(async (tx) => {

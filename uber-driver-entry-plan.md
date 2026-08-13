@@ -89,11 +89,30 @@ changes the economics entirely.
 ## Step 4 — The vehicle
 
 **If owned**: Assets → Buy Asset:
-- Name: "Toyota Vitz — KBX 123A"
+- Name: "Toyota Vitz — KBX 123A" (include the registration to distinguish
+  from a second vehicle if the driver manages one for a family member)
 - Cost: KES 600,000 (or purchase price)
 - Useful life: 5 years
 - Depreciation: Straight-Line
 - Payment: Bank (or however it was financed)
+
+**If received as a gift or inheritance**: This is common — a brother gives
+a vehicle, or a parent leaves one. The legal and accounting handling:
+1. Register the vehicle at **KES 1** (the nominal legal transfer price —
+   by law, a gift can be transferred at any amount including KES 1)
+2. Have the vehicle **revalued to market price** immediately:
+   Assets → Revalue Asset: new value KES 400,000 (whatever the market
+   says today). This posts DR PPE CR Revaluation Surplus — the vehicle
+   is now on the books at its real value.
+3. The driver can then choose:
+   - **Depreciate normally** over 5 years (correct accounting)
+   - **Write off (impair) over the next few years** — post an impairment
+     each year to gradually reduce the carrying amount. This is useful
+     when the driver doesn't want a large depreciation charge hitting
+     the P&L monthly. The accounting is: DR Impairment Loss CR PPE.
+   The choice depends on what the driver needs the P&L to show — a
+   bank wants to see depreciation, the driver's own planning may prefer
+   impairment over time.
 
 **If on hire-purchase**: This is a lease, not an asset purchase.
 Claims → Leases & Provisions → Record Lease:
@@ -104,6 +123,13 @@ Claims → Leases & Provisions → Record Lease:
 **If renting daily from a fleet owner**: This is a daily expense,
 not an asset or lease. Record it as:
 Claims → Expenses → Other: KES 1,500/day, "Vehicle hire — [fleet owner]"
+
+**If the driver manages a second vehicle** (e.g. his son drives it):
+Register it as a second asset with a distinct name:
+- "Toyota Vitz — KCD 456B (son's car)"
+- The income from that vehicle can be tracked under the same RIDES unit
+  — the product sales show which vehicle earned what if the receipts
+  note which car made each trip.
 
 ---
 
@@ -159,14 +185,28 @@ aggregates this data across drivers, the pattern becomes evidence.
 
 ### End of day
 
-**Record daily earnings as a labour charge**: This is optional but
-powerful. Claims → Expenses → Other:
-- Amount: the driver's own hourly rate × hours worked
-- Note: "My time — 10 hours @ KES 100/hr = KES 1,000"
+**Record daily earnings (your time)**: This is the most important entry
+the driver makes. It represents what the driver pays himself for the day's
+work — the money that leaves the business and goes to the driver as a person.
 
-This makes the P&L show the driver's time as a cost. If revenue minus
-all costs minus the driver's own time is negative, the driver is
-literally paying to work.
+Claims → Expenses → Other:
+- Amount: KES 4,000–6,000 (what the driver takes home)
+- Note: "My time — 8 hours at KES 750/hr = KES 6,000"
+
+OR create a utility product for this:
+- Product: "Daily Earnings" (type: Utility, category: Other Utility)
+- Rate: KES 750–1,000/hour
+- Daily charge: 6–8 hours × rate = KES 4,500–8,000
+
+This is charged as an expense TO the business. What the P&L then shows
+is what remains IN the business after the driver has been paid. If the
+business shows a loss after paying the driver, the rides aren't covering
+the driver's time — the driver is subsidising the business.
+
+The driver can adjust this rate based on what alternative work pays.
+If a boda-boda rider earns KES 1,500/day, and the driver's time costs
+KES 6,000/day, the driver knows exactly how much more the car needs
+to earn to justify choosing Uber over boda.
 
 ---
 
@@ -197,7 +237,9 @@ Annual inspection, licence fees via Claims → Expenses → Other.
 | Food + water | −300 |
 | Data | −100 |
 | Bribes (0–2 per day) | 0–200 |
-| **Daily net before vehicle costs** | **+0 to +1,200** |
+| **Daily net before driver pay and vehicle** | **+0 to +1,200** |
+| Driver earnings (taken out as pay) | −4,000–6,000 |
+| **Daily net after driver pay** | **−3,000 to −5,000** |
 
 ### Monthly
 
@@ -211,18 +253,21 @@ Annual inspection, licence fees via Claims → Expenses → Other.
 | Insurance | −3,000 |
 | Repairs (amortised) | −3,000 |
 | Vehicle depreciation (600K ÷ 60 months) | −10,000 |
-| **Monthly net** | **−15,300** |
+| **Business net before driver pay** | **−15,300** |
+| Driver earnings (26 × KES 5,000) | −130,000 |
+| **Business net after driver pay** | **−145,300** |
 
-This is the honest picture that most Uber drivers in Nairobi don't
-see: after all costs including vehicle depreciation, the typical driver
-is losing money — the vehicle is depreciating faster than the rides earn.
-The business only works if the driver:
-1. Owns the vehicle outright (no depreciation charge)
-2. Works more than 8 rides/day consistently
-3. Gets above-average fares (airport runs, corporate accounts)
+The business is deeply negative after the driver pays himself. This is
+the honest picture: the driver earned KES 130,000 in take-home pay, but
+the business consumed KES 119,300 in costs plus KES 10,000 in
+depreciation. The vehicle is an asset being consumed faster than the
+rides replace its value.
 
-The platform makes this visible instead of hiding it behind "I made
-4,000 today" which ignores the 3,500 in fuel that went with it.
+**What the driver actually takes home**: KES 5,000/day × 26 = KES 130,000.
+That's real money in his pocket. But the vehicle lost KES 10,000 of value
+and KES 3,000 went to repairs. His real wealth gain for the month is
+closer to KES 117,000 — still decent, but not the KES 130,000 he feels
+he earned.
 
 ---
 
