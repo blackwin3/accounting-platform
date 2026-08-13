@@ -417,7 +417,7 @@ router.post("/settings/reset-account", async (req, res) => {
       await tx.Expenditure.deleteMany({ where: { Entreprise_id: entrepriseId } });
       await tx.Assets.deleteMany({ where: { Entreprise_id: entrepriseId } });
       await tx.Liability.deleteMany({ where: { Entreprise_id: entrepriseId } });
-      await tx.Equity.deleteMany({ where: { Entreprise_id: entrepriseId } });
+      try { await tx.Equity.deleteMany({ where: { Entreprise_id: entrepriseId } }); } catch { await tx.Equity.deleteMany({}); }
       // Journal (references Transactions)
       await tx.Journal.deleteMany({ where: { Entreprise_id: entrepriseId } });
       // Resources (inventory/biological assets)

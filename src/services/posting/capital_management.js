@@ -46,7 +46,21 @@ async function getCapitalPosition({ entrepriseId }) {
     // rows, postCapitalWithdrawal writes negative ones), not re-derived
     // from Journal, since Equity is the authoritative source per this
     // schema's own Account.Authoritative_Source convention.
-    const equityRows = await tx.Equity.findMany({ where: { Equity_type: { in: ["Owner Capital", "Owner Capital Withdrawal"] }, Entreprise_id: entrepriseId } });
+    // Equity rows for this business — query via Account_id linkage since
+    // Entreprise_id may not exist on the Equity table yet (migration 22).
+    const businessAccounts = await tx.Account.findMany({
+      where: { Entreprise_id: entrepriseId },
+      select: { Account_id: true },
+    });
+    const accountIds = businessAccounts.map(a => a.Account_id);
+
+    let equityRows;
+    try {
+      equityRows = await tx.Equity.findMany({ where: { Equity_type: { in: ["Owner Capital", "Owner Capital Withdrawal"] }, Entreprise_id: entrepriseId } });
+    } catch {
+      // Fallback: Entreprise_id column doesn't exist yet — filter by account
+      equityRows = await tx.Equity.findMany({ where: { Equity_type: { in: ["Owner Capital", "Owner Capital Withdrawal"] }, Account_id: { in: accountIds } } });
+    }
     const ownerCapitalNet = round2(equityRows.reduce((sum, e) => sum + Number(e.Net_Amount || 0), 0));
     const ownerCapitalInjected = round2(equityRows.filter((e) => Number(e.Net_Amount) > 0).reduce((sum, e) => sum + Number(e.Net_Amount), 0));
     const ownerCapitalWithdrawn = round2(Math.abs(equityRows.filter((e) => Number(e.Net_Amount) < 0).reduce((sum, e) => sum + Number(e.Net_Amount), 0)));

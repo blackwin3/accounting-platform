@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { prisma } = require("../../services/postingEngine");
+const { prisma, round2 } = require("../../services/postingEngine");
 
 // GET /organisation/business
 router.get("/organisation/business", async (req, res) => {
@@ -360,8 +360,6 @@ router.get("/organisation/government", async (req, res) => {
       amount: Number(j.Debit || 0),
       date: j.Created_at ? new Date(j.Created_at).toLocaleDateString("en-GB") : "—",
     }));
-
-    const { round2 } = require("../../services/postingEngine");
 
     res.render("government", {
       title: "Government",

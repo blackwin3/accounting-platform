@@ -101,6 +101,7 @@ module.exports = {
   computeIndirectCashFlow: accounting_practice.computeIndirectCashFlow,
   getPeriodEndChecklist: accounting_practice.getPeriodEndChecklist,
   postSuccession: accounting_practice.postSuccession,
+  runSystemDiagnostics: accounting_practice.runSystemDiagnostics,
 
   // investments.js
   postInvestmentPurchase: investments.postInvestmentPurchase,

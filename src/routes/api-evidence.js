@@ -99,4 +99,35 @@ router.get("/periods/:id/checklist", async (req, res) => {
   }
 });
 
+// GET /api/diagnostics — runs all system diagnostic checks
+router.get("/diagnostics", async (req, res) => {
+  try {
+    const { runSystemDiagnostics } = require("../services/postingEngine");
+    const report = await runSystemDiagnostics(req.currentUser.Entreprise_id);
+    res.json({ ok: true, ...report });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal error running diagnostics" });
+  }
+});
+
+// POST /api/diagnostics/fix-balances — recalculates all account balances
+// from the Journal (the authoritative source). Fixes any drift between
+// the stored Current_Balance and the Journal-computed balance. Owner only.
+router.post("/diagnostics/fix-balances", async (req, res) => {
+  try {
+    if (req.currentUser.Access_Level !== "OWNER_FULL") {
+      return res.status(403).json({ error: "Only the Owner can run balance repair." });
+    }
+    const { replayAccountBalances } = require("../services/postingEngine");
+    const result = await replayAccountBalances(req.currentUser.Entreprise_id, true);
+    const fixed = result._fixedCount || 0;
+    delete result._fixedCount;
+    res.json({ ok: true, fixed, message: fixed > 0 ? `${fixed} account balance(s) corrected to match the Journal.` : "All balances already match the Journal." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal error fixing balances" });
+  }
+});
+
 module.exports = router;
