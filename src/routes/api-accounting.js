@@ -210,15 +210,23 @@ router.post("/provision-utilisation", async (req, res) => {
 // POST /api/expense { category, amount, paymentMethod, notes }
 router.post("/expense", async (req, res) => {
   try {
-    const { category, amount, paymentMethod, notes, moneyId, nextDueDate } = req.body;
+    const { category, amount, dueAmount, paymentMethod, notes, moneyId, nextDueDate } = req.body;
     const result = await postExpense({
-      category, amount, paymentMethod, notes,
+      category, amount: Number(amount),
+      dueAmount: dueAmount != null ? Number(dueAmount) : null,
+      paymentMethod, notes,
       moneyId: moneyId || null,
       nextDueDate: nextDueDate || null,
       businessUnit: req.currentBusinessUnit,
       entrepriseId: req.currentUser.Entreprise_id,
     });
-    res.json({ ok: true, transactionId: result.transaction.Transactions_id });
+    res.json({
+      ok: true,
+      transactionId: result.transaction.Transactions_id,
+      expenseAmount: result.expenseAmount,
+      prepaidAmount: result.prepaidAmount,
+      totalPaid: result.totalPaid,
+    });
   } catch (err) {
     if (err instanceof PostingError) return res.status(400).json({ error: err.message });
     console.error(err);

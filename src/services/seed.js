@@ -532,6 +532,17 @@ async function seedCatalogueEvents(entrepriseId) {
     Evidence_template: "NONE", Report_sections: "INCOME_STATEMENT:DiscountReceived",
     Default_Business_Unit: "SHOP",
   });
+  await def({
+    Event_Name: "RECORD_PREPAID_EXPENSE",
+    Event_Description: "Excess payment recognised as a prepaid asset. DR Prepaid Expenses (1300) CR Cash/Mobile/Bank. The owner paid more than was due — the excess is a current asset consumed in a future period. Common for insurance, rent, internet.",
+    Debit_Account_code: "1300", Credit_Account_code: "1000",
+    Cash_Flow_Category: "OPERATING", Operational_Impact: "NONE",
+    Risk_Level: "LOW", Documentation_type: "NONE", Report_trigger: "BALANCE_SHEET",
+    Escalation_Role: "NONE", Cycle_type: "EXPENDITURE", Alert_Required: 0,
+    Narrative_template: "Prepaid: KES {Amount} excess on {Category} payment. {Notes}",
+    Evidence_template: "NONE", Report_sections: "BALANCE_SHEET:PrepaidExpenses",
+    Default_Business_Unit: "SHOP",
+  });
 
   // ── CAPITAL & LOAN CYCLE ───────────────────────────────────────────
   await def({

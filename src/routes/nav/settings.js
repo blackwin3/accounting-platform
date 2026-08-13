@@ -200,6 +200,7 @@ router.get("/settings/profile", async (req, res) => {
         inheritanceStatus: req.currentUser.Inheritance_Status,
       },
       permissions,
+      canReset: accessLevel === "OWNER_FULL",
     });
   } catch (err) {
     console.error(err);

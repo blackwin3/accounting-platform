@@ -47,7 +47,7 @@ const EXPENSE_CATEGORIES = {
  * @param {number} [input.administrationId]
  */
 async function postExpense(input) {
-  const { category, amount, paymentMethod = "CASH", notes = "", moneyId = null, nextDueDate = null, administrationId = null, businessUnit = "SHOP", entrepriseId } = input;
+  const { category, amount, dueAmount = null, paymentMethod = "CASH", notes = "", moneyId = null, nextDueDate = null, administrationId = null, businessUnit = "SHOP", entrepriseId } = input;
 
   if (!entrepriseId) throw new PostingError("entrepriseId is required — every posting must belong to a specific business.");
   const categoryDef = EXPENSE_CATEGORIES[category];
@@ -56,6 +56,15 @@ async function postExpense(input) {
   if (moneyId && category !== "INSURANCE") {
     throw new PostingError("moneyId can only be given for an INSURANCE expense — it links this payment to a specific policy.");
   }
+
+  // Prepaid detection: if the owner paid more than what was actually due,
+  // the excess is a prepaid expense (a current asset, not an expense).
+  // Insurance: premium is 12,000 but owner paid 13,000 → 12,000 expense + 1,000 prepaid.
+  // Rent: rent is 15,000 but owner paid 30,000 (two months) → 15,000 expense + 15,000 prepaid.
+  const actualDue = dueAmount != null ? round2(Number(dueAmount)) : null;
+  const hasExcess = actualDue != null && round2(amount) > actualDue && actualDue > 0;
+  const expenseAmount = hasExcess ? actualDue : round2(amount);
+  const prepaidAmount = hasExcess ? round2(amount - actualDue) : 0;
 
   return prisma.$transaction(async (tx) => {
     const eventName = `PAY_EXPENSE_${category}`;
@@ -121,7 +130,7 @@ async function postExpense(input) {
 
     const result = await runCatalogueEvent(tx, {
       eventName,
-      amount: round2(amount),
+      amount: round2(expenseAmount),
       productId: product.Product_id,
       businessUnit,
       administrationId,
@@ -143,14 +152,64 @@ async function postExpense(input) {
         Expenditure_Behaviour: categoryDef.behaviour,
         Accounting_Nature: "OPERATING_EXPENSE",
         Business_Unit: businessUnit,
-        Net_Amount: round2(amount),
-        Expenditure_Paid: paymentMethod === "CREDIT" ? 0 : round2(amount),
-        Expenditure_Outstanding: paymentMethod === "CREDIT" ? round2(amount) : 0,
+        Net_Amount: round2(expenseAmount),
+        Expenditure_Paid: paymentMethod === "CREDIT" ? 0 : round2(expenseAmount),
+        Expenditure_Outstanding: paymentMethod === "CREDIT" ? round2(expenseAmount) : 0,
         Period_id: result.transaction.Period_id,
         Period: new Date(),
         Entreprise_id: entrepriseId,
       },
     });
+
+    // Prepaid excess: the owner paid more than the due amount. The excess
+    // is a current asset (Prepaid Expenses, 1300) that will be consumed in
+    // a future period. This handles: insurance overpayment, rent paid in
+    // advance, prepaid internet/utilities, etc.
+    let prepaidResult = null;
+    if (prepaidAmount > 0) {
+      const prepaidAccount = await mustFindOrCreateAccount(tx, "1300", "Prepaid Expenses", "ASSET", "DEBIT", "CURRENT_ASSET", entrepriseId);
+
+      await mustFindOrCreateCatalogue(tx, {
+        eventName: "RECORD_PREPAID_EXPENSE",
+        description: "Excess payment recognised as a prepaid asset (current asset). DR Prepaid Expenses (1300) CR Cash/Mobile/Bank. Will be expensed in the future period it covers.",
+        debitCode: "1300",
+        creditCode: "1000",
+        cashFlowCategory: "OPERATING",
+        riskLevel: "LOW",
+        cycleType: "EXPENDITURE",
+        alertRequired: 0,
+        narrativeTemplate: "Prepaid: KES {Amount} excess on {Category} payment. {Notes}",
+        reportSections: "BALANCE_SHEET:PrepaidExpenses",
+        businessUnit,
+        entrepriseId,
+      });
+
+      prepaidResult = await runCatalogueEvent(tx, {
+        eventName: "RECORD_PREPAID_EXPENSE",
+        amount: round2(prepaidAmount),
+        productId: product.Product_id,
+        businessUnit,
+        administrationId,
+        paymentMethod,
+        paymentDirection: "pay",
+        paymentSide: "credit",
+        narrativeValues: { Category: categoryDef.label, Notes: notes },
+        entrepriseId,
+      });
+
+      // Create a Liability row to track the prepaid amount for future consumption
+      await tx.Liability.create({
+        data: {
+          Catalogue_id: catalogue.Catalogue_id,
+          Account_id: prepaidAccount.Account_id,
+          Records_id: result.recordsId,
+          Liability_Type: "Prepaid Expense",
+          Net_Amount: round2(prepaidAmount),
+          Period: new Date(),
+          Entreprise_id: entrepriseId,
+        },
+      });
+    }
 
     // The actual fix for the reported gap: paying an INSURANCE expense
     // previously journaled and narrated correctly but had no way to be
@@ -184,7 +243,14 @@ async function postExpense(input) {
       });
     }
 
-    return { transaction: result.transaction, journal: result.journal, narrative: result.narrative };
+    return {
+      transaction: result.transaction,
+      journal: [...result.journal, ...(prepaidResult ? prepaidResult.journal : [])],
+      narrative: result.narrative,
+      expenseAmount,
+      prepaidAmount,
+      totalPaid: round2(amount),
+    };
   });
 }
 
