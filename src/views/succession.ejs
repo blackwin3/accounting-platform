@@ -77,6 +77,46 @@
 <% } %>
 
 <% if (canEdit) { %>
+<section class="bg-white rounded-xl border border-ink/10 p-6 mb-8">
+  <h2 class="font-display text-xl mb-2">Governance Settings</h2>
+  <p class="text-ink/50 text-sm mb-4">These values control how the system flags errors and suspicious activity. Set them before handing over — they protect the incoming owner from mistakes.</p>
+  <div class="grid md:grid-cols-2 gap-4">
+    <div>
+      <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Materiality Threshold (KES)</label>
+      <input id="gov-materiality" type="number" min="100" step="100" value="5000" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      <p class="text-xs text-ink/40 mt-1">Amounts below this are expensed immediately rather than capitalised. Also used to define "suspicious" (20× this value).</p>
+    </div>
+    <div>
+      <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Suspicious Amount Multiplier</label>
+      <input id="gov-suspicious" type="number" min="5" max="100" step="1" value="20" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      <p class="text-xs text-ink/40 mt-1">Transactions exceeding materiality × this multiplier are flagged in diagnostics. Default: 20× (KES 100,000).</p>
+    </div>
+  </div>
+  <button id="gov-save" class="mt-4 bg-till text-paper rounded-lg px-4 py-2 text-sm font-medium">Save Governance Settings</button>
+  <p id="gov-msg" class="text-sm mt-2 hidden"></p>
+</section>
+<script>
+document.getElementById('gov-save').addEventListener('click', async () => {
+  const materiality = document.getElementById('gov-materiality').value;
+  const suspicious = document.getElementById('gov-suspicious').value;
+  const msgEl = document.getElementById('gov-msg');
+  try {
+    // Update materiality threshold
+    await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'MATERIALITY_THRESHOLD', value: materiality, category: 'ACCOUNTING' }) });
+    await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'SUSPICIOUS_AMOUNT_MULTIPLIER', value: suspicious, category: 'ACCOUNTING' }) });
+    msgEl.textContent = 'Governance settings saved.';
+    msgEl.className = 'text-sm mt-2 text-till';
+  } catch (e) {
+    msgEl.textContent = e.message;
+    msgEl.className = 'text-sm mt-2 text-clay';
+  }
+});
+</script>
+<% } %>
+
+<% if (canEdit) { %>
 <section class="bg-white rounded-xl border border-ink/10 p-6">
   <h2 class="font-display text-xl mb-2">Important</h2>
   <p class="text-ink/50 text-sm">This page documents the family's succession <strong>intentions</strong>, not legal facts. A succession plan recorded here does not constitute a will, trust, or legal instrument. Before executing a formal handover (<code>POST /api/succession</code>), consult a lawyer to verify the legal standing of the intended transfer — especially where multiple family members, estranged relatives, or jointly-held assets are involved.</p>

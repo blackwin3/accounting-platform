@@ -74,30 +74,81 @@
       <div id="goods-category-field">
         <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Category</label>
         <select name="categoryGoods" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display">
-          <option value="Groceries">Groceries</option>
-          <option value="Beverages">Beverages</option>
-          <option value="Dairy">Dairy</option>
-          <option value="Produce">Produce</option>
-          <option value="Bakery">Bakery</option>
-          <option value="Meat &amp; Poultry">Meat &amp; Poultry</option>
-          <option value="Household">Household</option>
-          <option value="Personal Care">Personal Care</option>
-          <option value="Stationery">Stationery</option>
-          <option value="Hardware">Hardware</option>
-          <option value="Agricultural Inputs">Agricultural Inputs</option>
-          <option value="Other Goods">Other Goods</option>
+          <optgroup label="Retail">
+            <option value="Groceries">Groceries</option>
+            <option value="Beverages">Beverages</option>
+            <option value="Dairy">Dairy</option>
+            <option value="Produce">Fresh Produce</option>
+            <option value="Bakery">Bakery</option>
+            <option value="Household">Household</option>
+            <option value="Personal Care">Personal Care</option>
+            <option value="Stationery">Stationery</option>
+            <option value="Hardware">Hardware</option>
+          </optgroup>
+          <optgroup label="Agriculture &amp; Livestock">
+            <option value="Meat &amp; Poultry">Meat &amp; Poultry</option>
+            <option value="Livestock">Livestock (live animals)</option>
+            <option value="Agricultural Inputs">Agricultural Inputs (seeds, fertiliser)</option>
+            <option value="Feed &amp; Supplements">Feed &amp; Supplements</option>
+            <option value="Harvest &amp; Crop">Harvest &amp; Crop produce</option>
+          </optgroup>
+          <optgroup label="Vehicle &amp; Transport">
+            <option value="Fuel">Fuel</option>
+            <option value="Vehicle Parts">Vehicle Parts</option>
+            <option value="Vehicle Consumables">Vehicle Consumables (oil, tyres)</option>
+          </optgroup>
+          <optgroup label="Other">
+            <option value="Food &amp; Meals">Food &amp; Meals (personal/staff)</option>
+            <option value="Other Goods">Other Goods</option>
+          </optgroup>
         </select>
       </div>
       <div id="services-category-field" class="hidden">
-        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Category</label>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">What kind of service?</label>
         <select name="categoryServices" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display">
-          <option value="Repairs &amp; Maintenance">Repairs &amp; Maintenance</option>
-          <option value="Delivery &amp; Transport">Delivery &amp; Transport</option>
-          <option value="Professional Services">Professional Services</option>
-          <option value="Rental &amp; Hire">Rental &amp; Hire</option>
-          <option value="Installation">Installation</option>
-          <option value="Consultation">Consultation</option>
-          <option value="Other Services">Other Services</option>
+          <optgroup label="Transport &amp; Delivery">
+            <option value="Ride &amp; Transport">Ride &amp; Transport</option>
+            <option value="Delivery &amp; Courier">Delivery &amp; Courier</option>
+          </optgroup>
+          <optgroup label="Maintenance &amp; Repair">
+            <option value="Repairs &amp; Maintenance">Repairs &amp; Maintenance</option>
+            <option value="Installation">Installation</option>
+            <option value="Cleaning">Cleaning</option>
+          </optgroup>
+          <optgroup label="Professional">
+            <option value="Professional Services">Professional (accounting, legal)</option>
+            <option value="Consultation">Consultation</option>
+            <option value="Training &amp; Education">Training &amp; Education</option>
+          </optgroup>
+          <optgroup label="Labour">
+            <option value="Casual Labour">Casual Labour (daily/task)</option>
+            <option value="Security">Security</option>
+            <option value="Farm Labour">Farm Labour</option>
+          </optgroup>
+          <optgroup label="Other">
+            <option value="Rental &amp; Hire">Rental &amp; Hire</option>
+            <option value="Other Services">Other Services</option>
+          </optgroup>
+        </select>
+      </div>
+      <div id="utility-category-field" class="hidden">
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">What kind of utility?</label>
+        <select name="categoryUtility" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display">
+          <optgroup label="Monthly billing">
+            <option value="Electricity">Electricity (KPLC)</option>
+            <option value="Water">Water</option>
+            <option value="Internet">Internet (monthly)</option>
+            <option value="Phone Plan">Phone Plan (monthly)</option>
+          </optgroup>
+          <optgroup label="Prepaid / Token">
+            <option value="Electricity Token">Electricity Token (prepaid)</option>
+            <option value="Data Bundle">Data Bundle (prepaid)</option>
+            <option value="Airtime">Airtime</option>
+          </optgroup>
+          <optgroup label="Other">
+            <option value="Waste Collection">Waste Collection</option>
+            <option value="Other Utility">Other Utility</option>
+          </optgroup>
         </select>
       </div>
       <div>
@@ -183,6 +234,7 @@
   const stockFields = document.getElementById("stock-fields");
   const goodsCategoryField = document.getElementById("goods-category-field");
   const servicesCategoryField = document.getElementById("services-category-field");
+  const utilityCategoryField = document.getElementById("utility-category-field");
   const priceLabel = document.getElementById("price-label");
   const costLabel = document.getElementById("cost-label");
 
@@ -191,10 +243,10 @@
     utilityField.classList.toggle("hidden", type !== "Utility");
     investmentFields.classList.toggle("hidden", type !== "Investment");
     stockFields.classList.toggle("hidden", type !== "Goods");
-    // Utility products are stored as type "Services" underneath (see the
-    // submit handler), so they use the Services category list too.
+    // Show the right category dropdown based on product type
     goodsCategoryField.classList.toggle("hidden", type !== "Goods");
-    servicesCategoryField.classList.toggle("hidden", type === "Goods" || type === "Investment");
+    servicesCategoryField.classList.toggle("hidden", type !== "Services");
+    utilityCategoryField.classList.toggle("hidden", type !== "Utility");
     priceLabel.textContent = type === "Goods" ? "Selling price (KES)" : type === "Investment" ? "Principal Amount (KES)" : "Typical charge (KES)";
     costLabel.textContent = type === "Goods" ? "Cost (KES)" : type === "Investment" ? "Amount Invested (KES)" : "Cost to business (KES)";
   });

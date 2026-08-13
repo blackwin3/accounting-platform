@@ -312,6 +312,12 @@ async function postJournalPair(tx, { debitAccount, creditAccount, amount, catalo
         },
       })
     );
+    // Atomic balance update — debit increases DEBIT-normal accounts, decreases CREDIT-normal
+    const debitDelta = debitAccount.Normal_Balance === "DEBIT" ? amount : -amount;
+    await tx.Account.update({
+      where: { Account_id: debitAccount.Account_id },
+      data: { Current_Balance: { increment: debitDelta } },
+    });
   }
   if (creditAccount) {
     rows.push(
@@ -336,6 +342,12 @@ async function postJournalPair(tx, { debitAccount, creditAccount, amount, catalo
         },
       })
     );
+    // Atomic balance update — credit increases CREDIT-normal accounts, decreases DEBIT-normal
+    const creditDelta = creditAccount.Normal_Balance === "CREDIT" ? amount : -amount;
+    await tx.Account.update({
+      where: { Account_id: creditAccount.Account_id },
+      data: { Current_Balance: { increment: creditDelta } },
+    });
   }
   return rows;
 }
@@ -344,7 +356,14 @@ async function adjustResourceQuantity(tx, productId, quantity, impact) {
   const resource = await tx.Resources.findFirst({ where: { Product_id: productId } });
   if (!resource) return null;
   const delta = impact === "INVENTORY_DECREASE" ? -quantity : quantity;
-  const newQty = Number(resource.Resources_Quantity || 0) + delta;
+  const newQty = round2(Number(resource.Resources_Quantity || 0) + delta);
+  // Prevent negative inventory — a sale cannot remove more stock than exists
+  if (newQty < 0) {
+    throw new PostingError(
+      `Insufficient stock: ${resource.Resources_Quantity || 0} available, ` +
+      `attempted to remove ${quantity}. Add stock first or adjust the quantity.`
+    );
+  }
   return tx.Resources.update({
     where: { Resources_id: resource.Resources_id },
     data: { Resources_Quantity: newQty, Last_updated: new Date() },

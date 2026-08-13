@@ -399,4 +399,26 @@ router.post("/accounts/:codeId/rename", async (req, res) => {
   }
 });
 
+// POST /api/settings { name, value, category } — update or create a setting
+router.post("/settings", async (req, res) => {
+  try {
+    const entrepriseId = req.currentUser.Entreprise_id;
+    const { name, value, category } = req.body;
+    if (!name || !value) return res.status(400).json({ error: "name and value are required" });
+
+    const existing = await prisma.Settings.findFirst({ where: { Setting_Name: name, Entreprise_id: entrepriseId } });
+    if (existing) {
+      await prisma.Settings.update({ where: { Setting_id: existing.Setting_id }, data: { Setting_Value: String(value) } });
+    } else {
+      await prisma.Settings.create({
+        data: { Setting_Category: category || "OTHER", Setting_Name: name, Setting_Value: String(value), Data_Type: "STRING", Entreprise_id: entrepriseId },
+      });
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal error saving setting" });
+  }
+});
+
 module.exports = router;
