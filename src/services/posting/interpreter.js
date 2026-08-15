@@ -91,12 +91,35 @@ async function resolveAccountByCode(tx, code, entrepriseId) {
  * pretended to exist here.
  */
 async function checkLogicConditions(tx, catalogue, entrepriseId) {
-  const openPeriod = await tx.Structures.findFirst({
+  // First check: is there any OPEN period for this business?
+  let openPeriod = await tx.Structures.findFirst({
     where: { Structures_Type: "ACCOUNTING_PERIOD", Period_Status: "OPEN", Entreprise_id: entrepriseId },
     orderBy: { Structures_id: "desc" },
   });
+
+  // Auto-open today's period if none exists — the owner shouldn't have
+  // to manually open a period before their first transaction of the day.
+  // This respects the AUTO_OPEN_PERIOD setting.
   if (!openPeriod) {
-    throw new PostingError("No OPEN accounting period found. Open today's period before posting.");
+    const autoOpen = await tx.Settings.findFirst({
+      where: { Setting_Name: "AUTO_OPEN_PERIOD", Entreprise_id: entrepriseId },
+    });
+    if (!autoOpen || autoOpen.Setting_Value === "1") {
+      const today = new Date().toISOString().slice(0, 10);
+      openPeriod = await tx.Structures.create({
+        data: {
+          Structures_Type: "ACCOUNTING_PERIOD",
+          Structure_Level: "RULE",
+          Structures_Name: today,
+          Structures_Description: `Trading day: ${today} (auto-opened)`,
+          Period_Status: "OPEN",
+          Structures_Period: new Date(today + "T00:00:00.000Z"),
+          Entreprise_id: entrepriseId,
+        },
+      });
+    } else {
+      throw new PostingError("No OPEN accounting period found. Open today's period on the Settings → Rules page before posting.");
+    }
   }
   return openPeriod;
 }

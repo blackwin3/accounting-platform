@@ -27,6 +27,7 @@ const funds = require("./posting/funds");
 const InsuranceAndProvisions = require("./posting/InsuranceAndProvisions");
 const LeasesAndLessors = require("./posting/LeasesAndLessors");
 const accounting_practice = require("./posting/accounting_practice");
+const diagnostics = require("./posting/diagnostics");
 const investments = require("./posting/investments");
 const interpreter = require("./posting/interpreter");
 const ProductionAndCosting = require("./posting/ProductionAndCosting");
@@ -101,7 +102,7 @@ module.exports = {
   computeIndirectCashFlow: accounting_practice.computeIndirectCashFlow,
   getPeriodEndChecklist: accounting_practice.getPeriodEndChecklist,
   postSuccession: accounting_practice.postSuccession,
-  runSystemDiagnostics: accounting_practice.runSystemDiagnostics,
+  runSystemDiagnostics: diagnostics.runSystemDiagnostics,
 
   // investments.js
   postInvestmentPurchase: investments.postInvestmentPurchase,

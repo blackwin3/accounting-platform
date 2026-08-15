@@ -102,13 +102,19 @@
       </div>
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Annual Rate (%)</label>
+          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Coupon Rate (%) — what they pay you each year</label>
           <input name="interestRate" id="buy-rate" type="number" min="0" step="0.01" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+          <p class="text-xs text-ink/40 mt-1">The annual interest the bond pays — e.g. 12.5% on a government bond.</p>
         </div>
         <div>
-          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Maturity Date</label>
-          <input name="maturityDate" id="buy-maturity" type="date" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">YTM (%) — total return if held to end</label>
+          <input name="ytm" id="buy-ytm" type="number" min="0" step="0.01" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+          <p class="text-xs text-ink/40 mt-1">Yield to Maturity — the broker's number for the true annual return, including the purchase price difference. Leave blank if you don't have it.</p>
         </div>
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Maturity Date — when you get your money back</label>
+        <input name="maturityDate" id="buy-maturity" type="date" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
       </div>
       <div>
         <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Paid Via</label>
