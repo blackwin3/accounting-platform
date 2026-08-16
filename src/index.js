@@ -158,6 +158,8 @@ app.use("/", require("./routes/pos"));
 // commit notes) before this replaced the old mount.
 app.use("/api", require("./routes/api-business"));
 app.use("/api", require("./routes/api-operational"));
+app.use("/api", require("./routes/api-agriculture"));
+app.use("/api", require("./routes/api-services"));
 app.use("/api", require("./routes/api-accounting"));
 app.use("/api", require("./routes/api-assets"));
 app.use("/api", require("./routes/api-administration"));
