@@ -159,6 +159,8 @@ app.use("/", require("./routes/pos"));
 app.use("/api", require("./routes/api-business"));
 app.use("/api", require("./routes/api-operational"));
 app.use("/api", require("./routes/api-accounting"));
+app.use("/api", require("./routes/api-assets"));
+app.use("/api", require("./routes/api-administration"));
 app.use("/api", require("./routes/api-knowledge"));
 app.use("/api", require("./routes/api-evidence"));
 
