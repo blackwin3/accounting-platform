@@ -118,7 +118,7 @@ router.post("/settings/period/:id/close", async (req, res) => {
     // Run the period-end checklist before allowing closure.
     // Seed checks first so a business that has never visited Settings
     // has the default check definitions available.
-    const { seedPeriodEndChecks } = require("../../services/seed");
+    const { seedPeriodEndChecks } = require("../../services/seed/seed");
     const { getPeriodEndChecklist } = require("../../services/postingEngine");
     await seedPeriodEndChecks(entrepriseId);
     const checklist = await getPeriodEndChecklist(req.params.id, entrepriseId);
@@ -288,7 +288,7 @@ router.get("/settings/rules", async (req, res) => {
     // like ProcessActions' isPopulated flag) ever picks up that fix,
     // since the previous "only if zero rows" gate meant this whole block
     // could never run again once a business had any rows at all.
-    const { seedAccountingRules, seedProcessActions, seedSourceOfTruthPolicy, seedCatalogueEvents } = require("../../services/seed");
+    const { seedAccountingRules, seedProcessActions, seedSourceOfTruthPolicy, seedCatalogueEvents } = require("../../services/seed/seed");
     const entrepriseId = req.currentUser.Entreprise_id;
     await seedCatalogueEvents(entrepriseId);
     await seedAccountingRules(entrepriseId);

@@ -36,7 +36,9 @@ router.use(require("./money"));
 router.use(require("./resources"));
 router.use(require("./settings"));
 router.use(require("./organisation"));
+router.use(require("./government"));
 router.use(require("./knowledge"));
 router.use(require("./documents"));
+router.use(require("./interest-rates"));
 
 module.exports = router;

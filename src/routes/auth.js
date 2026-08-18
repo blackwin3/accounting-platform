@@ -105,49 +105,16 @@ router.post("/api/setup/signup", async (req, res) => {
     // already exist rather than requiring a posting function to create them
     // on first use.
     try {
-      const { seedCatalogueEvents, seedAccountingRules, seedDefaultSettings } = require("../services/seed");
+      const { seedCatalogueEvents, seedAccountingRules, seedDefaultSettings, seedAccountCodes, seedAccounts } = require("../services/seed/seed");
       await seedCatalogueEvents(org.Entreprise_id);
       await seedAccountingRules(org.Entreprise_id);
       await seedDefaultSettings(org.Entreprise_id);
 
-      // Provision the core accounts that every business needs from day one.
-      // These are the accounts the interpreter resolves by code — if they
-      // don't exist, resolveAccountByCode throws "account not set up."
-      const coreAccounts = [
-        ["1000", "Cash / Till", "ASSET", "DEBIT", "CURRENT_ASSET"],
-        ["1010", "Mobile Money", "ASSET", "DEBIT", "CURRENT_ASSET"],
-        ["1020", "Bank", "ASSET", "DEBIT", "CURRENT_ASSET"],
-        ["1100", "Inventory", "ASSET", "DEBIT", "CURRENT_ASSET"],
-        ["1200", "Trade Receivables", "ASSET", "DEBIT", "CURRENT_ASSET"],
-        ["1400", "Property Plant and Equipment", "ASSET", "DEBIT", "NON_CURRENT_ASSET"],
-        ["1410", "Accumulated Depreciation", "ASSET", "CREDIT", "NON_CURRENT_ASSET"],
-        ["2000", "Trade Payables", "LIABILITY", "CREDIT", "CURRENT_LIABILITY"],
-        ["2100", "Loan Payable", "LIABILITY", "CREDIT", "NON_CURRENT_LIABILITY"],
-        ["3100", "Owner Capital", "EQUITY", "CREDIT", "EQUITY"],
-        ["4000", "Sales", "INCOME", "CREDIT", "OPERATING_REVENUE"],
-        ["5000", "Cost of Goods Sold", "EXPENDITURE", "DEBIT", "OPERATING_EXPENSE"],
-        ["5100", "Rent Expense", "EXPENDITURE", "DEBIT", "OPERATING_EXPENSE"],
-        ["5200", "Salaries Expense", "EXPENDITURE", "DEBIT", "OPERATING_EXPENSE"],
-        ["5300", "Transport Expense", "EXPENDITURE", "DEBIT", "OPERATING_EXPENSE"],
-        ["5400", "Utilities Expense", "EXPENDITURE", "DEBIT", "OPERATING_EXPENSE"],
-        ["5600", "Insurance Expense", "EXPENDITURE", "DEBIT", "OPERATING_EXPENSE"],
-        ["5700", "Depreciation Expense", "EXPENDITURE", "DEBIT", "OPERATING_EXPENSE"],
-        ["5800", "Tax Expense", "EXPENDITURE", "DEBIT", "OPERATING_EXPENSE"],
-        ["5900", "Other Operating Expense", "EXPENDITURE", "DEBIT", "OPERATING_EXPENSE"],
-      ];
-      await prisma.$transaction(async (tx) => {
-        for (const [code, name, type, normalBal, section] of coreAccounts) {
-          const existing = await tx.Account_codes.findFirst({ where: { Code: code, Entreprise_id: org.Entreprise_id } });
-          if (!existing) {
-            const codeRow = await tx.Account_codes.create({
-              data: { Code: code, Code_name: name, Code_categories: type, Statement_Section: section, Is_Active: 1, Entreprise_id: org.Entreprise_id },
-            });
-            await tx.Account.create({
-              data: { Account_Name: name, Account_Type: type, Account_Code_id: codeRow.Account_codes_id, Account_subType: section, Normal_Balance: normalBal, Current_Balance: 0, Authoritative_Source: "JOURNAL", Is_Active: 1, Entreprise_id: org.Entreprise_id },
-            });
-          }
-        }
-      });
+      // Provision the core accounts from the shared seed-accounts module.
+      // This is the single source of truth for the chart of accounts —
+      // no more hardcoded account lists in multiple files.
+      const codes = await seedAccountCodes(org.Entreprise_id);
+      await seedAccounts(codes, org.Entreprise_id);
     } catch (seedErr) {
       console.error("Account/catalogue seed at signup failed:", seedErr.message);
       // Non-fatal — the user can still proceed; accounts will be created on

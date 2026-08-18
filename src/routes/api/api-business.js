@@ -152,7 +152,7 @@ router.post("/organisation", async (req, res) => {
     // Seed Catalogue events and rules after the response — errors here
     // must never fall through to the outer catch (response already sent).
     try {
-      const seed = require("../services/seed");
+      const seed = require("../../services/seed/seed");
       await seed.seedCatalogueEvents(entrepriseId);
       await seed.seedAccountingRules(entrepriseId);
       await seed.seedProcessActions();

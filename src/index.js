@@ -156,15 +156,15 @@ app.use("/", require("./routes/pos"));
 // Knowledge / Evidence) — replaces the original single 1,436-line
 // api.js. All 54 routes verified identical across the split (see
 // commit notes) before this replaced the old mount.
-app.use("/api", require("./routes/api-business"));
-app.use("/api", require("./routes/api-operational"));
-app.use("/api", require("./routes/api-agriculture"));
-app.use("/api", require("./routes/api-services"));
-app.use("/api", require("./routes/api-accounting"));
-app.use("/api", require("./routes/api-assets"));
-app.use("/api", require("./routes/api-administration"));
-app.use("/api", require("./routes/api-knowledge"));
-app.use("/api", require("./routes/api-evidence"));
+app.use("/api", require("./routes/api/api-business"));
+app.use("/api", require("./routes/api/api-operational"));
+app.use("/api", require("./routes/api/api-agriculture"));
+app.use("/api", require("./routes/api/api-services"));
+app.use("/api", require("./routes/api/api-accounting"));
+app.use("/api", require("./routes/api/api-assets"));
+app.use("/api", require("./routes/api/api-administration"));
+app.use("/api", require("./routes/api/api-knowledge"));
+app.use("/api", require("./routes/api/api-evidence"));
 
 // Global error handler — must be registered last, after every route. Any
 // exception thrown anywhere in the middleware chain that isn't already
