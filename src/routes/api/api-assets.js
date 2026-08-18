@@ -15,7 +15,7 @@ const {
   postRentalPropertyPurchase, assignTenant,
   postBiologicalAssetRevaluation,
   PostingError, prisma,
-} = require("../services/postingEngine");
+} = require("../../services/postingEngine");
 
 function requireCapitalApproval(req, res) {
   if (!["OWNER_FULL", "MANAGER", "ACCOUNTANT"].includes(req.currentUser.Access_Level)) {

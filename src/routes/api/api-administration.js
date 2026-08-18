@@ -6,7 +6,7 @@
 
 const express = require("express");
 const router = express.Router();
-const { postCorrection, postSuccession, replayAccountBalances, runSystemDiagnostics, PostingError, prisma } = require("../services/postingEngine");
+const { postCorrection, postSuccession, replayAccountBalances, runSystemDiagnostics, PostingError, prisma } = require("../../services/postingEngine");
 
 // GET /api/diagnostics — runs all 10 system diagnostic checks
 router.get("/diagnostics", async (req, res) => {

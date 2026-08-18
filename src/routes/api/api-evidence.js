@@ -13,7 +13,7 @@
 
 const express = require("express");
 const router = express.Router();
-const { prisma, verifyResourceQuantities, replayAccountBalances, getPeriodEndChecklist } = require("../services/postingEngine");
+const { prisma, verifyResourceQuantities, replayAccountBalances, getPeriodEndChecklist } = require("../../services/postingEngine");
 
 // POST /api/reports/:id/status — advance a report's review/approval status.
 // Distinct from Report_Stage (position in the close chain, set once at

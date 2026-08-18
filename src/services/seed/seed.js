@@ -16,7 +16,7 @@ const prisma = new PrismaClient();
 const { seedAccountCodes, seedAccounts } = require("./seed-accounts");
 const { seedCatalogueEvents, upsertStructure } = require("./seed-catalogue");
 const { seedAccountingRules, seedDefaultSettings, seedPeriodEndChecks } = require("./seed-settings");
-const { seedChebetFamily, upsertProduct, upsertResource } = require("./seed-demo");
+const { seedChebetFamily, upsertProduct, upsertResource } = require("../seed-demo");
 
 async function main() {
   const entrepriseId = (await prisma.Organisation.findFirst())?.Entreprise_id || null;

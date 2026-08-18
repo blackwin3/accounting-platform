@@ -11,7 +11,7 @@ const {
   leaseOutInventory, returnLeasedInventory,
   hireOutEquipment, endEquipmentHire,
   PostingError, prisma,
-} = require("../services/postingEngine");
+} = require("../../services/postingEngine");
 
 // ── SERVICE ENGAGEMENTS ──────────────────────────────────────────────
 

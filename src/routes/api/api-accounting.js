@@ -15,7 +15,7 @@ const {
   postCapitalWithdrawal, postLoanRepayment, postLoanClosure,
   postRentArrears, postSettleRentArrears,
   PostingError, prisma,
-} = require("../services/postingEngine");
+} = require("../../services/postingEngine");
 
 function requireCapitalApproval(req, res) {
   if (!["OWNER_FULL", "MANAGER", "ACCOUNTANT"].includes(req.currentUser.Access_Level)) {
@@ -183,7 +183,7 @@ router.post("/liability/:id/pay", async (req, res) => {
       return res.json({ ok: true, transactionId: result.transaction.Transactions_id, remainingOutstanding: result.remainingOutstanding });
     }
     if (liability.Liability_Type === "Lease") {
-      const { postLeasePayment } = require("../services/postingEngine");
+      const { postLeasePayment } = require("../../services/postingEngine");
       const result = await postLeasePayment({ liabilityId, amount: Number(amount), paymentMethod, entrepriseId });
       return res.json({ ok: true, transactionId: result.transaction.Transactions_id });
     }

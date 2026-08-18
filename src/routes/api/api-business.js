@@ -9,7 +9,7 @@
 
 const express = require("express");
 const router = express.Router();
-const { prisma } = require("../services/postingEngine");
+const { prisma } = require("../../services/postingEngine");
 
 async function provisionCashAccount(entrepriseId) {
   const codeRow = await prisma.Account_codes.create({

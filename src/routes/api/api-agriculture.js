@@ -10,7 +10,7 @@ const {
   recordBirth, recordHarvest, bulkPlanting,
   postSeasonalLabour, postRepackaging,
   PostingError, prisma,
-} = require("../services/postingEngine");
+} = require("../../services/postingEngine");
 
 // ── LIVESTOCK ────────────────────────────────────────────────────────
 

@@ -12,7 +12,7 @@
 
 const express = require("express");
 const router = express.Router();
-const { prisma } = require("../services/postingEngine");
+const { prisma } = require("../../services/postingEngine");
 
 // POST /api/knowledge — add a Knowledge note, optionally linked to a
 // Transactions row or a Records row (a report). This is the "Add Note"
