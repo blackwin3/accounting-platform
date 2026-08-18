@@ -163,6 +163,7 @@ app.use("/api", require("./routes/api/api-services"));
 app.use("/api", require("./routes/api/api-accounting"));
 app.use("/api", require("./routes/api/api-assets"));
 app.use("/api", require("./routes/api/api-administration"));
+app.use("/api", require("./routes/api/api-hr"));
 app.use("/api", require("./routes/api/api-knowledge"));
 app.use("/api", require("./routes/api/api-evidence"));
 

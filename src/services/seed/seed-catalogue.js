@@ -692,6 +692,28 @@ async function seedCatalogueEvents(entrepriseId) {
     Evidence_template: "NONE", Report_sections: "INCOME_STATEMENT:CasualLabour",
     Default_Business_Unit: "FARM",
   });
+  await def({
+    Event_Name: "PAY_SALARY",
+    Event_Description: "Pay a named team member their salary or wage. DR Salaries Expense (5200) CR Cash/Mobile/Bank.",
+    Debit_Account_code: "5200", Credit_Account_code: "1000",
+    Cash_Flow_Category: "OPERATING", Operational_Impact: "NONE",
+    Risk_Level: "LOW", Documentation_type: "NONE", Report_trigger: "INCOME_STATEMENT",
+    Escalation_Role: "NONE", Cycle_type: "PAYROLL", Alert_Required: 0,
+    Narrative_template: "Salary payment to {Employee_Name}: KES {Amount} for {Period}.",
+    Evidence_template: "NONE", Report_sections: "INCOME_STATEMENT:SalariesExpense|CASH_FLOW:Operating",
+    Default_Business_Unit: "SHOP",
+  });
+  await def({
+    Event_Name: "PAY_COMMISSION",
+    Event_Description: "Pay commission based on Arrangement_Rate percentage. DR Commission Expense (5220) CR Cash/Mobile/Bank.",
+    Debit_Account_code: "5220", Credit_Account_code: "1000",
+    Cash_Flow_Category: "OPERATING", Operational_Impact: "NONE",
+    Risk_Level: "LOW", Documentation_type: "NONE", Report_trigger: "INCOME_STATEMENT",
+    Escalation_Role: "NONE", Cycle_type: "PAYROLL", Alert_Required: 0,
+    Narrative_template: "Commission payment to {Employee_Name}: KES {Amount} for {Period}.",
+    Evidence_template: "NONE", Report_sections: "INCOME_STATEMENT:CommissionExpense|CASH_FLOW:Operating",
+    Default_Business_Unit: "SHOP",
+  });
 
   // ── BOND / INVESTMENT INTEREST CYCLE ───────────────────────────────
   await def({

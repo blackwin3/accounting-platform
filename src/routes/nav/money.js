@@ -197,6 +197,8 @@ router.get("/money/cash-flow", async (req, res) => {
       // Operating — Tier 2/3 events that touch cash.
       else if (eventName === "UTILISE_PROVISION") otherOperatingOut += credit;
       else if (eventName === "PAY_SEASONAL_LABOUR") employeesOut += credit;
+      else if (eventName === "PAY_SALARY") employeesOut += credit;
+      else if (eventName === "PAY_COMMISSION") employeesOut += credit;
       else if (eventName === "INSURANCE_CLAIM_RECEIPT") unitIncomeIn += debit;
       // Bond interest: accrual is non-cash, coupon receipt is operating
       else if (eventName === "ACCRUE_INVESTMENT_INTEREST") { /* NONE — non-cash accrual */ }

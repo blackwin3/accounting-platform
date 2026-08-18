@@ -28,6 +28,7 @@ const InsuranceAndProvisions = require("./posting/InsuranceAndProvisions");
 const LeasesAndLessors = require("./posting/LeasesAndLessors");
 const accounting_practice = require("./posting/accounting_practice");
 const diagnostics = require("./posting/diagnostics");
+const humanResourceManagement = require("./posting/humanResourceManagement");
 const investments = require("./posting/investments");
 const interpreter = require("./posting/interpreter");
 const ProductionAndCosting = require("./posting/ProductionAndCosting");
@@ -103,6 +104,13 @@ module.exports = {
   getPeriodEndChecklist: accounting_practice.getPeriodEndChecklist,
   postSuccession: accounting_practice.postSuccession,
   runSystemDiagnostics: diagnostics.runSystemDiagnostics,
+  // Human Resource Management
+  addTeamMember: humanResourceManagement.addTeamMember,
+  updateTeamRole: humanResourceManagement.updateTeamRole,
+  exitTeamMember: humanResourceManagement.exitTeamMember,
+  postSalaryPayment: humanResourceManagement.postSalaryPayment,
+  postCommissionPayment: humanResourceManagement.postCommissionPayment,
+  getTeamSummary: humanResourceManagement.getTeamSummary,
 
   // investments.js
   postInvestmentPurchase: investments.postInvestmentPurchase,
