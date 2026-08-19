@@ -68,6 +68,27 @@ router.get("/money/interest-rates", async (req, res) => {
       }));
     } catch { /* Arrangement_Type may not exist */ }
 
+    // Products with rates — margin, interest, or commission
+    const products = await prisma.Product.findMany({
+      where: { Entreprise_id: entrepriseId },
+    });
+    const productRates = products
+      .filter(p => p.Product_Price || p.Product_Rate || p.Product_Cost)
+      .map(p => {
+        const price = Number(p.Product_Price || 0);
+        const cost = Number(p.Product_Cost || 0);
+        const marginPct = price > 0 && cost > 0 ? round2(((price - cost) / cost) * 100) : null;
+        return {
+          name: p.Product_Name,
+          nature: p.Product_Nature || p.Product_type || "—",
+          price: price || null,
+          cost: cost || null,
+          marginPct,
+          rate: p.Product_Rate ? Number(p.Product_Rate) : null,
+        };
+      })
+      .filter(p => p.marginPct != null || p.rate != null);
+
     res.render("interest-rates", {
       title: "Interest Rates",
       active: "interest-rates",
@@ -76,6 +97,7 @@ router.get("/money/interest-rates", async (req, res) => {
       investments,
       assets,
       arrangements,
+      productRates,
       fmt: (n) => Number(n || 0).toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
     });
   } catch (err) {

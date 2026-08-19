@@ -155,4 +155,9 @@ module.exports = {
 
   // risk_management.js — reporting layer over InsuranceAndProvisions.js.
   getRiskPosition: riskManagement.getRiskPosition,
+
+  // Shared utilities re-exported from core.js
+  round2: core.round2,
+  prisma: core.prisma,
+  PostingError: core.PostingError,
 };
