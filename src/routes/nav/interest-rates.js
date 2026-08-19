@@ -1,3 +1,4 @@
+const { getCurrencyConfig, makeFmt } = require("../../services/currency");
 /**
  * interest-rates.js — Money > Interest Rates page.
  * All financial instruments carrying interest, growth, depreciation,
@@ -68,7 +69,10 @@ router.get("/money/interest-rates", async (req, res) => {
       }));
     } catch { /* Arrangement_Type may not exist */ }
 
-    // Products with rates — margin, interest, or commission
+    const currency = await getCurrencyConfig(prisma, entrepriseId);
+    const fmt = makeFmt(currency);
+
+    // Products with rates
     const products = await prisma.Product.findMany({
       where: { Entreprise_id: entrepriseId },
     });
@@ -98,7 +102,7 @@ router.get("/money/interest-rates", async (req, res) => {
       assets,
       arrangements,
       productRates,
-      fmt: (n) => Number(n || 0).toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      fmt,
     });
   } catch (err) {
     console.error(err);

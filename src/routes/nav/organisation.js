@@ -1,6 +1,43 @@
 const express = require("express");
 const router = express.Router();
 const { prisma, round2 } = require("../../services/postingEngine");
+const { getCurrencyConfig, makeFmt, CURRENCY_MAP } = require("../../services/currency");
+
+// GET /organisation — dashboard summary of all sub-pages
+router.get("/organisation", async (req, res) => {
+  try {
+    const entrepriseId = req.currentUser.Entreprise_id;
+    const currency = await getCurrencyConfig(prisma, entrepriseId);
+    const fmt = makeFmt(currency);
+    const stakeholderCount = await prisma.Stakeholder.count({ where: { Entreprise_id: entrepriseId } });
+    const supplierCount = await prisma.Stakeholder.count({ where: { Entreprise_id: entrepriseId, Stakeholder_Category: "Supplier" } });
+    const customerCount = await prisma.Stakeholder.count({ where: { Entreprise_id: entrepriseId, Stakeholder_Category: "Customer" } });
+    const teamCount = await prisma.Management.count({ where: { Entreprise_id: entrepriseId } });
+    const activeTeam = await prisma.Management.count({ where: { Entreprise_id: entrepriseId, Lifecycle_Status: { not: "EXITED" } } });
+    const productCount = await prisma.Product.count({ where: { Entreprise_id: entrepriseId } });
+    let livestockCount = 0;
+    try { livestockCount = await prisma.Resources.count({ where: { Resource_Class: "BIOLOGICAL_ASSET", Entreprise_id: entrepriseId } }); } catch {}
+    let monthlyPayroll = 0;
+    try {
+      const members = await prisma.Management.findMany({ where: { Entreprise_id: entrepriseId, Lifecycle_Status: { not: "EXITED" } } });
+      monthlyPayroll = round2(members.reduce((s, m) => s + Number(m.Management_Cost || 0), 0));
+    } catch {}
+    const org = await prisma.Organisation.findUnique({ where: { Entreprise_id: entrepriseId } });
+    res.render("organisation-dashboard", {
+      title: "Organisation", active: "organisation",
+      orgName: org?.Organisational_Name || "Your Business",
+      currency, fmt,
+      summary: {
+        stakeholders: { total: stakeholderCount, suppliers: supplierCount, customers: customerCount },
+        team: { total: teamCount, active: activeTeam, monthlyPayroll },
+        products: productCount, livestock: livestockCount,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error loading organisation dashboard: " + err.message);
+  }
+});
 
 // GET /organisation/business
 router.get("/organisation/business", async (req, res) => {
@@ -88,6 +125,53 @@ router.get("/organisation/management", async (req, res) => {
       .map((s) => ({ id: s.Stakeholder_id, name: [s.First_name, s.Last_name].filter(Boolean).join(" ") || s.Business_name }));
 
     const ownerCount = rows.filter((m) => m.Access_Level === "OWNER_FULL").length;
+    const activeMembers = rows.filter(m => m.Lifecycle_Status !== "EXITED");
+
+    // HR panel data — payroll and arrangement summary
+    const monthlyPayroll = round2(activeMembers.reduce((sum, m) => sum + Number(m.Management_Cost || 0), 0));
+    const byArrangement = {};
+    activeMembers.forEach(m => {
+      const arr = m.Arrangement_Type || "UNSPECIFIED";
+      if (!byArrangement[arr]) byArrangement[arr] = { count: 0, totalCost: 0 };
+      byArrangement[arr].count++;
+      byArrangement[arr].totalCost += Number(m.Management_Cost || 0);
+    });
+
+    // Labour products — services and utilities that represent internal labour
+    const labourProducts = await prisma.Product.findMany({
+      where: {
+        Entreprise_id: entrepriseId,
+        OR: [
+          { Product_Category: { in: ["Casual Labour", "Security", "Farm Labour"] } },
+          { Product_Nature: { in: ["SERVICE", "UTILITY"] }, Product_Name: { contains: "Labour" } },
+        ],
+      },
+    });
+
+    // Recent payroll transactions
+    let recentPayroll = [];
+    try {
+      const payrollCatalogues = await prisma.Catalogue.findMany({
+        where: { Event_Name: { in: ["PAY_SALARY", "PAY_COMMISSION", "PAY_SEASONAL_LABOUR", "CAPITAL_WITHDRAWAL"] }, Entreprise_id: entrepriseId },
+      });
+      const catIds = payrollCatalogues.map(c => c.Catalogue_id);
+      if (catIds.length > 0) {
+        const payrollJournals = await prisma.Journal.findMany({
+          where: { Catalogue_id: { in: catIds }, Entreprise_id: entrepriseId, Debit: { gt: 0 } },
+          orderBy: { Created_at: "desc" },
+          take: 10,
+        });
+        recentPayroll = payrollJournals.map(j => ({
+          date: j.Created_at ? new Date(j.Created_at).toLocaleDateString("en-GB") : "—",
+          description: j.Description || "Payment",
+          amount: Number(j.Debit || 0),
+        }));
+      }
+    } catch { /* Catalogue may not have these events yet */ }
+
+    const { getCurrencyConfig, makeFmt } = require("../../services/currency");
+    const currency = await getCurrencyConfig(prisma, entrepriseId);
+    const fmt = makeFmt(currency);
 
     res.render("management", {
       title: "Management",
@@ -101,14 +185,24 @@ router.get("/organisation/management", async (req, res) => {
         accessLevel: m.Access_Level,
         inheritanceStatus: m.Inheritance_Status,
         username: m.Username,
-        // Matches CAPITAL_APPROVAL_ROLES in api-accounting.js exactly —
-        // this reflects a real, enforced restriction (capital
-        // withdrawal, loan repayment, investment purchase/sale, rental
-        // property purchase all check this server-side), not a
-        // decorative label.
+        arrangementType: m.Arrangement_Type,
+        monthlyCost: m.Management_Cost ? Number(m.Management_Cost) : null,
+        lifecycleStatus: m.Lifecycle_Status || "ACTIVE",
         canApproveCapital: m.Access_Level === "OWNER_FULL" || m.Access_Level === "ACCOUNTANT",
       })),
       availableStakeholders,
+      // HR panel data
+      hr: {
+        activeCount: activeMembers.length,
+        exitedCount: rows.length - activeMembers.length,
+        monthlyPayroll,
+        annualEstimate: round2(monthlyPayroll * 12),
+        byArrangement,
+        recentPayroll,
+        labourProducts: labourProducts.map(p => ({ id: p.Product_id, name: p.Product_Name, category: p.Product_Category })),
+      },
+      fmt,
+      currency: currency.code,
     });
   } catch (err) {
     console.error(err);

@@ -1,3 +1,4 @@
+const { getCurrencyConfig, makeFmt } = require("../../services/currency");
 const express = require("express");
 const router = express.Router();
 const { prisma, getRiskPosition } = require("../../services/postingEngine");
@@ -44,6 +45,9 @@ router.get("/expense", async (req, res) => {
       where: { Instrument_type: "INSURANCE", Money_Status: "ACTIVE", Entreprise_id: entrepriseId },
       orderBy: { Money_Name: "asc" },
     });
+
+    const currency = await getCurrencyConfig(prisma, req.currentUser.Entreprise_id);
+    const fmt = makeFmt(currency);
 
     res.render("expense", {
       title: "Expenses",
@@ -290,7 +294,7 @@ router.get("/claims/risks-insurance", async (req, res) => {
       active: "risks-insurance",
       currentBusinessUnit: req.currentBusinessUnit,
       riskPosition,
-      fmt: (n) => Number(n || 0).toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      fmt: makeFmt(await getCurrencyConfig(prisma, req.currentUser.Entreprise_id)),
       // Kept flat for backward compatibility with the EJS template's
       // existing loops — the template still iterates `policies` and
       // `provisions` directly; riskPosition supplies the management panel.

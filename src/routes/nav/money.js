@@ -1,3 +1,4 @@
+const { getCurrencyConfig, makeFmt } = require("../../services/currency");
 const express = require("express");
 const router = express.Router();
 const { prisma, computeIndirectCashFlow, getCapitalPosition } = require("../../services/postingEngine");
@@ -55,10 +56,14 @@ router.get("/money", async (req, res) => {
     const totalEquity = capitalBalance + retainedEarnings;
     const totalLiabilities = loanBalance + otherLiabilitiesBalance;
 
+    const currency = await getCurrencyConfig(prisma, req.currentUser.Entreprise_id);
+    const fmt = makeFmt(currency);
+
     res.render("money", {
       title: "Money",
       active: "money",
       currentBusinessUnit: req.currentBusinessUnit,
+      currency: currency.code,
       cashBalance: round2(cashBalance),
       fixedAssetsBalance: round2(fixedAssetsBalance),
       capitalBalance: round2(capitalBalance),
@@ -68,7 +73,7 @@ router.get("/money", async (req, res) => {
       totalAssets: round2(cashBalance + fixedAssetsBalance),
       totalEquity: round2(capitalBalance + retainedEarnings),
       totalLiabilities: round2(loanBalance + otherLiabilitiesBalance),
-      fmt: (n) => Number(n || 0).toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      fmt,
     });
   } catch (err) {
     console.error(err);

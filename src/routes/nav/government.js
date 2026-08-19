@@ -1,3 +1,4 @@
+const { getCurrencyConfig, makeFmt } = require("../../services/currency");
 /**
  * government.js — Organisation > Government page.
  * Taxes, levies, grants, and government service payments
@@ -53,10 +54,14 @@ router.get("/organisation/government", async (req, res) => {
       date: j.Created_at ? new Date(j.Created_at).toLocaleDateString("en-GB") : "—",
     }));
 
+    const currency = await getCurrencyConfig(prisma, entrepriseId);
+    const fmt = makeFmt(currency);
+
     res.render("government", {
       title: "Government",
       active: "government",
       currentBusinessUnit: req.currentBusinessUnit,
+      currency: currency.code,
       vatRate: vatRateSetting ? Number(vatRateSetting.Setting_Value) : 16,
       vatRegistered: vatRegSetting ? vatRegSetting.Setting_Value === "1" : false,
       taxPaid,
@@ -70,7 +75,7 @@ router.get("/organisation/government", async (req, res) => {
         phone: s.Tel_1,
         email: s.Email_1,
       })),
-      fmt: (n) => Number(n || 0).toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      fmt,
     });
   } catch (err) {
     console.error(err);
