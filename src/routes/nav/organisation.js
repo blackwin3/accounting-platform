@@ -23,7 +23,7 @@ router.get("/organisation", async (req, res) => {
       monthlyPayroll = round2(members.reduce((s, m) => s + Number(m.Management_Cost || 0), 0));
     } catch {}
     const org = await prisma.Organisation.findUnique({ where: { Entreprise_id: entrepriseId } });
-    res.render("organisation-dashboard", {
+    res.render("organisation/organisation-dashboard", {
       title: "Organisation", active: "organisation",
       orgName: org?.Organisational_Name || "Your Business",
       currency, fmt,
@@ -57,7 +57,7 @@ router.get("/organisation/business", async (req, res) => {
       orderBy: { Structures_id: "asc" },
     });
 
-    res.render("business", {
+    res.render("organisation/business", {
       title: "Business",
       active: "business",
       organisation: org
@@ -92,7 +92,7 @@ router.get("/organisation/stakeholders", async (req, res) => {
   try {
     const entrepriseId = req.currentUser.Entreprise_id;
     const rows = await prisma.Stakeholder.findMany({ where: { Entreprise_id: entrepriseId }, orderBy: { Stakeholder_id: "desc" } });
-    res.render("stakeholders", {
+    res.render("organisation/stakeholders", {
       title: "Stakeholders",
       active: "stakeholders",
       stakeholders: rows.map((s) => ({
@@ -173,7 +173,7 @@ router.get("/organisation/management", async (req, res) => {
     const currency = await getCurrencyConfig(prisma, entrepriseId);
     const fmt = makeFmt(currency);
 
-    res.render("management", {
+    res.render("organisation/management", {
       title: "Management",
       active: "management",
       currentUserId: req.currentUser ? req.currentUser.Administration_id : null,
@@ -260,7 +260,7 @@ router.get("/organisation/processing", async (req, res) => {
       }));
     }
 
-    res.render("processing", {
+    res.render("organisation/processing", {
       title: "Processing",
       active: "processing",
       currentBusinessUnit: req.currentBusinessUnit,
@@ -321,7 +321,7 @@ router.get("/organisation/livestock", async (req, res) => {
       return { label: `${daysSince} day${daysSince === 1 ? "" : "s"} ago`, overdue: daysSince > 35 };
     }
 
-    res.render("livestock", {
+    res.render("organisation/livestock", {
       title: "Agriculture & Livestock",
       active: "livestock",
       currentBusinessUnit: req.currentBusinessUnit,
@@ -381,7 +381,7 @@ router.get("/organisation/services-wip", async (req, res) => {
       orderBy: { Resources_id: "desc" },
     });
 
-    res.render("services-wip", {
+    res.render("organisation/services-wip", {
       title: "Services",
       active: "services-wip",
       currentBusinessUnit: req.currentBusinessUnit,

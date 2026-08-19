@@ -1,0 +1,159 @@
+<header class="mb-8">
+  <p class="font-mono text-xs uppercase tracking-widest text-ink/40">Settings</p>
+  <h1 class="font-display text-3xl mt-1">Rules</h1>
+  <p class="text-ink/50 text-sm mt-1">How accounting standards govern the processes this system actually runs.</p>
+</header>
+
+<section class="mb-12">
+  <h2 class="font-display text-xl mb-4">Business Structure</h2>
+  <div class="bg-white rounded-xl border border-ink/10 p-6 mb-4">
+    <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-3">Current Business Units</p>
+    <div class="flex flex-wrap gap-2">
+      <% businessUnits.forEach(function(u) { %>
+        <span class="text-xs font-mono px-3 py-1.5 rounded-full bg-till/10 text-till"><%= u %></span>
+      <% }) %>
+      <% if (businessUnits.length === 0) { %>
+        <span class="text-xs text-ink/30 italic">No business units seeded yet.</span>
+      <% } %>
+    </div>
+    <p class="text-ink/50 text-xs mt-3">Each unit keeps its own products, transactions, and asset register, filtered by the switcher at the top of every page. Reports and the Trial Balance stay consolidated across all units — that's what those statements mean.</p>
+  </div>
+
+  <div class="bg-paper/60 rounded-xl p-6">
+    <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Beyond a flat list — grouping units into divisions</p>
+    <p class="text-ink/60 text-sm mb-3">
+      A larger multi-unit enterprise may have more business units than makes sense to view as one flat list — for
+      example, a fuel station and a mini-mart forming a "Commercial" division, while a restaurant, motel, and
+      tourist centre form a "Hospitality" division, each reporting individually but also rolling up into their
+      division and then the whole group.
+    </p>
+    <p class="text-ink/60 text-sm mb-3">
+      <span class="font-mono text-till">Structures.Parent_Structure_id</span> already supports this: a
+      <span class="font-mono">BUSINESS_UNIT</span> row can point to a parent <span class="font-mono">DIVISION</span>
+      row, which can itself point to the top-level <span class="font-mono">Framework</span> node — the same
+      parent-child chain used above for IAS/IFRS standards and their policies. The Structures page renders that
+      hierarchy directly, so a group with divisions would show them nested here exactly as standards and policies
+      are nested today.
+    </p>
+    <p class="text-ink/50 text-xs italic">Not currently seeded — this business is modelled as a flat list of business units. Shown here as a worked example of what the schema already supports if that changes.</p>
+  </div>
+</section>
+
+<section class="mb-12">
+  <h2 class="font-display text-xl mb-4">Standards</h2>
+  <div class="space-y-4">
+    <% standards.forEach(function(s, i) { %>
+      <div class="bg-white rounded-xl border border-ink/10 p-6">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <p class="font-display text-lg"><%= s.name %></p>
+            <p class="text-xs font-mono text-ink/40"><%= s.reference %></p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-paper text-ink/50"><%= s.appliesTo %></span>
+            <form method="POST" action="/settings/structures/<%= s.id %>/rule-severity" onsubmit="event.preventDefault(); fetch(this.action, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({Rule_Severity: this.severity.value})}).then(() => location.reload());">
+              <select name="severity" class="text-xs font-mono border border-ink/20 rounded-full px-2 py-1 bg-paper" onchange="this.form.requestSubmit()">
+                <% ['BLOCK','WARN','INFO'].forEach(function(sev) { %>
+                  <option value="<%= sev %>" <%= s.ruleSeverity === sev ? 'selected' : '' %>><%= sev %></option>
+                <% }) %>
+              </select>
+            </form>
+          </div>
+        </div>
+
+        <p class="text-ink/70 text-sm leading-relaxed mb-4"><%= s.ownerExplanation %></p>
+
+        <% if (s.catalogueEvents.length > 0) { %>
+          <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Applies to these processes</p>
+          <div class="flex flex-wrap gap-2 mb-4">
+            <% s.catalogueEvents.forEach(function(e) { %>
+              <span class="text-xs font-mono px-2 py-1 rounded-full bg-till/10 text-till"><%= e %></span>
+            <% }) %>
+          </div>
+        <% } else { %>
+          <p class="text-xs text-ink/30 italic mb-4">No direct posting events — this standard governs recognition principles applied across all events rather than specific transactions.</p>
+        <% } %>
+
+        <% if (s.policy) { %>
+          <button type="button" onclick="document.getElementById('detail-<%= i %>').classList.toggle('hidden')" class="text-xs text-till hover:underline font-medium">
+            Show accounting detail
+          </button>
+          <div id="detail-<%= i %>" class="hidden mt-3 bg-paper/60 rounded-lg p-4">
+            <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Our Policy — <%= s.policy.name %></p>
+            <p class="text-ink/60 text-xs leading-relaxed"><%= s.policy.accountantDetail %></p>
+          </div>
+        <% } %>
+      </div>
+    <% }) %>
+    <% if (standards.length === 0) { %>
+      <div class="bg-white rounded-xl border border-ink/10 p-8 text-center text-ink/40">No standards seeded yet.</div>
+    <% } %>
+  </div>
+</section>
+
+<section>
+  <h2 class="font-display text-xl mb-1">Enforcement Rules</h2>
+  <p class="text-ink/50 text-sm mb-4">These are actually running — not aspirational. Every posting passes through them in this order: does it make business sense, is the bookkeeping itself sound, does it satisfy a named standard.</p>
+
+  <%
+    const TIER_ORDER = ['BUSINESS', 'ACCOUNTING', 'COMPLIANCE'];
+    const TIER_LABELS = {
+      BUSINESS: { title: '1. Business Validation', hint: 'Does this make operational sense? Product exists, enough stock, customer exists.' },
+      ACCOUNTING: { title: '2. Accounting Validation', hint: 'Is the bookkeeping itself sound? Period open, journals balanced, accounts active.' },
+      COMPLIANCE: { title: '3. Compliance Validation', hint: 'Does this satisfy a named standard? IAS 16, IFRS 9, IFRS 15, tax.' },
+    };
+    const byTier = {};
+    logicConditions.forEach(function(l) {
+      const tier = l.validationTier || 'ACCOUNTING';
+      (byTier[tier] = byTier[tier] || []).push(l);
+    });
+  %>
+
+  <% TIER_ORDER.forEach(function(tier, tierIndex) { %>
+    <% const rulesInTier = byTier[tier] || []; %>
+    <div class="mb-6">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-till/10 text-till"><%= TIER_LABELS[tier].title %></span>
+      </div>
+      <p class="text-ink/40 text-xs mb-3"><%= TIER_LABELS[tier].hint %></p>
+      <% if (rulesInTier.length === 0) { %>
+        <div class="bg-paper rounded-xl border border-dashed border-ink/10 p-4 text-center text-ink/30 text-sm">No rules at this tier yet.</div>
+      <% } else { %>
+        <div class="space-y-4">
+          <% rulesInTier.forEach(function(l) { %>
+            <div class="bg-white rounded-xl border border-ink/10 p-6">
+              <div class="flex items-start justify-between mb-2">
+                <p class="font-display text-lg"><%= l.name %></p>
+                <form method="POST" action="/settings/logic-conditions/<%= l.id %>/enforcement" onsubmit="event.preventDefault(); fetch(this.action, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({Enforcement: this.enforcement.value})}).then(() => location.reload());">
+                  <select name="enforcement" class="text-xs font-mono px-2 py-0.5 rounded-full border-0 <%= l.enforcement === 'BLOCK' ? 'bg-clay/10 text-clay' : 'bg-paper text-ink/50' %>" onchange="this.form.requestSubmit()">
+                    <% ['BLOCK','WARN','INFO'].forEach(function(e) { %>
+                      <option value="<%= e %>" <%= l.enforcement === e ? 'selected' : '' %>><%= e %></option>
+                    <% }) %>
+                  </select>
+                </form>
+              </div>
+              <p class="text-ink/60 text-sm mb-3"><%= l.checkExpression %></p>
+              <div class="grid md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Owner sees</p>
+                  <p class="text-ink/60"><%= l.ownerMessage %></p>
+                </div>
+                <div>
+                  <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Accountant sees</p>
+                  <p class="text-ink/60"><%= l.accountantMessage %></p>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+    <% if (tierIndex < TIER_ORDER.length - 1) { %>
+      <div class="flex justify-center my-2 text-ink/20 text-xs">↓</div>
+    <% } %>
+  <% }) %>
+
+  <% if (logicConditions.length === 0) { %>
+    <div class="bg-white rounded-xl border border-ink/10 p-8 text-center text-ink/40">No enforcement rules documented yet.</div>
+  <% } %>
+</section>

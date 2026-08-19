@@ -1,0 +1,214 @@
+<header class="mb-8">
+  <p class="font-mono text-xs uppercase tracking-widest text-ink/40">Organisation — <%= currentBusinessUnit %></p>
+  <h1 class="font-display text-3xl mt-1">Services</h1>
+  <p class="text-ink/50 text-sm mt-1">Work-in-progress for genuine effort-based services — carpentry, consulting, repair work. Value accumulates as hours are logged against time and effort; nothing posts to the books until the work is actually billed. A Utility (internet, electricity, water) doesn't appear here — it already has its own instant-purchase cycle through the Till.</p>
+</header>
+
+<div class="grid lg:grid-cols-3 gap-8">
+
+<div class="lg:col-span-2">
+  <div class="bg-white rounded-xl border border-ink/10 overflow-hidden">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-ink/10 text-left text-ink/40 font-mono text-xs uppercase tracking-widest">
+          <th class="px-5 py-3">Service</th>
+          <th class="px-5 py-3">Client</th>
+          <th class="px-5 py-3 text-right">Rate</th>
+          <th class="px-5 py-3 text-right">Hours</th>
+          <th class="px-5 py-3 text-right">Value</th>
+          <th class="px-5 py-3">Status</th>
+          <th class="px-5 py-3">Updated</th>
+          <th class="px-5 py-3 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% engagements.forEach(function(e) { %>
+          <tr class="border-b border-ink/5 last:border-0 hover:bg-paper/50 <%= e.status !== 'AVAILABLE' ? 'opacity-50' : '' %>" id="engagement-row-<%= e.id %>">
+            <td class="px-5 py-3 font-display"><%= e.service %></td>
+            <td class="px-5 py-3 text-ink/50"><%= e.client %></td>
+            <td class="px-5 py-3 text-right font-mono tabular-nums"><%= fmt(e.hourlyRate) %>/hr</td>
+            <td class="px-5 py-3 text-right font-mono tabular-nums"><%= e.hoursLogged %>h</td>
+            <td class="px-5 py-3 text-right font-mono tabular-nums text-till"><%= fmt(e.value) %></td>
+            <td class="px-5 py-3">
+              <span class="text-xs font-mono px-2 py-0.5 rounded-full <%= e.status === 'SOLD' ? 'bg-till/10 text-till' : 'bg-paper text-ink/50' %>"><%= e.status === 'SOLD' ? 'Billed' : 'In Progress' %></span>
+            </td>
+            <td class="px-5 py-3 font-mono text-xs text-ink/40"><%= e.lastUpdated %></td>
+            <td class="px-5 py-3 text-right whitespace-nowrap">
+              <% if (e.status === 'AVAILABLE') { %>
+                <button type="button" onclick="openLogHours(<%= e.id %>, '<%= e.service %>')" class="text-xs text-till hover:underline">Log Hours</button>
+                <button type="button" onclick="openBill(<%= e.id %>, '<%= e.service %>', <%= e.value %>)" class="text-xs text-ink/60 hover:underline ml-2">Bill</button>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+        <% if (engagements.length === 0) { %>
+          <tr><td colspan="8" class="px-5 py-8 text-center text-ink/40">No service engagements yet for <%= currentBusinessUnit %>.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="lg:col-span-1 space-y-6">
+  <section class="bg-white rounded-xl border border-ink/10 p-6">
+    <h2 class="font-display text-lg mb-1">Start an Engagement</h2>
+    <p class="text-ink/50 text-xs mb-4">Begins tracking a piece of work. Nothing posts to the books yet.</p>
+    <form id="start-form" class="space-y-3">
+      <select id="start-product" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display">
+        <option value="">Service…</option>
+        <% serviceProducts.forEach(function(p) { %>
+          <option value="<%= p.id %>"><%= p.name %></option>
+        <% }) %>
+      </select>
+      <% if (serviceProducts.length === 0) { %>
+        <p class="text-xs text-clay">No Service products yet for <%= currentBusinessUnit %> — add one on the Products page first (mark Type = Services, and leave Utility unchecked).</p>
+      <% } %>
+      <input id="start-rate" type="number" min="0" step="0.01" required placeholder="Hourly rate (KES)" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      <input id="start-client" type="text" placeholder="Client (optional)" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display" />
+      <button type="submit" class="w-full py-2.5 rounded-lg bg-till text-paper font-display hover:brightness-110 transition">Start</button>
+      <div id="start-feedback" class="hidden text-sm p-3 rounded-lg"></div>
+    </form>
+  </section>
+
+  <section class="bg-white rounded-xl border border-ink/10 p-6">
+    <h2 class="font-display text-lg mb-1">Linked to Goods</h2>
+    <p class="text-ink/50 text-xs mb-4">A service like Labour that directly becomes part of a physical product — wood plus carpentry becoming a finished asset — is entered as an input on Processing, the same "transformer" used for Agriculture &amp; Livestock. This page tracks a service's own value over time; Processing is where that value gets folded into what it built.</p>
+    <a href="/organisation/processing" class="block text-center py-2.5 rounded-lg border border-ink/20 font-display text-sm hover:bg-paper transition">Open Processing →</a>
+  </section>
+</div>
+
+</div>
+
+<!-- Log Hours modal -->
+<div id="hours-modal" class="hidden fixed inset-0 bg-ink/40 flex items-center justify-center z-50 p-4" onclick="if(event.target === this) closeLogHours()">
+  <div class="bg-white rounded-xl p-6 max-w-sm w-full">
+    <h3 class="font-display text-lg mb-1">Log Hours — <span id="hours-service"></span></h3>
+    <p class="text-ink/50 text-sm mb-4">Adds to the running total. Nothing posts to the books.</p>
+    <form id="hours-form" class="space-y-3">
+      <input type="hidden" id="hours-resources-id" />
+      <input id="hours-value" type="number" min="0.01" step="0.01" required placeholder="Hours worked" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      <textarea id="hours-note" rows="2" placeholder="What was done (optional)" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display"></textarea>
+      <div class="flex gap-2">
+        <button type="button" onclick="closeLogHours()" class="flex-1 py-2.5 rounded-lg border border-ink/20 font-display hover:bg-paper transition">Cancel</button>
+        <button type="submit" class="flex-1 py-2.5 rounded-lg bg-till text-paper font-display hover:brightness-110 transition">Log</button>
+      </div>
+      <div id="hours-feedback" class="hidden text-sm p-3 rounded-lg"></div>
+    </form>
+  </div>
+</div>
+
+<!-- Bill modal -->
+<div id="bill-modal" class="hidden fixed inset-0 bg-ink/40 flex items-center justify-center z-50 p-4" onclick="if(event.target === this) closeBill()">
+  <div class="bg-white rounded-xl p-6 max-w-sm w-full">
+    <h3 class="font-display text-lg mb-1">Bill — <span id="bill-service"></span></h3>
+    <p class="text-ink/50 text-sm mb-4">Posts the accumulated value to the books. This is the one action on this page that's a real accounting event.</p>
+    <form id="bill-form" class="space-y-3">
+      <input type="hidden" id="bill-resources-id" />
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Payment Method</label>
+        <select id="bill-method" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display">
+          <option value="CASH">Cash</option>
+          <option value="MOBILE">Mobile</option>
+          <option value="BANK">Bank</option>
+          <option value="CREDIT">Credit</option>
+        </select>
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Amount</label>
+        <input id="bill-amount" type="number" min="0.01" step="0.01" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+        <p class="text-xs text-ink/40 mt-1">Defaults to hours logged × rate — adjust if the final bill genuinely differs.</p>
+      </div>
+      <div class="flex gap-2">
+        <button type="button" onclick="closeBill()" class="flex-1 py-2.5 rounded-lg border border-ink/20 font-display hover:bg-paper transition">Cancel</button>
+        <button type="submit" class="flex-1 py-2.5 rounded-lg bg-till text-paper font-display hover:brightness-110 transition">Bill</button>
+      </div>
+      <div id="bill-feedback" class="hidden text-sm p-3 rounded-lg"></div>
+    </form>
+  </div>
+</div>
+
+<script>
+  document.getElementById("start-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const feedback = document.getElementById("start-feedback");
+    try {
+      const res = await fetch("/api/services/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: document.getElementById("start-product").value,
+          hourlyRate: document.getElementById("start-rate").value,
+          client: document.getElementById("start-client").value,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to start engagement");
+      location.reload();
+    } catch (err) {
+      feedback.textContent = err.message;
+      feedback.className = "text-sm p-3 rounded-lg bg-clay/10 text-clay";
+      feedback.classList.remove("hidden");
+    }
+  });
+
+  function openLogHours(id, service) {
+    document.getElementById("hours-resources-id").value = id;
+    document.getElementById("hours-service").textContent = service;
+    document.getElementById("hours-value").value = "";
+    document.getElementById("hours-note").value = "";
+    document.getElementById("hours-modal").classList.remove("hidden");
+    document.getElementById("hours-feedback").classList.add("hidden");
+  }
+  function closeLogHours() { document.getElementById("hours-modal").classList.add("hidden"); }
+  document.getElementById("hours-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const feedback = document.getElementById("hours-feedback");
+    try {
+      const res = await fetch(`/api/services/${document.getElementById("hours-resources-id").value}/log-hours`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          hours: document.getElementById("hours-value").value,
+          note: document.getElementById("hours-note").value,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to log hours");
+      location.reload();
+    } catch (err) {
+      feedback.textContent = err.message;
+      feedback.className = "text-sm p-3 rounded-lg bg-clay/10 text-clay";
+      feedback.classList.remove("hidden");
+    }
+  });
+
+  function openBill(id, service, currentValue) {
+    document.getElementById("bill-resources-id").value = id;
+    document.getElementById("bill-service").textContent = service;
+    document.getElementById("bill-amount").value = currentValue;
+    document.getElementById("bill-modal").classList.remove("hidden");
+    document.getElementById("bill-feedback").classList.add("hidden");
+  }
+  function closeBill() { document.getElementById("bill-modal").classList.add("hidden"); }
+  document.getElementById("bill-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const feedback = document.getElementById("bill-feedback");
+    try {
+      const res = await fetch(`/api/services/${document.getElementById("bill-resources-id").value}/bill`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          paymentMethod: document.getElementById("bill-method").value,
+          finalAmount: document.getElementById("bill-amount").value,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to bill");
+      location.reload();
+    } catch (err) {
+      feedback.textContent = err.message;
+      feedback.className = "text-sm p-3 rounded-lg bg-clay/10 text-clay";
+      feedback.classList.remove("hidden");
+    }
+  });
+</script>

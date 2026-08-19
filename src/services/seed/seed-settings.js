@@ -582,7 +582,7 @@ if (require.main === module) {
     .finally(() => prisma.$disconnect());
 }
 
-module.exports = { seedAccountingRules, seedProcessActions, seedSourceOfTruthPolicy, seedCatalogueEvents, seedPeriodEndChecks, seedDefaultSettings };
+module.exports = { seedAccountingRules, seedPeriodEndChecks, seedDefaultSettings };
 
 /**
  * seedDefaultSettings — seeds the typed, categorised Settings rows that

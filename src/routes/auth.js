@@ -7,7 +7,7 @@ const { prisma } = require("../services/postingEngine");
 // state — a logged-in person reaches their dashboard via Sign In/the
 // sidebar, not by clicking the site title while already logged in.
 router.get("/", (req, res) => {
-  res.render("landing", { layout: false, showSignup: true });
+  res.render("auth/landing", { layout: false, showSignup: true });
 });
 
 // GET /about — public, no auth required
@@ -24,7 +24,7 @@ router.get("/setup", (req, res) => {
   if (req.session && req.session.userId) {
     return req.session.destroy(() => res.redirect("/setup"));
   }
-  res.render("setup", { layout: false, currentUser: null });
+  res.render("auth/setup", { layout: false, currentUser: null });
 });
 
 // POST /api/setup/signup — creates a brand new Organisation and its first
@@ -133,14 +133,14 @@ router.post("/api/setup/signup", async (req, res) => {
 
 router.get("/login", (req, res) => {
   if (req.session && req.session.userId) return res.redirect("/dashboard");
-  res.render("login", { error: null, layout: false, showSignup: true });
+  res.render("auth/login", { error: null, layout: false, showSignup: true });
 });
 
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
   const person = await verifyLogin(username, password);
   if (!person) {
-    return res.render("login", { error: "Incorrect username or password.", layout: false, showSignup: true });
+    return res.render("auth/login", { error: "Incorrect username or password.", layout: false, showSignup: true });
   }
   req.session.userId = person.Administration_id;
   res.redirect("/dashboard");

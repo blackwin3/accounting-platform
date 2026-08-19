@@ -1,0 +1,218 @@
+<header class="mb-8">
+  <a href="/claims" class="text-ink/40 hover:text-till text-sm">← Claims</a>
+  <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mt-2">Claims — <%= currentBusinessUnit %></p>
+  <h1 class="font-display text-3xl mt-1">Risks &amp; Insurance</h1>
+  <p class="text-ink/50 text-sm mt-1">Two ways the business manages exposure to future loss: warranty provisions set aside from its own funds, and insurance policies that transfer the risk to an insurer.</p>
+</header>
+
+<section class="bg-white rounded-xl border border-ink/10 p-6 mb-8">
+  <h2 class="font-display text-xl mb-1">Risk Position</h2>
+  <p class="text-ink/50 text-sm mb-5">Whole-business risk exposure, genuinely computed from live policy and provision data — not scoped to <%= currentBusinessUnit %> alone.</p>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+    <div>
+      <p class="font-mono text-xs uppercase tracking-widest text-ink/40"><%= riskPosition.activePoliciesCount %> Active Policies</p>
+      <p class="font-display text-xl"><%= fmt(riskPosition.totalCoverageAmount) %></p>
+      <p class="text-xs text-ink/40">Total coverage</p>
+    </div>
+    <div>
+      <p class="font-mono text-xs uppercase tracking-widest text-ink/40">Premiums Due</p>
+      <p class="font-display text-xl <%= riskPosition.totalPremiumsDue > 0 ? 'text-clay' : '' %>"><%= fmt(riskPosition.totalPremiumsDue) %></p>
+    </div>
+    <div>
+      <p class="font-mono text-xs uppercase tracking-widest text-ink/40">Outstanding Provisions</p>
+      <p class="font-display text-xl"><%= fmt(riskPosition.totalProvisions) %></p>
+    </div>
+    <div>
+      <p class="font-mono text-xs uppercase tracking-widest text-ink/40">Coverage Ratio</p>
+      <% if (riskPosition.riskCoverageRatio !== null) { %>
+        <p class="font-display text-xl <%= riskPosition.riskCoverageRatio < 0.8 ? 'text-clay' : 'text-till' %>"><%= riskPosition.riskCoverageRatio.toFixed(2) %>x</p>
+        <p class="text-xs text-ink/40">of asset carrying value</p>
+      <% } else { %>
+        <p class="font-display text-xl text-ink/30">—</p>
+        <p class="text-xs text-ink/40">no assets on register</p>
+      <% } %>
+    </div>
+  </div>
+  <% if (riskPosition.isUninsured) { %>
+    <div class="bg-clay/10 border border-clay/30 rounded-lg px-4 py-2 text-sm text-clay mb-3">This business has no active insurance policies — all assets are exposed.</div>
+  <% } %>
+  <% if (riskPosition.expiringCount > 0) { %>
+    <div class="bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 text-sm text-amber-700 mb-3"><%= riskPosition.expiringCount %> policy <%= riskPosition.expiringCount === 1 ? 'expires' : 'expire' %> within 30 days — renewal needed.</div>
+  <% } %>
+  <% if (riskPosition.highRiskCount > 0) { %>
+    <div class="bg-clay/5 border border-clay/20 rounded-lg px-4 py-2 text-sm text-clay mb-3"><%= riskPosition.highRiskCount %> high-risk <%= riskPosition.highRiskCount === 1 ? 'policy' : 'policies' %> — confirm cover is adequate.</div>
+  <% } %>
+</section>
+
+<section class="grid grid-cols-2 gap-4 mb-10">
+  <div class="bg-white rounded-xl border border-ink/10 p-5">
+    <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Outstanding Provisions</p>
+    <p class="font-mono text-2xl tabular-nums text-clay"><%= totalProvisions.toFixed(2) %></p>
+  </div>
+  <div class="bg-white rounded-xl border border-ink/10 p-5">
+    <p class="font-mono text-xs uppercase tracking-widest text-ink/40 mb-2">Total Insurance Coverage</p>
+    <p class="font-mono text-2xl tabular-nums text-till"><%= totalCoverage.toFixed(2) %></p>
+  </div>
+</section>
+
+<section class="mb-10">
+  <h2 class="font-display text-xl mb-1">Provisions</h2>
+  <p class="text-ink/50 text-sm mb-4">Warranty and similar obligations set aside from the business's own funds. Add or claim against a provision from Claims → Leases &amp; Provisions.</p>
+  <div class="bg-white rounded-xl border border-ink/10 overflow-hidden">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-ink/10 text-left text-ink/40 font-mono text-xs uppercase tracking-widest">
+          <th class="px-5 py-3">Provision</th>
+          <th class="px-5 py-3 text-right">Outstanding</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% provisions.forEach(function(p) { %>
+          <tr class="border-b border-ink/5 last:border-0 hover:bg-paper/50">
+            <td class="px-5 py-3 font-display">Warranty Provision #<%= p.id %></td>
+            <td class="px-5 py-3 text-right font-mono tabular-nums text-clay"><%= p.amount.toFixed(2) %></td>
+          </tr>
+        <% }) %>
+        <% if (provisions.length === 0) { %>
+          <tr><td colspan="2" class="px-5 py-8 text-center text-ink/40">No outstanding provisions. <a href="/claims/leases-provisions" class="text-till hover:underline">Record one →</a></td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="grid md:grid-cols-2 gap-6 mb-10">
+  <section class="bg-white rounded-xl border border-ink/10 p-6">
+    <h2 class="font-display text-xl mb-1">Record a Policy</h2>
+    <p class="text-ink/50 text-sm mb-5">Write down the details of your insurance. To pay the premium, go to Claims → Expenses → Insurance and select this policy.</p>
+    <form id="policy-form" class="space-y-4">
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">What is insured?</label>
+        <input name="name" type="text" required placeholder="e.g. Shop stock, Vehicle, Livestock herd" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display" />
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">How much are you covered for? (KES)</label>
+          <input name="coverageAmount" type="number" min="0" step="0.01" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+          <p class="text-xs text-ink/40 mt-1">The maximum the insurer will pay if something goes wrong. This is the big number on your policy document.</p>
+        </div>
+        <div>
+          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">How much do you pay? (KES)</label>
+          <input name="premiumAmount" type="number" min="0" step="0.01" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+          <p class="text-xs text-ink/40 mt-1">The premium — what you pay the insurance company. Can be monthly or annual. Leave empty if someone else pays for you (employer, cooperative).</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">When does it start?</label>
+          <input name="startDate" type="date" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+        </div>
+        <div>
+          <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">When does it expire?</label>
+          <input name="maturityDate" type="date" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+        </div>
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">How important is this insurance?</label>
+        <select name="riskLevel" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display">
+          <option value="LOW">Low — nice to have but not critical</option>
+          <option value="MEDIUM" selected>Medium — important for the business</option>
+          <option value="HIGH">High — the business depends on this</option>
+        </select>
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Notes (optional)</label>
+        <textarea name="riskNote" rows="2" placeholder="Insurer name, policy number, what's covered, what's NOT covered" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display"></textarea>
+      </div>
+      <button type="submit" id="policy-submit" class="w-full py-3 rounded-lg bg-till text-paper font-display text-lg hover:brightness-110 transition">Record Policy</button>
+      <div id="policy-feedback" class="hidden text-sm p-3 rounded-lg"></div>
+    </form>
+  </section>
+
+  <section class="bg-white rounded-xl border border-ink/10 p-6">
+    <h2 class="font-display text-xl mb-1">Active Policies</h2>
+    <p class="text-ink/50 text-sm mb-5">Coverage currently in force.</p>
+    <% if (policies.length === 0) { %>
+      <p class="text-ink/40 text-sm">No active policies yet.</p>
+    <% } else { %>
+      <div class="space-y-3">
+        <% policies.forEach(function(p) { %>
+          <div class="border border-ink/10 rounded-lg p-4">
+            <div class="flex items-start justify-between mb-1">
+              <span class="font-display"><%= p.name %></span>
+              <span class="text-xs font-mono px-2 py-0.5 rounded-full <%= p.riskLevel === 'HIGH' ? 'bg-clay/10 text-clay' : p.riskLevel === 'LOW' ? 'bg-till/10 text-till' : 'bg-paper text-ink/50' %>"><%= p.riskLevel %></span>
+            </div>
+            <p class="text-xs text-ink/50 mb-2">Coverage <%= p.coverage.toFixed(2) %><% if (p.premium !== null) { %> · Premium ~<%= p.premium.toFixed(2) %><% } %></p>
+            <p class="text-xs text-ink/40 mb-3"><%= p.startDate %> → <%= p.maturityDate %></p>
+            <% if (p.riskNote) { %><p class="text-xs text-ink/50 mb-3"><%= p.riskNote %></p><% } %>
+            <button type="button" onclick="closePolicy(<%= p.id %>)" class="text-xs text-clay hover:underline">Mark as lapsed/cancelled</button>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </section>
+</div>
+
+<% if (closedPolicies.length > 0) { %>
+<section>
+  <h2 class="font-display text-xl mb-4">History</h2>
+  <div class="bg-white rounded-xl border border-ink/10 overflow-hidden">
+    <table class="w-full text-sm">
+      <tbody>
+        <% closedPolicies.forEach(function(p) { %>
+          <tr class="border-b border-ink/5 last:border-0 hover:bg-paper/50 opacity-60">
+            <td class="px-5 py-3 font-display"><%= p.name %></td>
+            <td class="px-5 py-3 text-right">
+              <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-ink/10 text-ink/50"><%= p.status %></span>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+<% } %>
+
+<script>
+  const policyForm = document.getElementById("policy-form");
+  const policyFeedback = document.getElementById("policy-feedback");
+  const policySubmit = document.getElementById("policy-submit");
+
+  policyForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    policySubmit.disabled = true;
+    policySubmit.textContent = "Saving...";
+    const data = Object.fromEntries(new FormData(policyForm).entries());
+    try {
+      const res = await fetch("/api/insurance-policy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to record policy");
+      policyFeedback.textContent = "Policy recorded.";
+      policyFeedback.className = "text-sm p-3 rounded-lg bg-till/10 text-till";
+      policyFeedback.classList.remove("hidden");
+      setTimeout(() => location.reload(), 800);
+    } catch (err) {
+      policyFeedback.textContent = err.message;
+      policyFeedback.className = "text-sm p-3 rounded-lg bg-clay/10 text-clay";
+      policyFeedback.classList.remove("hidden");
+      policySubmit.disabled = false;
+      policySubmit.textContent = "Record Policy";
+    }
+  });
+
+  async function closePolicy(id) {
+    if (!confirm("Mark this policy as lapsed/cancelled?")) return;
+    try {
+      const res = await fetch(`/api/insurance-policy/${id}/close`, { method: "POST" });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to close policy");
+      location.reload();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+</script>

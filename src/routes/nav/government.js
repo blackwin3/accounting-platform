@@ -57,7 +57,7 @@ router.get("/organisation/government", async (req, res) => {
     const currency = await getCurrencyConfig(prisma, entrepriseId);
     const fmt = makeFmt(currency);
 
-    res.render("government", {
+    res.render("organisation/government", {
       title: "Government",
       active: "government",
       currentBusinessUnit: req.currentBusinessUnit,

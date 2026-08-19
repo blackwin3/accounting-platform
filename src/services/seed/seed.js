@@ -16,7 +16,7 @@ const prisma = new PrismaClient();
 const { seedAccountCodes, seedAccounts } = require("./seed-accounts");
 const { seedCatalogueEvents, upsertStructure } = require("./seed-catalogue");
 const { seedAccountingRules, seedDefaultSettings, seedPeriodEndChecks } = require("./seed-settings");
-const { seedProcessActions } = require("./seed-action-logic");
+const { seedProcessActions, seedSourceOfTruthPolicy } = require("./seed-action-logic");
 const { seedChebetFamily, upsertProduct, upsertResource } = require("./seed-demo");
 
 async function main() {
@@ -106,6 +106,7 @@ module.exports = {
   seedDefaultSettings,
   seedPeriodEndChecks,
   seedProcessActions,
+  seedSourceOfTruthPolicy,
   seedAccountCodes,
   seedAccounts,
   upsertManagement,

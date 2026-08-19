@@ -93,7 +93,7 @@ router.get("/money/interest-rates", async (req, res) => {
       })
       .filter(p => p.marginPct != null || p.rate != null);
 
-    res.render("interest-rates", {
+    res.render("money/interest-rates", {
       title: "Interest Rates",
       active: "interest-rates",
       currentBusinessUnit: req.currentBusinessUnit,

@@ -77,6 +77,17 @@ router.get("/reports", async (req, res) => {
       orderBy: { Reports_id: "desc" },
     });
 
+    // Historical reports — previously generated, accessible without re-generating
+    const archivedReports = await prisma.Reports.findMany({
+      where: { Entreprise_id: entrepriseId },
+      orderBy: { Reports_id: "desc" },
+      take: 20,
+    });
+
+    const { getCurrencyConfig, makeFmt } = require("../../services/currency");
+    const currency = await getCurrencyConfig(prisma, entrepriseId);
+    const fmt = makeFmt(currency);
+
     res.render("reports", {
       title: "Reports",
       active: "reports",
@@ -90,6 +101,14 @@ router.get("/reports", async (req, res) => {
       latestBalanceSheet,
       incomeStatementFigures: latestIncomeStatement ? await computeIncomeStatementForDisplay(entrepriseId) : null,
       balanceSheetFigures: latestBalanceSheet ? await computeBalanceSheetForDisplay(entrepriseId) : null,
+      archivedReports: archivedReports.map(r => ({
+        id: r.Reports_id,
+        type: r.Report_Stage || r.Reports_type,
+        date: r.Reports_period ? new Date(r.Reports_period).toLocaleDateString("en-GB") : "—",
+        status: r.Report_Status || "GENERATED",
+      })),
+      fmt,
+      currency: currency.code,
     });
   } catch (err) {
     console.error(err);

@@ -59,7 +59,7 @@ router.get("/money", async (req, res) => {
     const currency = await getCurrencyConfig(prisma, req.currentUser.Entreprise_id);
     const fmt = makeFmt(currency);
 
-    res.render("money", {
+    res.render("money/money", {
       title: "Money",
       active: "money",
       currentBusinessUnit: req.currentBusinessUnit,
@@ -295,7 +295,7 @@ router.get("/money/cash-flow", async (req, res) => {
     const netChangeInCash = round2(directOperatingNet + investingDetail.net + financingDetail.net);
     const beginningCash = round2(endingCash - netChangeInCash);
 
-    res.render("cash-flow", {
+    res.render("money/cash-flow", {
       title: "Cash Flow",
       active: "money-cash-flow",
       currentBusinessUnit: req.currentBusinessUnit,
@@ -375,7 +375,7 @@ router.get("/money/funds", async (req, res) => {
 
     const capitalPosition = await getCapitalPosition({ entrepriseId });
 
-    res.render("funds", {
+    res.render("money/funds", {
       title: "Funds",
       active: "money-funds",
       currentBusinessUnit: req.currentBusinessUnit,
@@ -431,7 +431,7 @@ router.get("/money/investments", async (req, res) => {
     const totalHeld = activeHoldings.reduce((sum, m) => sum + Number(m.Principal_amount || 0), 0);
     const totalRentalValue = rentalProperties.reduce((sum, a) => sum + Number(a.Cost_Amount || 0), 0);
 
-    res.render("investments", {
+    res.render("money/investments", {
       title: "Investments",
       active: "money-investments",
       currentBusinessUnit: req.currentBusinessUnit,

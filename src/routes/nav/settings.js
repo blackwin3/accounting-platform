@@ -47,7 +47,7 @@ router.get("/settings", async (req, res) => {
     let nextMonth = requestedMonth + 1, nextYear = requestedYear;
     if (nextMonth > 12) { nextMonth = 1; nextYear += 1; }
 
-    res.render("settings", {
+    res.render("settings/settings", {
       title: "Settings",
       active: "settings",
       structures: rows.map((s) => ({
@@ -189,7 +189,7 @@ router.get("/settings/profile", async (req, res) => {
       allowed: accessLevel === "OWNER_FULL" || allowedLevels.includes(accessLevel),
     }));
 
-    res.render("profile", {
+    res.render("settings/profile", {
       title: "Profile",
       active: "profile",
       profile: {
@@ -246,7 +246,7 @@ router.get("/settings/succession", async (req, res) => {
       };
     });
 
-    res.render("succession", {
+    res.render("settings/succession", {
       title: "Succession Planning",
       active: "succession",
       members,
@@ -347,7 +347,7 @@ router.get("/settings/rules", async (req, res) => {
 
     const businessUnitRows = await prisma.Structures.findMany({ where: { Structures_Type: "BUSINESS_UNIT", Entreprise_id: entrepriseId }, orderBy: { Structures_Name: "asc" } });
 
-    res.render("rules", {
+    res.render("settings/rules", {
       title: "Rules",
       active: "rules",
       standards,

@@ -9,14 +9,14 @@
  */
 
 const CURRENCY_MAP = {
-  KES: { locale: "en-KE", symbol: "Ksh", name: "Kenya Shilling" },
-  UGX: { locale: "en-UG", symbol: "Ush", name: "Uganda Shilling" },
-  TZS: { locale: "en-TZ", symbol: "Tsh", name: "Tanzania Shilling" },
-  RWF: { locale: "rw-RW", symbol: "FRf", name: "Rwanda Franc" },
-  ETB: { locale: "am-ET", symbol: "Br ", name: "Ethiopian Birr" },
-  NGN: { locale: "en-NG", symbol: "₦", name: "Nigerian Naira" },
-  GHS: { locale: "en-GH", symbol: "GH₵", name: "Ghana Cedi" },
-  ZAR: { locale: "en-ZA", symbol: "R ", name: "South African Rand" },
+  KES: { locale: "en-KE", symbol: "KES", name: "Kenya Shilling" },
+  UGX: { locale: "en-UG", symbol: "UGX", name: "Uganda Shilling" },
+  TZS: { locale: "en-TZ", symbol: "TZS", name: "Tanzania Shilling" },
+  RWF: { locale: "rw-RW", symbol: "RWF", name: "Rwanda Franc" },
+  ETB: { locale: "am-ET", symbol: "ETB", name: "Ethiopian Birr" },
+  NGN: { locale: "en-NG", symbol: "NGN", name: "Nigerian Naira" },
+  GHS: { locale: "en-GH", symbol: "GHS", name: "Ghana Cedi" },
+  ZAR: { locale: "en-ZA", symbol: "ZAR", name: "South African Rand" },
   USD: { locale: "en-US", symbol: "$", name: "US Dollar" },
   GBP: { locale: "en-GB", symbol: "£", name: "British Pound" },
   EUR: { locale: "de-DE", symbol: "€", name: "Euro" },

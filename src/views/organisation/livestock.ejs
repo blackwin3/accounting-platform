@@ -1,0 +1,378 @@
+<header class="mb-8">
+  <p class="font-mono text-xs uppercase tracking-widest text-ink/40">Organisation — <%= currentBusinessUnit %></p>
+  <h1 class="font-display text-3xl mt-1">Agriculture &amp; Livestock</h1>
+  <p class="text-ink/50 text-sm mt-1">Individual register for animals and crop plantings — each tracked the way a rental tenant is: a Monthly Review checks in on condition without every visit being a cash event. Birth, harvest, loss, and theft are genuinely different events with their own accounting shape.</p>
+</header>
+
+<div class="grid lg:grid-cols-3 gap-8">
+
+<div class="lg:col-span-2">
+  <div class="bg-white rounded-xl border border-ink/10 overflow-hidden">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-ink/10 text-left text-ink/40 font-mono text-xs uppercase tracking-widest">
+          <th class="px-5 py-3">Tag</th>
+          <th class="px-5 py-3">Type</th>
+          <th class="px-5 py-3">Stage</th>
+          <th class="px-5 py-3">Condition</th>
+          <th class="px-5 py-3">Status</th>
+          <th class="px-5 py-3 text-right">Value</th>
+          <th class="px-5 py-3">Review</th>
+          <th class="px-5 py-3 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% animals.forEach(function(a) { %>
+          <tr class="border-b border-ink/5 last:border-0 hover:bg-paper/50 <%= a.status !== 'AVAILABLE' ? 'opacity-50' : '' %>" id="animal-row-<%= a.id %>">
+            <td class="px-5 py-3 font-mono">
+              <%= a.tag %>
+              <% if (a.parentTag) { %><span class="text-ink/30 text-xs block">of <%= a.parentTag %></span><% } %>
+            </td>
+            <td class="px-5 py-3">
+              <span class="font-display"><%= a.species %></span>
+              <span class="text-xs font-mono px-1.5 py-0.5 rounded bg-paper text-ink/40 ml-1"><%= a.category === 'CROP' ? '🌱' : '🐾' %></span>
+            </td>
+            <td class="px-5 py-3 text-xs text-ink/50"><%= a.growthStage %></td>
+            <td class="px-5 py-3">
+              <span class="text-xs font-mono px-2 py-0.5 rounded-full <%= a.condition === 'GOOD' ? 'bg-till/10 text-till' : a.condition === 'POOR' ? 'bg-clay/10 text-clay' : 'bg-paper text-ink/50' %>"><%= a.condition %></span>
+            </td>
+            <td class="px-5 py-3 text-xs text-ink/50"><%= a.status %></td>
+            <td class="px-5 py-3 text-right font-mono tabular-nums"><%= a.fairValue !== null ? fmt(a.fairValue) : '—' %></td>
+            <td class="px-5 py-3">
+              <span class="text-xs <%= a.reviewOverdue ? 'text-clay' : 'text-ink/40' %>"><%= a.reviewLabel %></span>
+            </td>
+            <td class="px-5 py-3 text-right whitespace-nowrap">
+              <% if (a.status === 'AVAILABLE') { %>
+                <button type="button" onclick="openReview(<%= a.id %>, '<%= a.tag %>', '<%= a.condition %>', '<%= a.growthStage %>')" class="text-xs text-till hover:underline">Review</button>
+                <button type="button" onclick="openLoss(<%= a.id %>, '<%= a.tag %>')" class="text-xs text-clay hover:underline ml-1">Loss</button>
+                <button type="button" onclick="openTheft(<%= a.id %>, '<%= a.tag %>')" class="text-xs text-clay hover:underline ml-1">Theft</button>
+                <% if (a.category === 'LIVESTOCK' && a.sex === 'FEMALE') { %>
+                  <button type="button" onclick="openBirth(<%= a.id %>, '<%= a.tag %>')" class="text-xs text-ink/60 hover:underline ml-1">Birth</button>
+                <% } %>
+                <% if (a.category === 'CROP') { %>
+                  <button type="button" onclick="openHarvest(<%= a.id %>, '<%= a.tag %>')" class="text-xs text-ink/60 hover:underline ml-1">Harvest</button>
+                <% } %>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+        <% if (animals.length === 0) { %>
+          <tr><td colspan="8" class="px-5 py-8 text-center text-ink/40">Nothing registered yet for <%= currentBusinessUnit %>.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="lg:col-span-1 space-y-6">
+
+  <!-- Register -->
+  <section class="bg-white rounded-xl border border-ink/10 p-6">
+    <h2 class="font-display text-lg mb-1">Register</h2>
+    <p class="text-ink/50 text-xs mb-4">Adds to the register only — record the actual acquisition (purchase, planting) separately, the way it genuinely happened.</p>
+    <form id="register-form" class="space-y-3">
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Type</label>
+        <select id="reg-category" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display">
+          <option value="LIVESTOCK">Animal</option>
+          <option value="CROP">Crop planting</option>
+        </select>
+      </div>
+      <div>
+        <label class="block font-mono text-xs uppercase tracking-widest text-ink/40 mb-1">Product</label>
+        <select id="reg-product" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display">
+          <option value="">Select…</option>
+          <% products.forEach(function(p) { %>
+            <option value="<%= p.id %>"><%= p.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <input id="reg-tag" type="text" required placeholder="Tag / ID, e.g. C-014 or BED-01" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      <div class="grid grid-cols-2 gap-2">
+        <select id="reg-sex" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display">
+          <option value="">Sex (n/a)</option>
+          <option value="MALE">Male</option>
+          <option value="FEMALE">Female</option>
+        </select>
+        <select id="reg-condition" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display">
+          <option value="GOOD">Good</option>
+          <option value="FAIR">Fair</option>
+          <option value="POOR">Poor</option>
+        </select>
+      </div>
+      <input id="reg-stage" type="text" placeholder="Stage, e.g. ADULT or SEEDLING" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      <input id="reg-value" type="number" min="0" step="0.01" placeholder="Fair value (KES)" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      <button type="submit" class="w-full py-2.5 rounded-lg bg-till text-paper font-display hover:brightness-110 transition">Register</button>
+      <div id="register-feedback" class="hidden text-sm p-3 rounded-lg"></div>
+    </form>
+  </section>
+
+  <!-- Transformer: Growth / Spoilage -->
+  <section class="bg-white rounded-xl border border-ink/10 p-6">
+    <h2 class="font-display text-lg mb-1">Transformer</h2>
+    <p class="text-ink/50 text-xs mb-4">Maturing stock — a chick growing into an adult chicken, or similar — is a genuine conversion, using the same engine as Processing: consume the young stock, produce the mature product.</p>
+    <a href="/organisation/processing" class="block text-center py-2.5 rounded-lg border border-ink/20 font-display text-sm hover:bg-paper transition">Open Processing →</a>
+  </section>
+
+</div>
+</div>
+
+<!-- Monthly Review modal -->
+<div id="review-modal" class="hidden fixed inset-0 bg-ink/40 flex items-center justify-center z-50 p-4" onclick="if(event.target === this) closeReview()">
+  <div class="bg-white rounded-xl p-6 max-w-sm w-full">
+    <h3 class="font-display text-lg mb-1">Monthly Review — <span id="review-tag"></span></h3>
+    <p class="text-ink/50 text-sm mb-4">A routine check-in. Nothing posts to the books.</p>
+    <form id="review-form" class="space-y-3">
+      <input type="hidden" id="review-resources-id" />
+      <select id="review-condition" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display">
+        <option value="GOOD">Good</option>
+        <option value="FAIR">Fair</option>
+        <option value="POOR">Poor</option>
+      </select>
+      <input id="review-stage" type="text" placeholder="Stage, if changed" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      <input id="review-value" type="number" min="0" step="0.01" placeholder="Updated fair value (optional)" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      <textarea id="review-note" rows="2" placeholder="Note" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display"></textarea>
+      <div class="flex gap-2">
+        <button type="button" onclick="closeReview()" class="flex-1 py-2.5 rounded-lg border border-ink/20 font-display hover:bg-paper transition">Cancel</button>
+        <button type="submit" class="flex-1 py-2.5 rounded-lg bg-till text-paper font-display hover:brightness-110 transition">Save</button>
+      </div>
+      <div id="review-feedback" class="hidden text-sm p-3 rounded-lg"></div>
+    </form>
+  </div>
+</div>
+
+<!-- Loss / Theft modal -->
+<div id="loss-modal" class="hidden fixed inset-0 bg-ink/40 flex items-center justify-center z-50 p-4" onclick="if(event.target === this) closeLoss()">
+  <div class="bg-white rounded-xl p-6 max-w-sm w-full">
+    <h3 class="font-display text-lg mb-1"><span id="loss-title">Record Loss</span> — <span id="loss-tag"></span></h3>
+    <p class="text-ink/50 text-sm mb-4">Genuinely different from a review: this removes real value from the business and posts to the books.</p>
+    <form id="loss-form" class="space-y-3">
+      <input type="hidden" id="loss-resources-id" />
+      <input type="hidden" id="loss-type" value="DEATH_OR_SPOILAGE" />
+      <textarea id="loss-reason" rows="2" required placeholder="Reason" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display"></textarea>
+      <div class="flex gap-2">
+        <button type="button" onclick="closeLoss()" class="flex-1 py-2.5 rounded-lg border border-ink/20 font-display hover:bg-paper transition">Cancel</button>
+        <button type="submit" class="flex-1 py-2.5 rounded-lg bg-clay text-paper font-display hover:brightness-110 transition">Record</button>
+      </div>
+      <div id="loss-feedback" class="hidden text-sm p-3 rounded-lg"></div>
+    </form>
+  </div>
+</div>
+
+<!-- Birth modal -->
+<div id="birth-modal" class="hidden fixed inset-0 bg-ink/40 flex items-center justify-center z-50 p-4" onclick="if(event.target === this) closeBirth()">
+  <div class="bg-white rounded-xl p-6 max-w-sm w-full">
+    <h3 class="font-display text-lg mb-1">Record Birth — mother <span id="birth-mother-tag"></span></h3>
+    <p class="text-ink/50 text-sm mb-4">Creates a new register entry for the newborn, linked to this mother, and recognises its fair value as a real gain (IAS 41).</p>
+    <form id="birth-form" class="space-y-3">
+      <input type="hidden" id="birth-mother-id" />
+      <input id="birth-tag" type="text" required placeholder="New tag, e.g. C-042" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      <select id="birth-sex" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display">
+        <option value="">Sex unknown</option>
+        <option value="MALE">Male</option>
+        <option value="FEMALE">Female</option>
+      </select>
+      <input id="birth-value" type="number" min="0" step="0.01" required placeholder="Fair value of the newborn (KES)" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      <div class="flex gap-2">
+        <button type="button" onclick="closeBirth()" class="flex-1 py-2.5 rounded-lg border border-ink/20 font-display hover:bg-paper transition">Cancel</button>
+        <button type="submit" class="flex-1 py-2.5 rounded-lg bg-till text-paper font-display hover:brightness-110 transition">Record Birth</button>
+      </div>
+      <div id="birth-feedback" class="hidden text-sm p-3 rounded-lg"></div>
+    </form>
+  </div>
+</div>
+
+<!-- Harvest modal -->
+<div id="harvest-modal" class="hidden fixed inset-0 bg-ink/40 flex items-center justify-center z-50 p-4" onclick="if(event.target === this) closeHarvest()">
+  <div class="bg-white rounded-xl p-6 max-w-sm w-full">
+    <h3 class="font-display text-lg mb-1">Harvest — <span id="harvest-planting-tag"></span></h3>
+    <p class="text-ink/50 text-sm mb-4">Turns this planting into real sellable stock of the product you choose — the same "transformer" idea as Processing, just for a crop leaving the ground rather than one product becoming another.</p>
+    <form id="harvest-form" class="space-y-3">
+      <input type="hidden" id="harvest-planting-id" />
+      <select id="harvest-product" required class="w-full border border-ink/20 rounded-lg px-3 py-2 font-display">
+        <option value="">Output product…</option>
+        <% goodsProducts.forEach(function(p) { %>
+          <option value="<%= p.id %>"><%= p.name %></option>
+        <% }) %>
+      </select>
+      <input id="harvest-quantity" type="number" min="0.001" step="0.001" required placeholder="Quantity produced" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      <input id="harvest-value" type="number" min="0" step="0.01" placeholder="Total harvest value (KES, optional)" class="w-full border border-ink/20 rounded-lg px-3 py-2 font-mono" />
+      <div class="flex gap-2">
+        <button type="button" onclick="closeHarvest()" class="flex-1 py-2.5 rounded-lg border border-ink/20 font-display hover:bg-paper transition">Cancel</button>
+        <button type="submit" class="flex-1 py-2.5 rounded-lg bg-till text-paper font-display hover:brightness-110 transition">Record Harvest</button>
+      </div>
+      <div id="harvest-feedback" class="hidden text-sm p-3 rounded-lg"></div>
+    </form>
+  </div>
+</div>
+
+<script>
+  document.getElementById("register-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const feedback = document.getElementById("register-feedback");
+    try {
+      const res = await fetch("/api/livestock/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category: document.getElementById("reg-category").value,
+          productId: document.getElementById("reg-product").value,
+          tag: document.getElementById("reg-tag").value,
+          sex: document.getElementById("reg-sex").value,
+          condition: document.getElementById("reg-condition").value,
+          growthStage: document.getElementById("reg-stage").value,
+          fairValue: document.getElementById("reg-value").value,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to register");
+      location.reload();
+    } catch (err) {
+      feedback.textContent = err.message;
+      feedback.className = "text-sm p-3 rounded-lg bg-clay/10 text-clay";
+      feedback.classList.remove("hidden");
+    }
+  });
+
+  function openReview(id, tag, condition, stage) {
+    document.getElementById("review-resources-id").value = id;
+    document.getElementById("review-tag").textContent = tag;
+    document.getElementById("review-condition").value = condition;
+    document.getElementById("review-stage").value = stage === "—" ? "" : stage;
+    document.getElementById("review-value").value = "";
+    document.getElementById("review-note").value = "";
+    document.getElementById("review-modal").classList.remove("hidden");
+    document.getElementById("review-feedback").classList.add("hidden");
+  }
+  function closeReview() { document.getElementById("review-modal").classList.add("hidden"); }
+  document.getElementById("review-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const feedback = document.getElementById("review-feedback");
+    try {
+      const res = await fetch(`/api/livestock/${document.getElementById("review-resources-id").value}/review`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          condition: document.getElementById("review-condition").value,
+          growthStage: document.getElementById("review-stage").value,
+          fairValue: document.getElementById("review-value").value,
+          note: document.getElementById("review-note").value,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to save review");
+      location.reload();
+    } catch (err) {
+      feedback.textContent = err.message;
+      feedback.className = "text-sm p-3 rounded-lg bg-clay/10 text-clay";
+      feedback.classList.remove("hidden");
+    }
+  });
+
+  function openLoss(id, tag) {
+    document.getElementById("loss-resources-id").value = id;
+    document.getElementById("loss-tag").textContent = tag;
+    document.getElementById("loss-type").value = "DEATH_OR_SPOILAGE";
+    document.getElementById("loss-title").textContent = "Record Loss";
+    document.getElementById("loss-reason").value = "";
+    document.getElementById("loss-modal").classList.remove("hidden");
+    document.getElementById("loss-feedback").classList.add("hidden");
+  }
+  function openTheft(id, tag) {
+    document.getElementById("loss-resources-id").value = id;
+    document.getElementById("loss-tag").textContent = tag;
+    document.getElementById("loss-type").value = "THEFT";
+    document.getElementById("loss-title").textContent = "Record Theft";
+    document.getElementById("loss-reason").value = "";
+    document.getElementById("loss-modal").classList.remove("hidden");
+    document.getElementById("loss-feedback").classList.add("hidden");
+  }
+  function closeLoss() { document.getElementById("loss-modal").classList.add("hidden"); }
+  document.getElementById("loss-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const feedback = document.getElementById("loss-feedback");
+    try {
+      const res = await fetch(`/api/livestock/${document.getElementById("loss-resources-id").value}/loss`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reason: document.getElementById("loss-reason").value,
+          lossType: document.getElementById("loss-type").value,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to record");
+      location.reload();
+    } catch (err) {
+      feedback.textContent = err.message;
+      feedback.className = "text-sm p-3 rounded-lg bg-clay/10 text-clay";
+      feedback.classList.remove("hidden");
+    }
+  });
+
+  function openBirth(motherId, motherTag) {
+    document.getElementById("birth-mother-id").value = motherId;
+    document.getElementById("birth-mother-tag").textContent = motherTag;
+    document.getElementById("birth-tag").value = "";
+    document.getElementById("birth-sex").value = "";
+    document.getElementById("birth-value").value = "";
+    document.getElementById("birth-modal").classList.remove("hidden");
+    document.getElementById("birth-feedback").classList.add("hidden");
+  }
+  function closeBirth() { document.getElementById("birth-modal").classList.add("hidden"); }
+  document.getElementById("birth-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const feedback = document.getElementById("birth-feedback");
+    try {
+      const res = await fetch(`/api/livestock/${document.getElementById("birth-mother-id").value}/birth`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tag: document.getElementById("birth-tag").value,
+          sex: document.getElementById("birth-sex").value,
+          fairValue: document.getElementById("birth-value").value,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to record birth");
+      location.reload();
+    } catch (err) {
+      feedback.textContent = err.message;
+      feedback.className = "text-sm p-3 rounded-lg bg-clay/10 text-clay";
+      feedback.classList.remove("hidden");
+    }
+  });
+
+  function openHarvest(plantingId, tag) {
+    document.getElementById("harvest-planting-id").value = plantingId;
+    document.getElementById("harvest-planting-tag").textContent = tag;
+    document.getElementById("harvest-product").value = "";
+    document.getElementById("harvest-quantity").value = "";
+    document.getElementById("harvest-value").value = "";
+    document.getElementById("harvest-modal").classList.remove("hidden");
+    document.getElementById("harvest-feedback").classList.add("hidden");
+  }
+  function closeHarvest() { document.getElementById("harvest-modal").classList.add("hidden"); }
+  document.getElementById("harvest-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const feedback = document.getElementById("harvest-feedback");
+    try {
+      const res = await fetch(`/api/livestock/${document.getElementById("harvest-planting-id").value}/harvest`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          outputProductId: document.getElementById("harvest-product").value,
+          outputQuantity: document.getElementById("harvest-quantity").value,
+          harvestValue: document.getElementById("harvest-value").value,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to record harvest");
+      location.reload();
+    } catch (err) {
+      feedback.textContent = err.message;
+      feedback.className = "text-sm p-3 rounded-lg bg-clay/10 text-clay";
+      feedback.classList.remove("hidden");
+    }
+  });
+</script>

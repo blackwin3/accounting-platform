@@ -49,7 +49,7 @@ router.get("/expense", async (req, res) => {
     const currency = await getCurrencyConfig(prisma, req.currentUser.Entreprise_id);
     const fmt = makeFmt(currency);
 
-    res.render("expense", {
+    res.render("claims/expense", {
       title: "Expenses",
       active: "expense",
       currentBusinessUnit: req.currentBusinessUnit,
@@ -259,7 +259,7 @@ router.get("/claims/leases-provisions", async (req, res) => {
       orderBy: { Liability_id: "desc" },
     });
 
-    res.render("leases-provisions", {
+    res.render("claims/leases-provisions", {
       title: "Leases & Provisions",
       active: "leases-provisions",
       currentBusinessUnit: req.currentBusinessUnit,
@@ -289,7 +289,7 @@ router.get("/claims/risks-insurance", async (req, res) => {
     // high-risk flagging that the old route did not compute at all.
     const riskPosition = await getRiskPosition({ entrepriseId });
 
-    res.render("risks-insurance", {
+    res.render("claims/risks-insurance", {
       title: "Risks & Insurance",
       active: "risks-insurance",
       currentBusinessUnit: req.currentBusinessUnit,
