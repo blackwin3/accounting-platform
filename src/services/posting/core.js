@@ -286,7 +286,8 @@ async function postJournalPair(tx, { debitAccount, creditAccount, amount, catalo
   // (for multi-pair events like asset disposal or lease termination),
   // use that; otherwise generate one from the transaction ID + a
   // timestamp suffix to ensure uniqueness within the same transaction.
-  const group = entryGroup || `JE-${transactionId}-${Date.now().toString(36)}`;
+  const groupId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const group = entryGroup || `JE-${transactionId}-${groupId}`;
 
   const rows = [];
   if (debitAccount) {

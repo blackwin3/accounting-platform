@@ -19,7 +19,7 @@ router.post("/services/start", async (req, res) => {
   try {
     const b = req.body;
     const result = await startServiceEngagement({
-      productId: Number(b.productId), stakeholderId: Number(b.stakeholderId),
+      productId: Number(b.productId), client: b.stakeholderId ? Number(b.stakeholderId) : null,
       estimatedHours: b.estimatedHours ? Number(b.estimatedHours) : null,
       hourlyRate: b.hourlyRate ? Number(b.hourlyRate) : null,
       description: b.description,

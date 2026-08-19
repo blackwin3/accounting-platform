@@ -42,7 +42,18 @@ router.post("/asset-purchase", async (req, res) => {
       administrationId: req.currentUser.Administration_id,
       entrepriseId: req.currentUser.Entreprise_id,
     });
-    res.json({ ok: true, assetId: result.asset.Assets_id, transactionId: result.transaction.Transactions_id });
+    const cost = Number(b.cost);
+    const residualValue = Number(b.residualValue || 0);
+    const usefulLifeYears = Number(b.usefulLifeYears || 5);
+    const monthlyDepreciation = usefulLifeYears > 0 ? Math.round(((cost - residualValue) / (usefulLifeYears * 12)) * 100) / 100 : 0;
+
+    res.json({
+      ok: true,
+      assetId: result.asset.Assets_id,
+      transactionId: result.transaction.Transactions_id,
+      monthlyDepreciation,
+      annualDepreciation: Math.round(monthlyDepreciation * 12 * 100) / 100,
+    });
   } catch (err) {
     if (err instanceof PostingError) return res.status(400).json({ error: err.message });
     console.error(err);

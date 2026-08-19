@@ -263,7 +263,9 @@ router.post("/loan-closure", async (req, res) => {
 router.post("/fund-transfer", async (req, res) => {
   try {
     const result = await postFundTransfer({
-      amount: Number(req.body.amount), fromMethod: req.body.fromMethod, toMethod: req.body.toMethod,
+      from: req.body.fromMethod || req.body.from,
+      to: req.body.toMethod || req.body.to,
+      amount: Number(req.body.amount),
       notes: req.body.notes, businessUnit: req.currentBusinessUnit,
       entrepriseId: req.currentUser.Entreprise_id,
     });

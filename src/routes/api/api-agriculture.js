@@ -22,6 +22,7 @@ router.post("/livestock/register", async (req, res) => {
       sex: b.sex, growthStage: b.growthStage, condition: b.condition,
       birthDate: b.birthDate, fairValue: b.fairValue ? Number(b.fairValue) : null,
       parentResourcesId: b.parentResourcesId ? Number(b.parentResourcesId) : null,
+      entrepriseId: req.currentUser.Entreprise_id,
     });
     res.json({ ok: true, resourcesId: result.Resources_id, tag: result.Animal_Tag });
   } catch (err) {
@@ -110,6 +111,7 @@ router.post("/livestock/bulk-planting", async (req, res) => {
       tagPrefix: b.tagPrefix, category: b.category || "CROP",
       growthStage: b.growthStage || "SEEDLING",
       fairValue: b.fairValue ? Number(b.fairValue) : null,
+      entrepriseId: req.currentUser.Entreprise_id,
     });
     res.json({ ok: true, count: result.length, tags: result.map(r => r.Animal_Tag) });
   } catch (err) {
@@ -145,8 +147,11 @@ router.post("/repackaging", async (req, res) => {
   try {
     const b = req.body;
     const result = await postRepackaging({
-      sourceProductId: Number(b.sourceProductId), targetProductId: Number(b.targetProductId),
-      sourceQuantity: Number(b.sourceQuantity), targetQuantity: Number(b.targetQuantity),
+      inputs: b.inputs || [],
+      outputProductId: Number(b.outputProductId),
+      outputQuantity: Number(b.outputQuantity),
+      spoilageQuantity: b.spoilageQuantity ? Number(b.spoilageQuantity) : 0,
+      notes: b.notes,
       businessUnit: req.currentBusinessUnit,
       administrationId: req.currentUser.Administration_id,
       entrepriseId: req.currentUser.Entreprise_id,
