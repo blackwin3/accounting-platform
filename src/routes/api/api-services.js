@@ -40,6 +40,7 @@ router.post("/services/:id/log-hours", async (req, res) => {
       resourcesId: Number(req.params.id),
       hours: Number(req.body.hours),
       notes: req.body.notes,
+      entrepriseId: req.currentUser.Entreprise_id,
     });
     res.json({ ok: true, totalHours: result.totalHours });
   } catch (err) {

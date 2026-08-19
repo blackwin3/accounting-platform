@@ -213,4 +213,4 @@ async function seedSourceOfTruthPolicy(entrepriseId) {
   console.log(`Source-of-truth policy seeded: 12 rules (${rows.filter((r) => r.isPopulated).length} active, ${rows.filter((r) => !r.isPopulated).length} declared but not yet populated).`);
 }
 
-module.exports = { seedProcessActions, upsertProcessAction };
+module.exports = { seedProcessActions, seedSourceOfTruthPolicy, upsertProcessAction };

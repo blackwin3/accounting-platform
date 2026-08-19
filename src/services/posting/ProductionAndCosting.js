@@ -187,7 +187,7 @@ async function startServiceEngagement(input) {
 
   const product = await prisma.Product.findUnique({ where: { Product_id: Number(productId) } });
   if (!product || product.Entreprise_id !== entrepriseId) throw new PostingError("Product not found for this business");
-  if (!product.Is_Service) throw new PostingError("This product isn't marked as a Service");
+  if (!product.Is_Service && product.Product_Nature !== "SERVICE") throw new PostingError("This product isn't marked as a Service — set its type to Services on the Products page.");
   if (product.Is_Utility) throw new PostingError("Utilities have their own instant consumption cycle — work-in-progress is for genuine effort-based services only");
 
   return prisma.Resources.create({
