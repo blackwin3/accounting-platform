@@ -190,7 +190,7 @@ router.get("/resources/lessor", async (req, res) => {
       orderBy: { First_name: "asc" },
     });
 
-    res.render("lessor", {
+    res.render("claims/lessor", {
       title: "Lessor",
       active: "lessor",
       currentBusinessUnit: req.currentBusinessUnit,
