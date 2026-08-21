@@ -3,7 +3,7 @@ function getPrisma() { if (!_prisma) { _prisma = require("../posting/core").pris
 
 function truncateAtBoundary(text, maxLength) {
   if (!text || text.length <= maxLength) return text;
-  const hardCut = text.slice(0, maxLength - 1); // reserve 1 char for the ellipsis
+  const hardCut = text.slice(0, maxLength - 3); // reserve 3 chars for "..."
   const lastSentenceEnd = hardCut.lastIndexOf(". ");
   if (lastSentenceEnd > maxLength * 0.5) {
     return hardCut.slice(0, lastSentenceEnd + 1);

@@ -233,6 +233,12 @@ router.get("/money/cash-flow", async (req, res) => {
       // fall through to the "else" branch below and appear as a genuine
       // classification gap in server logs.
       else if (eventName === "FUND_TRANSFER") { /* intentionally excluded from all three activities */ }
+      // Fallback: any operating event that isn't explicitly classified above
+      // goes into "other operating" to prevent silent gaps between direct and indirect methods
+      else if (cashFlowCategory === "OPERATING") {
+        if (debit > 0) otherOperatingOut += credit || 0;
+        if (credit > 0) otherOperatingOut += credit || 0;
+      }
     }
 
     const totalAvailable = byMethod.CASH + byMethod.MOBILE + byMethod.BANK;
