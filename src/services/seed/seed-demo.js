@@ -1,18 +1,19 @@
-const { prisma } = require("../posting/core");
-const { postFunding, postAssetPurchase, postBasket } = require("./postingEngine");
+let _prisma;
+function getPrisma() { if (!_prisma) { _prisma = require("../posting/core").prisma; } return _prisma; }
+const { postFunding, postAssetPurchase, postBasket } = require("../postingEngine");
 
 async function upsertProduct(name, price, cost, businessUnit = "SHOP", entrepriseId) {
-  const existing = await prisma.Product.findFirst({ where: { Product_Name: name, Entreprise_id: entrepriseId } });
+  const existing = await getPrisma().Product.findFirst({ where: { Product_Name: name, Entreprise_id: entrepriseId } });
   if (existing) return existing;
-  return prisma.Product.create({
+  return getPrisma().Product.create({
     data: { Product_Name: name, Product_type: "Goods", Product_Price: price, Product_Cost: cost, Product_Unit: "unit", Business_Unit: businessUnit, Entreprise_id: entrepriseId },
   });
 }
 
 async function upsertResource(productId, quantity) {
-  const existing = await prisma.Resources.findFirst({ where: { Product_id: productId } });
+  const existing = await getPrisma().Resources.findFirst({ where: { Product_id: productId } });
   if (existing) return existing;
-  return prisma.Resources.create({
+  return getPrisma().Resources.create({
     data: {
       Product_id: productId,
       Resource_type: "INVENTORY",
@@ -203,7 +204,7 @@ async function seedChebetFamily(defaultCatalogueId, entrepriseId) {
   // inventory purchase — DR Inventory CR Cash — so the resulting stock
   // quantity is a real consequence of a posted transaction, matching how
   // every other product's stock in this system is derived.
-  const existingMilkDelivery = await prisma.Journal.findFirst({ where: { Description: { startsWith: "BUY_INVENTORY_CASH" }, Entreprise_id: entrepriseId, Product_id: milk.Product_id } });
+  const existingMilkDelivery = await getPrisma().Journal.findFirst({ where: { Description: { startsWith: "BUY_INVENTORY_CASH" }, Entreprise_id: entrepriseId, Product_id: milk.Product_id } });
   if (!existingMilkDelivery) {
     await postBasket({
       mode: "buy",
@@ -223,7 +224,7 @@ async function seedChebetFamily(defaultCatalogueId, entrepriseId) {
       entrepriseId,
     });
   }
-  const existingEggsDelivery = await prisma.Journal.findFirst({ where: { Description: { startsWith: "BUY_INVENTORY_CASH" }, Entreprise_id: entrepriseId, Product_id: eggs.Product_id } });
+  const existingEggsDelivery = await getPrisma().Journal.findFirst({ where: { Description: { startsWith: "BUY_INVENTORY_CASH" }, Entreprise_id: entrepriseId, Product_id: eggs.Product_id } });
   if (!existingEggsDelivery) {
     // A week's lay from 25 hens, delivered to the shop at cost
     await postBasket({
@@ -403,7 +404,7 @@ async function seedChebetStage2({ daniel, grace, niece, grandson, daughterInLaw,
   // Posted through the real engine (not raw Prisma writes) so they
   // produce the same balanced Journal trail as every other transaction.
   // ---------------------------------------------------------------
-  const existingCapital = await prisma.Journal.findFirst({ where: { Description: { startsWith: "OWNER_CAPITAL_INJECTION" }, Entreprise_id: entrepriseId } });
+  const existingCapital = await getPrisma().Journal.findFirst({ where: { Description: { startsWith: "OWNER_CAPITAL_INJECTION" }, Entreprise_id: entrepriseId } });
   if (!existingCapital) {
     await postFunding({
       source: "CAPITAL",
@@ -415,7 +416,7 @@ async function seedChebetStage2({ daniel, grace, niece, grandson, daughterInLaw,
     });
   }
 
-  const existingLoan = await prisma.Journal.findFirst({ where: { Description: { startsWith: "LOAN_DRAWDOWN" }, Entreprise_id: entrepriseId } });
+  const existingLoan = await getPrisma().Journal.findFirst({ where: { Description: { startsWith: "LOAN_DRAWDOWN" }, Entreprise_id: entrepriseId } });
   if (!existingLoan) {
     await postFunding({
       source: "LOAN",
@@ -427,7 +428,7 @@ async function seedChebetStage2({ daniel, grace, niece, grandson, daughterInLaw,
     });
   }
 
-  const existingVehicle = await prisma.Assets.findFirst({ where: { Assets_Type: "Toyota Vitz", Entreprise_id: entrepriseId } });
+  const existingVehicle = await getPrisma().Assets.findFirst({ where: { Assets_Type: "Toyota Vitz", Entreprise_id: entrepriseId } });
   if (!existingVehicle) {
     // The biography names the vehicle and its 2017 purchase date but does not
     // give a price; this cost is a reasonable period estimate, not a
@@ -448,11 +449,11 @@ async function seedChebetStage2({ daniel, grace, niece, grandson, daughterInLaw,
 }
 
 async function upsertStakeholder(fields) {
-  const existing = await prisma.Stakeholder.findFirst({
+  const existing = await getPrisma().Stakeholder.findFirst({
     where: { First_name: fields.First_name, Last_name: fields.Last_name, Entreprise_id: fields.Entreprise_id },
   });
   if (existing) return existing;
-  return prisma.Stakeholder.create({ data: fields });
+  return getPrisma().Stakeholder.create({ data: fields });
 }
 
 async function upsertManagementForStakeholder({
@@ -469,10 +470,10 @@ async function upsertManagementForStakeholder({
   password = null,
   entrepriseId,
 }) {
-  const existing = await prisma.Management.findFirst({ where: { Stakeholder_id: stakeholderId } });
+  const existing = await getPrisma().Management.findFirst({ where: { Stakeholder_id: stakeholderId } });
   if (existing) return existing;
   const passwordHash = password ? await bcrypt.hash(password, 10) : null;
-  return prisma.Management.create({
+  return getPrisma().Management.create({
     data: {
       Catalogue_id: catalogueId,
       Stakeholder_id: stakeholderId,
@@ -491,9 +492,9 @@ async function upsertManagementForStakeholder({
 }
 
 async function upsertMoneyInstrument({ accountId, name, instrumentType, instrumentClass, principal, interestRate, startDate, maturityDate, entrepriseId }) {
-  const existing = await prisma.Money.findFirst({ where: { Money_Name: name, Entreprise_id: entrepriseId } });
+  const existing = await getPrisma().Money.findFirst({ where: { Money_Name: name, Entreprise_id: entrepriseId } });
   if (existing) return existing;
-  return prisma.Money.create({
+  return getPrisma().Money.create({
     data: {
       Account_id: accountId,
       Instrument_type: instrumentType,
@@ -523,9 +524,9 @@ async function upsertKnowledge({
   authorStakeholderId,
   entrepriseId,
 }) {
-  const existing = await prisma.Knowledge.findFirst({ where: { Explanation: explanation, Entreprise_id: entrepriseId } });
+  const existing = await getPrisma().Knowledge.findFirst({ where: { Explanation: explanation, Entreprise_id: entrepriseId } });
   if (existing) return existing;
-  return prisma.Knowledge.create({
+  return getPrisma().Knowledge.create({
     data: {
       Explanation: explanation,
       Knowledge_type: knowledgeType,

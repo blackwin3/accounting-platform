@@ -11,6 +11,7 @@
         <th class="px-5 py-3">Date</th>
         <th class="px-5 py-3">Source</th>
         <th class="px-5 py-3">Story</th>
+        <th class="px-5 py-3">Document</th>
       </tr>
     </thead>
     <tbody>
@@ -21,10 +22,19 @@
             <span class="text-xs font-mono px-2 py-0.5 rounded-full <%= n.isGenerated ? 'bg-paper text-ink/50' : 'bg-till/10 text-till' %>"><%= n.source %></span>
           </td>
           <td class="px-5 py-3 text-ink/70"><%= n.description %></td>
+          <td class="px-5 py-3">
+            <% if (n.receiptNo) { %>
+              <a href="/documents/receipt/<%= n.recordsId %>" class="text-xs font-mono text-till hover:underline"><%= n.receiptNo %></a>
+            <% } else if (n.transactionId) { %>
+              <a href="/transactions?highlight=<%= n.transactionId %>" class="text-xs font-mono text-ink/40 hover:text-till hover:underline">TXN #<%= n.transactionId %></a>
+            <% } else { %>
+              <span class="text-xs text-ink/20">—</span>
+            <% } %>
+          </td>
         </tr>
       <% }) %>
       <% if (entries.length === 0) { %>
-        <tr><td colspan="3" class="px-5 py-8 text-center text-ink/40">No narrative entries yet — they're generated automatically as you post sales, expenses, and purchases.</td></tr>
+        <tr><td colspan="4" class="px-5 py-8 text-center text-ink/40">No narrative entries yet — they're generated automatically as you post sales, expenses, and purchases.</td></tr>
       <% } %>
     </tbody>
   </table>

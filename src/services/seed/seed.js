@@ -10,7 +10,8 @@
  */
 
 const bcrypt = require("bcryptjs");
-const { prisma } = require("../posting/core");
+let _prisma;
+function getPrisma() { if (!_prisma) { _prisma = require("../posting/core").prisma; } return _prisma; }
 
 const { seedAccountCodes, seedAccounts } = require("./seed-accounts");
 const { seedCatalogueEvents, upsertStructure } = require("./seed-catalogue");
@@ -19,7 +20,7 @@ const { seedProcessActions, seedSourceOfTruthPolicy } = require("./seed-action-l
 const { seedChebetFamily, upsertProduct, upsertResource } = require("./seed-demo");
 
 async function main() {
-  const entrepriseId = (await prisma.Organisation.findFirst())?.Entreprise_id || null;
+  const entrepriseId = (await getPrisma().Organisation.findFirst())?.Entreprise_id || null;
   if (!entrepriseId) {
     console.log("No Organisation found — run signup first.");
     return;
@@ -62,7 +63,7 @@ async function main() {
   await upsertResource(soap.Product_id, 30);
 
   // Default management users
-  const catalogueForManagement = await prisma.Catalogue.findFirst({ where: { Entreprise_id: entrepriseId } });
+  const catalogueForManagement = await getPrisma().Catalogue.findFirst({ where: { Entreprise_id: entrepriseId } });
   const defaultPeople = [
     { name: "Owner", username: "owner", password: "owner123", accessLevel: "OWNER_FULL", role: "Owner" },
     { name: "Accountant", username: "accountant", password: "acct123", accessLevel: "ACCOUNTANT", role: "Accountant" },
@@ -81,9 +82,9 @@ async function main() {
 }
 
 async function upsertManagement({ name, username, password, accessLevel, role }, catalogueId, entrepriseId) {
-  const existing = await prisma.Management.findFirst({ where: { Username: username, Entreprise_id: entrepriseId } });
+  const existing = await getPrisma().Management.findFirst({ where: { Username: username, Entreprise_id: entrepriseId } });
   if (existing) return existing;
-  return prisma.Management.create({
+  return getPrisma().Management.create({
     data: {
       Catalogue_id: catalogueId,
       Management_Name: name,

@@ -1,4 +1,5 @@
-const { prisma } = require("../posting/core");
+let _prisma;
+function getPrisma() { if (!_prisma) { _prisma = require("../posting/core").prisma; } return _prisma; }
 
 async function seedAccountCodes(entrepriseId) {
   const rows = [
@@ -70,17 +71,17 @@ async function seedAccounts(codes, entrepriseId) {
 }
 
 async function upsertCode(code, name, category, statementSection, entrepriseId) {
-  const existing = await prisma.Account_codes.findFirst({ where: { Code: code, Entreprise_id: entrepriseId } });
+  const existing = await getPrisma().Account_codes.findFirst({ where: { Code: code, Entreprise_id: entrepriseId } });
   if (existing) return existing;
-  return prisma.Account_codes.create({
+  return getPrisma().Account_codes.create({
     data: { Code: code, Code_name: name, Code_categories: category, Statement_Section: statementSection, Is_Active: 1, Entreprise_id: entrepriseId },
   });
 }
 
 async function upsertAccount(name, type, codeId, normalBalance, entrepriseId) {
-  const existing = await prisma.Account.findFirst({ where: { Account_Code_id: codeId, Entreprise_id: entrepriseId } });
+  const existing = await getPrisma().Account.findFirst({ where: { Account_Code_id: codeId, Entreprise_id: entrepriseId } });
   if (existing) return existing;
-  return prisma.Account.create({
+  return getPrisma().Account.create({
     data: {
       Account_Name: name,
       Account_Type: type,

@@ -1,4 +1,5 @@
-const { prisma } = require("../posting/core");
+let _prisma;
+function getPrisma() { if (!_prisma) { _prisma = require("../posting/core").prisma; } return _prisma; }
 
 function truncateAtBoundary(text, maxLength) {
   if (!text || text.length <= maxLength) return text;
@@ -38,7 +39,7 @@ async function upsertStructure(fields) {
     }
   }
 
-  const existing = await prisma.Structures.findFirst({
+  const existing = await getPrisma().Structures.findFirst({
     where: { Structures_Name: safeFields.Structures_Name, Structures_Type: safeFields.Structures_Type, Entreprise_id: safeFields.Entreprise_id },
   });
 
@@ -63,12 +64,12 @@ async function upsertStructure(fields) {
       }
     }
     if (Object.keys(updatable).length > 0) {
-      return prisma.Structures.update({ where: { Structures_id: existing.Structures_id }, data: updatable });
+      return getPrisma().Structures.update({ where: { Structures_id: existing.Structures_id }, data: updatable });
     }
     return existing;
   }
 
-  return prisma.Structures.create({ data: safeFields });
+  return getPrisma().Structures.create({ data: safeFields });
 }
 
 /**
@@ -341,9 +342,9 @@ async function seedAccountingRules(entrepriseId) {
     // Tag which Catalogue events this standard actually governs, so the
     // Rules page can show "this standard applies to these real processes"
     for (const eventName of std.catalogueEvents) {
-      const cat = await prisma.Catalogue.findFirst({ where: { Event_Name: eventName, Entreprise_id: entrepriseId } });
+      const cat = await getPrisma().Catalogue.findFirst({ where: { Event_Name: eventName, Entreprise_id: entrepriseId } });
       if (cat) {
-        await prisma.Catalogue.update({
+        await getPrisma().Catalogue.update({
           where: { Catalogue_id: cat.Catalogue_id },
           data: { Structures_id: standardStructure.Structures_id },
         });
@@ -536,7 +537,7 @@ async function upsertLogicCondition({
   // shared globally across every business rather than scoped per-business.
   // Left unscoped deliberately rather than silently working around it;
   // needs a follow-up migration.
-  const existing = await prisma.LogicConditions.findFirst({ where: { Conditons_Name: name } });
+  const existing = await getPrisma().LogicConditions.findFirst({ where: { Conditons_Name: name } });
   if (existing) return existing;
 
   const safeData = {
@@ -569,7 +570,7 @@ async function upsertLogicCondition({
     }
   }
 
-  return prisma.LogicConditions.create({ data: safeData });
+  return getPrisma().LogicConditions.create({ data: safeData });
 }
 
 
@@ -622,11 +623,11 @@ async function seedDefaultSettings(entrepriseId) {
   ];
 
   for (const s of settings) {
-    const existing = await prisma.Settings.findFirst({
+    const existing = await getPrisma().Settings.findFirst({
       where: { Setting_Name: s.name, Entreprise_id: entrepriseId },
     });
     if (!existing) {
-      await prisma.Settings.create({
+      await getPrisma().Settings.create({
         data: {
           Setting_Category: s.category,
           Setting_Name: s.name,

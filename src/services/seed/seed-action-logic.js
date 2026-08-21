@@ -1,7 +1,8 @@
-const { prisma } = require("../posting/core");
+let _prisma;
+function getPrisma() { if (!_prisma) { _prisma = require("../posting/core").prisma; } return _prisma; }
 
 async function upsertProcessAction(fields) {
-  const existing = await prisma.ProcessActions.findFirst({
+  const existing = await getPrisma().ProcessActions.findFirst({
     where: { Process_name: fields.Process_name, Sequence_No: fields.Sequence_No },
   });
   if (existing) return existing;
@@ -12,7 +13,7 @@ async function upsertProcessAction(fields) {
       safeFields[field] = safeFields[field].slice(0, cap - 1) + "…";
     }
   }
-  return prisma.ProcessActions.create({ data: safeFields });
+  return getPrisma().ProcessActions.create({ data: safeFields });
 }
 
 async function seedProcessActions() {

@@ -1,4 +1,5 @@
-const { prisma } = require("../posting/core");
+let _prisma;
+function getPrisma() { if (!_prisma) { _prisma = require("../posting/core").prisma; } return _prisma; }
 
 function truncateAtBoundary(text, maxLength) {
   if (!text || text.length <= maxLength) return text;
@@ -38,7 +39,7 @@ async function upsertStructure(fields) {
     }
   }
 
-  const existing = await prisma.Structures.findFirst({
+  const existing = await getPrisma().Structures.findFirst({
     where: { Structures_Name: safeFields.Structures_Name, Structures_Type: safeFields.Structures_Type, Entreprise_id: safeFields.Entreprise_id },
   });
 
@@ -63,12 +64,12 @@ async function upsertStructure(fields) {
       }
     }
     if (Object.keys(updatable).length > 0) {
-      return prisma.Structures.update({ where: { Structures_id: existing.Structures_id }, data: updatable });
+      return getPrisma().Structures.update({ where: { Structures_id: existing.Structures_id }, data: updatable });
     }
     return existing;
   }
 
-  return prisma.Structures.create({ data: safeFields });
+  return getPrisma().Structures.create({ data: safeFields });
 }
 
 /**
@@ -801,9 +802,9 @@ async function seedCatalogueEvents(entrepriseId) {
 }
 
 async function upsertCatalogue(fields) {
-  const existing = await prisma.Catalogue.findFirst({ where: { Event_Name: fields.Event_Name, Entreprise_id: fields.Entreprise_id } });
+  const existing = await getPrisma().Catalogue.findFirst({ where: { Event_Name: fields.Event_Name, Entreprise_id: fields.Entreprise_id } });
   if (existing) return existing;
-  return prisma.Catalogue.create({ data: fields });
+  return getPrisma().Catalogue.create({ data: fields });
 }
 
 module.exports = { seedCatalogueEvents, upsertCatalogue, truncateAtBoundary, upsertStructure };

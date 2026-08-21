@@ -36,6 +36,17 @@ router.get("/narrative", async (req, res) => {
   try {
     const entrepriseId = req.currentUser.Entreprise_id;
     const rows = await prisma.Narrative.findMany({ where: { Entreprise_id: entrepriseId }, orderBy: { Narrative_id: "desc" }, take: 100 });
+
+    // Look up receipts for narratives that have a Records_id
+    const recordsIds = rows.map(n => n.Records_id).filter(Boolean);
+    let receiptsByRecordsId = {};
+    if (recordsIds.length > 0) {
+      const docs = await prisma.Documents.findMany({
+        where: { Records_id: { in: recordsIds }, Document_type: "RECEIPT", Entreprise_id: entrepriseId },
+      });
+      docs.forEach(d => { receiptsByRecordsId[d.Records_id] = d.Documents_no; });
+    }
+
     res.render("narrative", {
       title: "Narrative",
       active: "narrative",
@@ -44,6 +55,9 @@ router.get("/narrative", async (req, res) => {
         source: n.Narrative_source || (n.Is_Generated ? "SYSTEM" : "HUMAN"),
         isGenerated: !!n.Is_Generated,
         description: n.Description,
+        transactionId: n.Transaction_id || null,
+        recordsId: n.Records_id || null,
+        receiptNo: n.Records_id ? (receiptsByRecordsId[n.Records_id] || null) : null,
       })),
     });
   } catch (err) {
