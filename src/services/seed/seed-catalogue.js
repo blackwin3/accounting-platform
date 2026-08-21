@@ -1,5 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const { prisma } = require("../posting/core");
 
 function truncateAtBoundary(text, maxLength) {
   if (!text || text.length <= maxLength) return text;

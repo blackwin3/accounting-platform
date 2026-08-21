@@ -414,6 +414,7 @@ async function computeIndirectCashFlow(entrepriseId, directMethodOperatingTotal,
   let receivablesChange = 0;
   let payablesChange = 0;
   let inventoryChange = 0;
+  let prepaidChange = 0;
 
   const NON_CASH_EXPENSE_ACCOUNTS = ["Depreciation Expense", "Impairment Loss", "Revaluation Loss"];
 
@@ -437,11 +438,13 @@ async function computeIndirectCashFlow(entrepriseId, directMethodOperatingTotal,
       payablesChange += credit - debit;
     } else if (acc.Account_Name === "Inventory") {
       inventoryChange += debit - credit;
+    } else if (acc.Account_Name === "Prepaid Expenses") {
+      prepaidChange += debit - credit;
     }
   }
 
   const operatingCashFlow = round2(
-    netProfit - gainOnDisposalAdjustment + depreciationAddBack - receivablesChange + payablesChange - inventoryChange
+    netProfit - gainOnDisposalAdjustment + depreciationAddBack - receivablesChange + payablesChange - inventoryChange - prepaidChange
   );
 
   return {
@@ -451,6 +454,7 @@ async function computeIndirectCashFlow(entrepriseId, directMethodOperatingTotal,
     receivablesChange: round2(receivablesChange),
     payablesChange: round2(payablesChange),
     inventoryChange: round2(inventoryChange),
+    prepaidChange: round2(prepaidChange),
     operatingCashFlow,
     directMethodOperatingTotal: directMethodOperatingTotal != null ? round2(directMethodOperatingTotal) : null,
     matchesDirectMethod:

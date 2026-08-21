@@ -1,5 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const { prisma } = require("../posting/core");
 const { postFunding, postAssetPurchase, postBasket } = require("./postingEngine");
 
 async function upsertProduct(name, price, cost, businessUnit = "SHOP", entrepriseId) {

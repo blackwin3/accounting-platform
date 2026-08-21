@@ -9,9 +9,8 @@
  * Or called from auth.js (signup) and api-business.js (organisation create)
  */
 
-const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcryptjs");
-const prisma = new PrismaClient();
+const { prisma } = require("../posting/core");
 
 const { seedAccountCodes, seedAccounts } = require("./seed-accounts");
 const { seedCatalogueEvents, upsertStructure } = require("./seed-catalogue");

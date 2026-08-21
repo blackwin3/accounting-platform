@@ -1,5 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const { prisma } = require("../posting/core");
 
 async function upsertProcessAction(fields) {
   const existing = await prisma.ProcessActions.findFirst({
