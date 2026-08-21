@@ -72,9 +72,7 @@
 
 <script>
   let PRODUCTS = [];
-  try { PRODUCTS = 
-    JSON.parse('<%- JSON.stringify(products).replace(/\'/g, "\\'") %>'); } 
-    catch(e) { console.error('Failed to parse products', e); }
+  try { PRODUCTS = JSON.parse('<%- JSON.stringify(products).replace(/\'/g, "\\'") %>'); } catch(e) { console.error('Failed to parse products', e); }
 
   function fmtNum(n) {
     const num = Number(n || 0);

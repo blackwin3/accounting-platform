@@ -573,16 +573,6 @@ async function upsertLogicCondition({
   return prisma.LogicConditions.create({ data: safeData });
 }
 
-if (require.main === module) {
-  main()
-    .catch((e) => {
-      console.error(e);
-      process.exit(1);
-    })
-    .finally(() => prisma.$disconnect());
-}
-
-module.exports = { seedAccountingRules, seedPeriodEndChecks, seedDefaultSettings };
 
 /**
  * seedDefaultSettings — seeds the typed, categorised Settings rows that
